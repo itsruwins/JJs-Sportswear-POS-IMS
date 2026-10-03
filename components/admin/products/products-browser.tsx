@@ -120,7 +120,7 @@ export function ProductsBrowser({
     return (
       <EmptyState
         title="No products yet"
-        body="Products you add show up here with their sizes, colors, and stock. Adding products comes in the next update."
+        body="Add your first product with the button above. It shows up here with its sizes, colors, and stock."
       />
     );
   }

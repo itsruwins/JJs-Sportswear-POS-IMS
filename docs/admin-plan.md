@@ -78,6 +78,11 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 11. **Payment verification:** GCash reference and screenshot review, down payment and balance.
 12. **Chat and notifications:** customer and staff messaging per order.
 
+## Hardening to consider (deferred on purpose)
+
+- **Atomic product save:** move the product save into one database function (a new migration) so a failure midway can't leave partial changes. Phase 3 instead makes every step self-correcting on retry and keeps new products hidden until the save completes.
+- **Edit conflicts:** check `updated_at` so two people editing the same product don't overwrite each other's changes.
+
 ## How each phase runs
 
 1. A short round of questions, only on what that phase leaves open.

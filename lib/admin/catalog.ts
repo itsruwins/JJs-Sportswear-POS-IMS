@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { STANDARD_SIZES } from "./sizes";
 
 export type CatalogVariant = {
   id: string;
@@ -66,14 +67,16 @@ export async function fetchProduct(supabase: SupabaseClient, id: string) {
 // Sizes, colors, and stock state
 // ---------------------------------------------------------------------------
 
-const SIZE_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"];
+const SIZE_ORDER = STANDARD_SIZES.map((s) => s.toUpperCase());
 
-/** A size's place in apparel order; combined sizes like "S/M" rank by their first size. */
+/** A size's place in the standard list; unlisted combined sizes like "M/L" rank by their first size. */
 function sizeRank(size: string) {
-  return SIZE_ORDER.indexOf(size.toUpperCase().split("/")[0].trim());
+  const upper = size.trim().toUpperCase();
+  const exact = SIZE_ORDER.indexOf(upper);
+  return exact !== -1 ? exact : SIZE_ORDER.indexOf(upper.split("/")[0].trim());
 }
 
-/** Standard apparel order first (XS → 3XL), anything else after it alphabetically. */
+/** Standard size-list order first, anything else after it alphabetically. */
 export function sortSizes(sizes: string[]) {
   return [...sizes].sort((a, b) => {
     const ia = sizeRank(a);
@@ -157,4 +160,31 @@ export function priceRange(product: CatalogProduct) {
 
 export function isSample(product: Pick<CatalogProduct, "tags">) {
   return product.tags.some((t) => t.toLowerCase() === "sample");
+}
+
+// ---------------------------------------------------------------------------
+// Product form context
+// ---------------------------------------------------------------------------
+
+/** Every photo of one product, oldest first (the form shows them all, not just the main one). */
+export async function fetchProductImages(supabase: SupabaseClient, productId: string) {
+  const { data } = await supabase
+    .from("product_images")
+    .select("id, image_url, is_primary")
+    .eq("product_id", productId)
+    .order("created_at");
+  return (data ?? []).map((i) => ({ id: i.id as string, url: i.image_url as string, is_primary: i.is_primary as boolean }));
+}
+
+/** Colors and tags already in use (for suggestions) and the SKUs other products own. */
+export function formContext(products: CatalogProduct[], excludeId?: string) {
+  const colors = unique(products.flatMap((p) => p.variants.map((v) => v.color))).sort((a, b) => a.localeCompare(b));
+  const tags = unique(products.flatMap((p) => p.tags))
+    .filter((t) => t.toLowerCase() !== "sample")
+    .sort((a, b) => a.localeCompare(b));
+  const takenSkus = products
+    .filter((p) => p.id !== excludeId)
+    .flatMap((p) => p.variants.map((v) => v.sku))
+    .filter((s): s is string => Boolean(s));
+  return { suggestions: { colors, tags }, takenSkus };
 }

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, CircleCheck } from "lucide-react";
+import { ProductActions } from "@/components/admin/products/product-actions";
 import { Pill, ProductThumb } from "@/components/admin/products/product-bits";
 import {
   fetchProduct,
@@ -15,6 +16,7 @@ import {
   variantState,
 } from "@/lib/admin/catalog";
 import { requireStaff } from "@/lib/admin/session";
+import { hasStockHistory } from "@/lib/admin/stock";
 
 export const metadata: Metadata = { title: "Product · J&J Sportswear Admin" };
 
@@ -22,14 +24,23 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const STATE_LABEL = { in: "In stock", low: "Low", zero: "Sold out" } as const;
 
-export default async function ProductPage({ params }: PageProps<"/admin/products/[id]">) {
-  const { supabase } = await requireStaff();
+export default async function ProductPage({ params, searchParams }: PageProps<"/admin/products/[id]">) {
+  const { supabase, profile } = await requireStaff();
   const { id } = await params;
+  const justSaved = (await searchParams).saved === "1";
   if (!UUID.test(id)) notFound();
 
   const { product, error } = await fetchProduct(supabase, id);
   if (error) throw error;
   if (!product) notFound();
+
+  // Only the owner deletes, and only products that never held stock; work that out before offering it.
+  const canDelete =
+    profile.role === "owner" &&
+    !(await hasStockHistory(
+      supabase,
+      product.variants.map((v) => v.id),
+    ).catch(() => true));
 
   const sizes = sortSizes(unique(product.variants.map((v) => v.size ?? "One size")));
   const colors = sortColors(unique(product.variants.map((v) => v.color ?? "—")));
@@ -55,6 +66,18 @@ export default async function ProductPage({ params }: PageProps<"/admin/products
         <ArrowLeft aria-hidden="true" className="size-4" />
         Products
       </Link>
+
+      {justSaved && (
+        <p role="status" className="mt-4 flex items-center gap-2.5 rounded-xl bg-ground-2 px-4 py-3 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)]">
+          <CircleCheck aria-hidden="true" className="size-[1.125rem] text-board-text" />
+          Product saved.
+        </p>
+      )}
+      {!product.is_active && (
+        <p className="mt-4 rounded-xl bg-ground-2 px-4 py-3 text-[0.9375rem] text-ink shadow-[inset_0_0_0_1px_var(--line)]">
+          This product is archived. It’s hidden from the shop and the catalog list until you restore it.
+        </p>
+      )}
 
       <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-14">
         <div className="mx-auto w-full max-w-[22rem] lg:mx-0">
@@ -96,16 +119,15 @@ export default async function ProductPage({ params }: PageProps<"/admin/products
             <Stat label="Sold out" value={String(stock.zero)} />
           </dl>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <span
-              aria-disabled="true"
-              className="inline-flex h-11 cursor-default items-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]"
-            >
-              <Pencil aria-hidden="true" className="size-4" />
-              Edit product
-              <span className="text-[0.8125rem] font-medium">· Coming soon</span>
-            </span>
-            <p className="text-[0.8125rem] text-ink-2">Last updated {updated}</p>
+          <div className="mt-5">
+            <ProductActions
+              id={product.id}
+              name={product.name}
+              archived={!product.is_active}
+              isOwner={profile.role === "owner"}
+              canDelete={canDelete}
+            />
+            <p className="mt-3 text-[0.8125rem] text-ink-2">Last updated {updated}</p>
           </div>
         </div>
       </div>

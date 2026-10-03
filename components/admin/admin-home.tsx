@@ -135,7 +135,7 @@ export function AdminHomeView({
               <SetupStep
                 done={productCount > 0}
                 title="Add your products"
-                body={productCount > 0 ? `${productCount} in the catalog.` : "Arrives with the Products section."}
+                body={productCount > 0 ? `${productCount} in the catalog.` : "Go to Products and tap Add product."}
               />
               <SetupStep
                 title="Bring in your staff"

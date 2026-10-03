@@ -581,7 +581,17 @@ html:has(.auth-dialog[open]) {
 
 .auth-input::placeholder,
 .auth-input input::placeholder {
-  color: color-mix(in oklch, var(--ink-2) 75%, transparent);
+  color: var(--ink-2);
+}
+
+/* Fields that grow with their content (chip inputs, text areas). */
+.auth-input.auth-input-grow {
+  height: auto;
+}
+
+/* Suggestions come from the field itself; hide the browser's dropdown arrow. */
+.chip-input-field::-webkit-calendar-picker-indicator {
+  display: none !important;
 }
 
 .auth-input:focus-within {

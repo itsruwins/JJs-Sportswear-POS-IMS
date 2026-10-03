@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { LiveRefresh } from "@/components/admin/live-refresh";
 import { ProductsBrowser, type Filter, type Sort } from "@/components/admin/products/products-browser";
 import { fetchCatalog } from "@/lib/admin/catalog";
@@ -29,7 +31,19 @@ export default async function ProductsPage({ searchParams }: PageProps<"/admin/p
             Everything in the catalog, with stock for every size at a glance.
           </p>
         </div>
+        <Link
+          href="/admin/products/new"
+          className="press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+        >
+          <Plus aria-hidden="true" className="size-4" strokeWidth={2.5} />
+          Add product
+        </Link>
       </header>
+      {one(params.deleted) === "1" && (
+        <p role="status" className="mb-6 rounded-xl bg-ground-2 px-4 py-3 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)]">
+          Product deleted.
+        </p>
+      )}
 
       {error ? (
         <p role="alert" className="auth-alert rounded-2xl px-5 py-4 text-[0.9375rem]">
