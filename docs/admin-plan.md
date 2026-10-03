@@ -61,6 +61,7 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 - An inventory log filterable by type, product, staff member, and date, plus each variant's own history.
 - A low-stock and out-of-stock list.
 - A live notifications bell.
+- Add `products` and `product_variants` to the `supabase_realtime` publication (a new migration), so the admin's counts update the moment stock moves. Phase 1 refreshes them on tab focus and every minute instead.
 - **Done when:** staff can answer "who changed this, when, and why" and see what needs restocking.
 
 ### Phase 6: Inventory dashboard + report

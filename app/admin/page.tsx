@@ -1,4 +1,5 @@
 import { AdminHomeView, type RestockRow } from "@/components/admin/admin-home";
+import { LiveRefresh } from "@/components/admin/live-refresh";
 import type { Readout } from "@/components/admin/readout-board";
 import { firstName, requireStaff } from "@/lib/admin/session";
 
@@ -51,7 +52,9 @@ export default async function AdminHome() {
   }).format(now);
 
   return (
-    <AdminHomeView
+    <>
+      <LiveRefresh />
+      <AdminHomeView
       firstName={firstName(profile)}
       username={profile.username}
       role={profile.role}
@@ -62,6 +65,7 @@ export default async function AdminHome() {
       productCount={productCount}
       needsRestock={needsRestock}
       attentionCount={out.length + low.length}
-    />
+      />
+    </>
   );
 }

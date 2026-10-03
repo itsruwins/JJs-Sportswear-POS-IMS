@@ -372,6 +372,12 @@ html {
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
+.cell[data-stock="zero"] {
+  background: var(--ink);
+  color: var(--ground);
+  box-shadow: none;
+}
+
 .on-board .cell[data-stock="out"] {
   background: var(--board-deep);
   color: var(--board-ink-2);
@@ -592,7 +598,7 @@ input.auth-input:focus-visible,
   justify-content: center;
   gap: 0.1875rem;
   width: 4.75rem;
-  height: 3.5rem;
+  height: 3.875rem;
   border-radius: 1rem;
   color: var(--ink-2);
   font-size: 0.75rem;
@@ -616,19 +622,12 @@ button.admin-dock-item:hover {
   color: color-mix(in oklch, var(--ink-2) 70%, transparent);
 }
 
+/* Unbuilt sections carry "Soon" on a line of its own, clear of the icon. */
 .admin-soon {
-  position: absolute;
-  top: 0.3125rem;
-  right: 0.375rem;
-  padding: 0.0625rem 0.3125rem;
-  border-radius: 999px;
-  background: var(--ground-2);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
   color: var(--ink-2);
-  box-shadow: inset 0 0 0 1px var(--line);
-  font-size: 0.5625rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
 }
 
 @media (max-width: 639px) {
@@ -680,7 +679,7 @@ button.admin-dock-item:hover {
 /* More rises out of the dock and returns into it. */
 .admin-more {
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom) + 0.875rem + 4.25rem + 0.625rem);
+  bottom: calc(env(safe-area-inset-bottom) + 0.875rem + 4.625rem + 0.625rem);
   width: min(24rem, calc(100vw - 1.5rem));
   transform: translate(-50%, 10px) scale(0.97);
   transform-origin: 50% 100%;
@@ -699,7 +698,7 @@ button.admin-dock-item:hover {
 
 @media (max-width: 639px) {
   .admin-more {
-    bottom: calc(env(safe-area-inset-bottom) + 4.25rem + 0.5rem);
+    bottom: calc(env(safe-area-inset-bottom) + 4.625rem + 0.5rem);
   }
 }
 

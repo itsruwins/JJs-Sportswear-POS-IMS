@@ -1,5 +1,6 @@
 import { Check, Shirt } from "lucide-react";
 import type { StaffRole } from "@/lib/admin/session";
+import { DOCK_SECTIONS, MORE_SECTIONS, ROLE_LABEL, visibleTo } from "./nav";
 import { ReadoutBoard, type Readout } from "./readout-board";
 
 export type RestockRow = {
@@ -40,10 +41,20 @@ export function AdminHomeView({
   return (
     <div className="mx-auto max-w-[80rem] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
       <header className="mb-7 sm:mb-8">
-        <p className="text-[0.9375rem] text-ink-2">{dateLine}</p>
-        <h1 className="voice-display mt-2 text-[clamp(2.25rem,5vw,3.5rem)]">
+        <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">
           {greeting}, {firstName}.
         </h1>
+        <p className="voice-label mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[0.9375rem] text-ink-2">
+          <span>{dateLine}</span>
+          <span aria-hidden="true">·</span>
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-[0.8125rem] ${
+              role === "owner" ? "bg-board text-board-ink" : "bg-ground-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]"
+            }`}
+          >
+            {ROLE_LABEL[role]}
+          </span>
+        </p>
       </header>
 
       {loadFailed ? (
@@ -85,20 +96,20 @@ export function AdminHomeView({
                   <li key={v.id} className="flex items-center gap-4 border-b border-line py-3.5">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[1rem] font-semibold text-ink">{v.product?.name ?? "Unnamed product"}</p>
-                      <p className="mt-0.5 truncate text-[0.875rem] text-ink-2">
-                        {[v.size, v.color].filter(Boolean).join(" · ")}
-                        {v.sku && <span className="tabular"> · {v.sku}</span>}
-                      </p>
+                      <p className="mt-0.5 text-[0.875rem] text-ink-2">{[v.size, v.color].filter(Boolean).join(" · ")}</p>
+                      {v.sku && <p className="tabular mt-0.5 whitespace-nowrap text-[0.8125rem] text-ink-2">{v.sku}</p>}
                     </div>
-                    <span className="on-board inline-grid shrink-0 rounded-lg bg-board p-1">
-                      <span
-                        data-stock={sold ? "out" : "low"}
-                        className="cell voice-board tabular grid h-10 min-w-12 place-items-center rounded-md px-2 text-[1.25rem]"
-                      >
-                        {sold ? "–" : v.stock_quantity}
-                      </span>
+                    <span
+                      data-stock={sold ? "zero" : "low"}
+                      className="cell voice-board tabular grid h-11 min-w-12 shrink-0 place-items-center rounded-lg px-2 text-[1.375rem]"
+                    >
+                      {v.stock_quantity}
                     </span>
-                    <span className="w-16 shrink-0 text-right text-[0.8125rem] text-ink-2">{sold ? "Sold out" : "Low"}</span>
+                    <span
+                      className={`w-[4.5rem] shrink-0 text-right text-[0.875rem] ${sold ? "font-semibold text-ink" : "text-ink-2"}`}
+                    >
+                      {sold ? "Sold out" : "Low"}
+                    </span>
                   </li>
                 );
               })}
@@ -130,12 +141,16 @@ export function AdminHomeView({
             <h2 id="next-title" className="voice-display border-b border-line pb-3 text-[1.75rem]">
               Coming to the admin
             </h2>
-            <ul className="text-[0.9375rem] text-ink-2">
-              {["Products: add and edit sizes and colors", "Stock: restock and adjust counts", "History: every change, logged", "Point of sale: counter sales"].map((line) => (
-                <li key={line} className="border-b border-line py-3.5">
-                  {line}
-                </li>
-              ))}
+            <ul>
+              {[...DOCK_SECTIONS, ...MORE_SECTIONS]
+                .filter((s) => !s.href)
+                .filter(visibleTo(role))
+                .map((s) => (
+                  <li key={s.label} className="border-b border-line py-3.5">
+                    <p className="text-[1rem] font-semibold text-ink">{s.label}</p>
+                    <p className="mt-0.5 text-[0.875rem] leading-snug text-ink-2">{s.description}</p>
+                  </li>
+                ))}
             </ul>
           </section>
         )}

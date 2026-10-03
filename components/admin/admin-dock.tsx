@@ -24,14 +24,24 @@ function DockItem({ section, active }: { section: AdminSection; active: boolean 
         <span className="admin-soon" aria-hidden="true">
           Soon
         </span>
-        <span className="sr-only">, coming soon</span>
+        <span className="sr-only">(coming soon)</span>
       </span>
     );
   }
   return (
     <Link href={section.href} className="admin-dock-item press" aria-current={active ? "page" : undefined}>
       {body}
+      <ReservedRow />
     </Link>
+  );
+}
+
+/** Keeps every dock icon on one line, whether or not the item carries "Soon". */
+function ReservedRow() {
+  return (
+    <span aria-hidden="true" className="admin-soon invisible">
+      Soon
+    </span>
   );
 }
 
@@ -60,6 +70,7 @@ export function AdminDock({ role }: { role: StaffRole }) {
           >
             <Ellipsis aria-hidden="true" className="size-[1.375rem]" strokeWidth={1.9} />
             <span>More</span>
+            <ReservedRow />
           </button>
         </li>
       </ul>
