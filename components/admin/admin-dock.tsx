@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Ellipsis } from "lucide-react";
@@ -8,46 +8,58 @@ import type { StaffRole } from "@/lib/admin/session";
 import { DOCK_SECTIONS, MORE_SECTIONS, visibleTo, type AdminSection } from "./nav";
 import { usePopoverOpen } from "./use-popover-open";
 
-function DockItem({ section, active }: { section: AdminSection; active: boolean }) {
+function DockIcon({ section, soon = false }: { section: AdminSection; soon?: boolean }) {
   const Icon = section.icon;
-  const body = (
-    <>
+  return (
+    <span className="admin-dock-icon">
       <Icon aria-hidden="true" className="size-[1.375rem]" strokeWidth={1.9} />
-      <span>{section.label}</span>
-    </>
-  );
-
-  if (!section.href) {
-    return (
-      <span className="admin-dock-item" aria-disabled="true">
-        {body}
-        <span className="admin-soon" aria-hidden="true">
-          Soon
-        </span>
-        <span className="sr-only">(coming soon)</span>
-      </span>
-    );
-  }
-  return (
-    <Link href={section.href} className="admin-dock-item press" aria-current={active ? "page" : undefined}>
-      {body}
-      <ReservedRow />
-    </Link>
-  );
-}
-
-/** Keeps every dock icon on one line, whether or not the item carries "Soon". */
-function ReservedRow() {
-  return (
-    <span aria-hidden="true" className="admin-soon invisible">
-      Soon
+      {soon && <span aria-hidden="true" className="admin-soon-dot" />}
     </span>
   );
 }
 
+/** An unbuilt section: dimmed, with a "Coming soon" tip on hover, focus, or tap. */
+function SoonItem({ section }: { section: AdminSection }) {
+  const [tip, setTip] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  return (
+    <button
+      type="button"
+      aria-disabled="true"
+      aria-label={`${section.label}, coming soon`}
+      data-tip={tip ? "on" : undefined}
+      onClick={() => {
+        setTip(true);
+        window.clearTimeout(timer.current);
+        timer.current = window.setTimeout(() => setTip(false), 1600);
+      }}
+      className="admin-dock-item"
+    >
+      <DockIcon section={section} soon />
+      <span>{section.label}</span>
+      <span aria-hidden="true" className="admin-tip">
+        Coming soon
+      </span>
+    </button>
+  );
+}
+
+function DockItem({ section, active }: { section: AdminSection; active: boolean }) {
+  if (!section.href) return <SoonItem section={section} />;
+  return (
+    <Link href={section.href} className="admin-dock-item press" aria-current={active ? "page" : undefined}>
+      <DockIcon section={section} />
+      <span>{section.label}</span>
+    </Link>
+  );
+}
+
 /** The admin's navigation: a floating dock on larger screens, a tab bar on phones. */
-export function AdminDock({ role }: { role: StaffRole }) {
+export function AdminDock({ role, activeHref }: { role: StaffRole; activeHref?: string }) {
   const pathname = usePathname();
+  const current = activeHref ?? pathname;
   const moreRef = useRef<HTMLDivElement>(null);
   const moreOpen = usePopoverOpen(moreRef);
   const more = MORE_SECTIONS.filter(visibleTo(role));
@@ -57,7 +69,7 @@ export function AdminDock({ role }: { role: StaffRole }) {
       <ul className="admin-dock-list">
         {DOCK_SECTIONS.map((s) => (
           <li key={s.label} className="flex flex-1 sm:flex-none">
-            <DockItem section={s} active={s.href === pathname} />
+            <DockItem section={s} active={s.href === current} />
           </li>
         ))}
         <li className="flex flex-1 sm:flex-none">
@@ -70,7 +82,6 @@ export function AdminDock({ role }: { role: StaffRole }) {
           >
             <Ellipsis aria-hidden="true" className="size-[1.375rem]" strokeWidth={1.9} />
             <span>More</span>
-            <ReservedRow />
           </button>
         </li>
       </ul>

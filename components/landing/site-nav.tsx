@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
+import { ThemeButton } from "@/components/theme-button";
 import { Wordmark } from "./wordmark";
 
 const LINKS = [
@@ -43,7 +44,8 @@ export function SiteNav() {
           ))}
         </ul>
 
-        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          <ThemeButton />
           {username ? (
             <>
               <button

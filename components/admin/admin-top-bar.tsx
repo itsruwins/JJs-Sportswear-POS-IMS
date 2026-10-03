@@ -7,6 +7,7 @@ import { ChevronDown, LogOut, Store } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { StaffRole } from "@/lib/admin/session";
 import { Wordmark } from "@/components/landing/wordmark";
+import { ThemeButton } from "@/components/theme-button";
 import { ROLE_LABEL } from "./nav";
 import { usePopoverOpen } from "./use-popover-open";
 
@@ -50,12 +51,13 @@ export function AdminTopBar({ username, fullName, role }: Props) {
           </span>
         </Link>
 
+        <ThemeButton className="ml-auto" />
         <button
           type="button"
           popoverTarget="admin-account"
           aria-expanded={menuOpen}
           aria-controls="admin-account"
-          className="press ml-auto flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2.5 hover:bg-ground-2"
+          className="press flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2.5 hover:bg-ground-2"
         >
           <span
             aria-hidden="true"
