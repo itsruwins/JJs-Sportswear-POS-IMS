@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img">
+<title>Warmer Jacket (sample illustration, Black)</title>
+<!-- Sample illustration for demo data. Replace with real product photos. -->
+<g><path d="M92 36 Q120 52 148 36 L184 52 L210 176 L186 182 L164 100 L164 212 L76 212 L76 100 L54 182 L30 176 L56 52 Z" fill="#1f2321"/>
+<path d="M94 37 Q120 56 146 37" fill="none" stroke="#6d706e" stroke-width="7" stroke-linecap="round"/>
+<path d="M30 176 L54 182 M186 182 L210 176" stroke="#6d706e" stroke-width="7" stroke-linecap="round"/>
+<path d="M104 30 L136 30 L140 42 L100 42 Z" fill="#6d706e"/>
+<path d="M120 42 L120 212" stroke="#6d706e" stroke-width="4"/>
+<path d="M76 206 L164 206" stroke="#6d706e" stroke-width="10"/></g>
+</svg>

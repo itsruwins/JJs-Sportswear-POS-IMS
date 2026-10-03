@@ -14,6 +14,7 @@
   --ink-2: oklch(0.42 0.018 158);
   --line: oklch(0.87 0.01 158);
   --surface: oklch(0.995 0.002 158);
+  --photo-bg: oklch(0.955 0.004 158);
 
   --board: oklch(0.43 0.105 158);
   --board-deep: oklch(0.355 0.09 158);
@@ -50,6 +51,7 @@
     --ink-2: oklch(0.76 0.018 158);
     --line: oklch(0.31 0.016 158);
     --surface: oklch(0.235 0.015 158);
+    --photo-bg: oklch(0.9 0.005 158);
 
     --board: oklch(0.37 0.09 158);
     --board-deep: oklch(0.3 0.075 158);
@@ -73,6 +75,7 @@
   --ink-2: oklch(0.76 0.018 158);
   --line: oklch(0.31 0.016 158);
   --surface: oklch(0.235 0.015 158);
+  --photo-bg: oklch(0.9 0.005 158);
 
   --board: oklch(0.37 0.09 158);
   --board-deep: oklch(0.3 0.075 158);
@@ -416,10 +419,33 @@ html {
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
+/* Sold out, off the board: a hollow slot with a solid ink ring. Same in both themes,
+   and clearly apart from lit (in stock) and amber (low). */
 .cell[data-stock="zero"] {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+
+/* A size where at least one color is sold out: a small ink notch in the corner. */
+.cell[data-partial="true"] {
+  position: relative;
+}
+
+.cell[data-partial="true"]::after {
+  content: "";
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
   background: var(--ink);
-  color: var(--ground);
-  box-shadow: none;
+}
+
+/* The browser's own clear button doubles ours on search fields. */
+input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
 }
 
 .on-board .cell[data-stock="out"] {

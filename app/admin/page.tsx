@@ -24,7 +24,7 @@ export default async function AdminHome() {
     supabase.from("products").select("id", { count: "exact", head: true }).eq("is_active", true),
     supabase
       .from("product_variants")
-      .select("id, size, color, sku, stock_quantity, low_stock_threshold, product:products!inner(name)")
+      .select("id, product_id, size, color, sku, stock_quantity, low_stock_threshold, product:products!inner(name)")
       .eq("is_active", true)
       .eq("products.is_active", true)
       .returns<VariantRow[]>(),

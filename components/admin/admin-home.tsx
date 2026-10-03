@@ -1,10 +1,12 @@
-import { Check, Shirt } from "lucide-react";
+import Link from "next/link";
+import { Check, ChevronRight, Shirt } from "lucide-react";
 import type { StaffRole } from "@/lib/admin/session";
 import { DOCK_SECTIONS, MORE_SECTIONS, ROLE_LABEL, visibleTo } from "./nav";
 import { ReadoutBoard, type Readout } from "./readout-board";
 
 export type RestockRow = {
   id: string;
+  product_id: string;
   size: string | null;
   color: string | null;
   sku: string | null;
@@ -93,23 +95,29 @@ export function AdminHomeView({
               {needsRestock.map((v) => {
                 const sold = v.stock_quantity <= 0;
                 return (
-                  <li key={v.id} className="flex items-center gap-4 border-b border-line py-3.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[1rem] font-semibold text-ink">{v.product?.name ?? "Unnamed product"}</p>
-                      <p className="mt-0.5 text-[0.875rem] text-ink-2">{[v.size, v.color].filter(Boolean).join(" · ")}</p>
-                      {v.sku && <p className="tabular mt-0.5 whitespace-nowrap text-[0.8125rem] text-ink-2">{v.sku}</p>}
-                    </div>
-                    <span
-                      data-stock={sold ? "zero" : "low"}
-                      className="cell voice-board tabular grid h-11 min-w-12 shrink-0 place-items-center rounded-lg px-2 text-[1.375rem]"
+                  <li key={v.id} className="border-b border-line">
+                    <Link
+                      href={`/admin/products/${v.product_id}`}
+                      className="group flex items-center gap-4 rounded-xl py-3.5 outline-offset-[-2px]"
                     >
-                      {v.stock_quantity}
-                    </span>
-                    <span
-                      className={`w-[4.5rem] shrink-0 text-right text-[0.875rem] ${sold ? "font-semibold text-ink" : "text-ink-2"}`}
-                    >
-                      {sold ? "Sold out" : "Low"}
-                    </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[1rem] font-semibold text-ink group-hover:underline">{v.product?.name ?? "Unnamed product"}</p>
+                        <p className="mt-0.5 text-[0.875rem] text-ink-2">{[v.size, v.color].filter(Boolean).join(" · ")}</p>
+                        {v.sku && <p className="tabular mt-0.5 whitespace-nowrap text-[0.8125rem] text-ink-2">{v.sku}</p>}
+                      </div>
+                      <span
+                        data-stock={sold ? "zero" : "low"}
+                        className="cell voice-board tabular grid h-11 min-w-12 shrink-0 place-items-center rounded-lg px-2 text-[1.375rem]"
+                      >
+                        {v.stock_quantity}
+                      </span>
+                      <span
+                        className={`w-[4.5rem] shrink-0 text-right text-[0.875rem] ${sold ? "font-semibold text-ink" : "text-ink-2"}`}
+                      >
+                        {sold ? "Sold out" : "Low"}
+                      </span>
+                      <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-ink-2" />
+                    </Link>
                   </li>
                 );
               })}

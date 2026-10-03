@@ -308,7 +308,10 @@ Each character is a 0.72em × 1em off-white card in two hinged halves; the top h
 0.7rem round lamps inside pill buttons. **Idle:** Board Edge, recessed. **Done:** Board Chalk with a faint white ring. **Live:** amber with a soft amber halo. 220ms color transition. Tapping a period flips the board to that stage; tapping the live period steps through its remaining statuses.
 
 ### Stock cells on a board rail
-Size runs are a strip of board (Court Green, 12px radius, 6px padding, 6px gaps) holding identical cells. **In:** lit off-white card with the count in Board voice. **Low:** amber card, Amber Ink. **Out:** a blank well slot (Board Well Green, inner shadow, a dash). Off the board, an out cell is transparent with a 1px rule. The legend uses miniature rails (3px pad, 3px cells). State changes cross-fade at 260ms.
+Size runs are a strip of board (Court Green, 12px radius, 6px padding, 6px gaps) holding identical cells. **In:** lit off-white card with the count in Board voice. **Low:** amber card, Amber Ink. **Out:** a blank well slot (Board Well Green, inner shadow, a dash). The legend uses miniature rails (3px pad, 3px cells). State changes cross-fade at 260ms.
+
+### Stock cells off the board (admin)
+Lists, the restock queue, and the size × color grid use loose cells on the page ground. **In:** the lit card with a 1px rule. **Low:** amber. **Out:** a hollow slot with a 1.5px solid ink ring and the count "0", identical in light and dark, so a sold-out size reads as the most urgent state without inverting into a lit card in dark mode. When one color of a size is sold out but others still have stock, the size's cell is amber with a small ink dot in its top-right corner. Product photos sit on a light Photo Backdrop (`oklch(0.955 0.004 158)` light, `oklch(0.9 0.005 158)` dark) in both themes, the way product photography is shot; light garments carry a soft outline.
 
 ### Motion
 **The One Flip Rule.** The flip is the single authored motion: the top flap falls (170ms, `--ease-in` `cubic-bezier(0.55, 0, 1, 0.45)`, rotateX 0 to -90deg, dimming to 82%), then the bottom flap rises (230ms, `--ease-out` `cubic-bezier(0.22, 1, 0.36, 1)`), staggered 28ms per cell. It is interruptible: a new value always starts from the card on screen. The board auto-advances (2.6s) only while at least 35% visible and the tab is visible, and stops for good after a manual tap. Everything else is state transition only (press travel, lamp, cell, nav fade, jersey color cross-fade at 480ms).
@@ -319,7 +322,7 @@ Size runs are a strip of board (Court Green, 12px radius, 6px padding, 6px gaps)
 
 ### Do:
 - **Do** put live data on the board in flip cells with tabular figures and a fixed cell count.
-- **Do** express inventory state as card state: lit, amber for low, blank for sold out.
+- **Do** express inventory state as card state: lit, amber for low, a blank well slot for sold out on the board, and a hollow ink-ringed slot for sold out off the board.
 - **Do** keep amber for live and low (plus focus, selection, and board-side error) only.
 - **Do** separate the voices with Archivo's width axis: 62 board, 72 display, 85 label, normal for reading.
 - **Do** give every control press travel and the global amber focus ring.

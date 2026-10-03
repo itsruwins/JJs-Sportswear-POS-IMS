@@ -56,6 +56,11 @@ function DockItem({ section, active }: { section: AdminSection; active: boolean 
   );
 }
 
+function isActive(href: string | undefined, current: string) {
+  if (!href) return false;
+  return href === "/admin" ? current === href : current === href || current.startsWith(`${href}/`);
+}
+
 /** The admin's navigation: a floating dock on larger screens, a tab bar on phones. */
 export function AdminDock({ role, activeHref }: { role: StaffRole; activeHref?: string }) {
   const pathname = usePathname();
@@ -69,7 +74,7 @@ export function AdminDock({ role, activeHref }: { role: StaffRole; activeHref?: 
       <ul className="admin-dock-list">
         {DOCK_SECTIONS.map((s) => (
           <li key={s.label} className="flex flex-1 sm:flex-none">
-            <DockItem section={s} active={s.href === current} />
+            <DockItem section={s} active={isActive(s.href, current)} />
           </li>
         ))}
         <li className="flex flex-1 sm:flex-none">

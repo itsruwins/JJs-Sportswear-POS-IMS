@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img">
+<title>Pullover Hoodie (sample illustration, Black)</title>
+<!-- Sample illustration for demo data. Replace with real product photos. -->
+<g><path d="M92 36 Q120 52 148 36 L184 52 L210 176 L186 182 L164 100 L164 212 L76 212 L76 100 L54 182 L30 176 L56 52 Z" fill="#1f2321"/>
+<path d="M94 37 Q120 56 146 37" fill="none" stroke="#6d706e" stroke-width="7" stroke-linecap="round"/>
+<path d="M30 176 L54 182 M186 182 L210 176" stroke="#6d706e" stroke-width="7" stroke-linecap="round"/>
+<path d="M88 40 Q120 4 152 40 Q120 64 88 40 Z" fill="#6d706e"/>
+<path d="M92 160 L148 160 L156 194 L84 194 Z" fill="#6d706e" opacity="0.55"/>
+<path d="M110 60 L108 84 M130 60 L132 84" stroke="#6d706e" stroke-width="3" stroke-linecap="round"/></g>
+</svg>

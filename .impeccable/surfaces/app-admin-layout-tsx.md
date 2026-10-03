@@ -13,7 +13,7 @@ Mode: Operate. Owner and staff of J&J Sportswear on desktop, tablet, and phone; 
 
 THESIS: The admin is one counter tool reached through a floating dock, the way a counter tablet or phone already works. It refuses the category default of a dense left sidebar over a grid of KPI tiles.
 
-OWN-WORLD: Calm neutral ground from DESIGN.md (ground, ground-2, ink, line). Court green appears only on the live readout board, the active dock item, and primary actions; amber only for low stock and live state. Archivo voices: board numerals for counts, display for page titles, label for small headings. Live counts sit on off-white flip cards. Translucent top bar and dock, with content scrolling beneath. Press travel on every control.
+OWN-WORLD: Calm neutral ground from DESIGN.md (ground, ground-2, ink, line). Court green appears only on the live readout board, the active dock item, and primary actions; amber only for low stock and live state. Archivo voices: board numerals for counts, display for page titles, label for small headings. Live counts sit on off-white flip cards. Translucent top bar. The dock is a solid white bar (raised charcoal in dark mode) with a thin border and a court-green pill for the current section; unbuilt sections are dimmed with a dot and a "Coming soon" tip; hover only darkens text. (Dock look set by the user on 2026-10-04, replacing the earlier translucent dock.) Press travel on every control.
 
 STORY: Staff land here after logging in, read the shop's numbers at a glance, see what needs restocking, and reach any section from the dock. Unbuilt sections show as Soon, so the roadmap is visible without broken pages.
 
@@ -22,3 +22,8 @@ FIRST VIEWPORT: The translucent top bar holds the J&J wordmark with "Admin" and 
 FORM: Tablet Dock, position 7 of 7 on the surface list (sidebar counter board, scoreboard strip header, watch column, command-first search, today queue, counter/back-office tabs, tablet dock). Seed key b41285f8. Signature move: the readout's counts flip in on arrival and flip when a value changes.
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+## Phase 2 additions (Products)
+
+Sample catalog via supabase/seed/sample-products.sql (cleanup: remove-sample-products.sql); illustrations in public/samples/ are sample art. /admin/products: search (name, SKU, tag, exact size, color; words must match one product or one variant), filters (In catalog, Low stock, Sold-out sizes, Archived), sort, URL-synced. Each row: photo tile, name + Sample/Archived pills, colors, size rail (total per size; amber when any color is low; sold-out style when none left in any color), price range, total stock. /admin/products/[id]: read-only detail with photo, tags (link to search), stats, size × color stock grid, and the variants table; Edit shows as Coming soon until Phase 3. Product photos sit on a light backdrop in both themes; sold-out cells use their own dark-mode treatment.
+
