@@ -1,26 +1,591 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * J&J Sportswear: the liga scoreboard world.
+ * Court-green board panels, off-white flip cards, amber for live and low states.
+ */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  color-scheme: light dark;
+
+  --ground: oklch(0.975 0.004 158);
+  --ground-2: oklch(0.948 0.007 158);
+  --ink: oklch(0.2 0.016 158);
+  --ink-2: oklch(0.42 0.018 158);
+  --line: oklch(0.87 0.01 158);
+
+  --board: oklch(0.43 0.105 158);
+  --board-deep: oklch(0.355 0.09 158);
+  --board-edge: oklch(0.3 0.075 158);
+  --board-ink: oklch(0.975 0.012 158);
+  --board-ink-2: oklch(0.85 0.045 158);
+  --board-line: oklch(0.52 0.09 158);
+  --board-text: oklch(0.43 0.105 158);
+
+  --card: oklch(0.985 0.002 158);
+  --card-shade: oklch(0.93 0.004 158);
+  --card-ink: oklch(0.17 0.012 158);
+
+  --amber: oklch(0.82 0.165 78);
+  --amber-ink: oklch(0.28 0.06 65);
+
+  --nav-bg: oklch(0.975 0.004 158 / 0.72);
+  --shadow-board: 0 1px 0 oklch(1 0 0 / 0.12) inset, 0 30px 60px -30px oklch(0.25 0.08 158 / 0.55),
+    0 12px 24px -12px oklch(0.25 0.06 158 / 0.35);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+
+  --z-sticky: 20;
+  --z-skip: 40;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --ground: oklch(0.165 0.012 158);
+    --ground-2: oklch(0.205 0.015 158);
+    --ink: oklch(0.955 0.01 158);
+    --ink-2: oklch(0.76 0.018 158);
+    --line: oklch(0.31 0.016 158);
+
+    --board: oklch(0.37 0.09 158);
+    --board-deep: oklch(0.3 0.075 158);
+    --board-edge: oklch(0.24 0.06 158);
+    --board-line: oklch(0.46 0.08 158);
+    --board-text: oklch(0.78 0.13 156);
+
+    --card: oklch(0.935 0.004 158);
+    --card-shade: oklch(0.87 0.006 158);
+
+    --nav-bg: oklch(0.165 0.012 158 / 0.7);
+    --shadow-board: 0 1px 0 oklch(1 0 0 / 0.08) inset, 0 30px 60px -30px oklch(0 0 0 / 0.7);
   }
 }
 
+@theme inline {
+  --color-ground: var(--ground);
+  --color-ground-2: var(--ground-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-line: var(--line);
+  --color-board: var(--board);
+  --color-board-deep: var(--board-deep);
+  --color-board-edge: var(--board-edge);
+  --color-board-ink: var(--board-ink);
+  --color-board-ink-2: var(--board-ink-2);
+  --color-board-line: var(--board-line);
+  --color-board-text: var(--board-text);
+  --color-card: var(--card);
+  --color-card-ink: var(--card-ink);
+  --color-amber: var(--amber);
+  --color-amber-ink: var(--amber-ink);
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-feature-settings: "kern", "calt";
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--amber);
+  color: var(--amber-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+a {
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+html {
+  scrollbar-color: var(--line) transparent;
+}
+
+/* ---------- Type voices ---------- */
+
+/* Board / display voice: Archivo pulled to its narrowest width. */
+.voice-board {
+  font-variation-settings: "wdth" 62;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.voice-display {
+  font-variation-settings: "wdth" 72;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  word-spacing: 0.12em;
+  line-height: 0.98;
+}
+
+.voice-label {
+  font-variation-settings: "wdth" 85;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Press travel ---------- */
+
+.press {
+  transition:
+    transform 120ms var(--ease-out),
+    background-color 160ms var(--ease-out),
+    color 160ms var(--ease-out),
+    box-shadow 160ms var(--ease-out);
+}
+
+.press:active:not(:disabled) {
+  transform: translateY(1px) scale(0.975);
+  transition-duration: 60ms;
+}
+
+/* ---------- Translucent nav ---------- */
+
+.site-nav {
+  z-index: var(--z-sticky);
+  background: var(--nav-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  backdrop-filter: blur(20px) saturate(170%);
+}
+
+.site-nav::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -12px 0;
+  height: 12px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--nav-bg), transparent);
+  opacity: 0;
+  transition: opacity 200ms var(--ease-out);
+}
+
+.site-nav[data-scrolled="true"]::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .site-nav {
+    background: var(--ground);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ---------- Scoreboard ---------- */
+
+.board {
+  background:
+    radial-gradient(120% 80% at 50% -10%, oklch(1 0 0 / 0.07), transparent 60%),
+    var(--board);
+  box-shadow: var(--shadow-board);
+}
+
+.board-well {
+  background: var(--board-deep);
+  box-shadow:
+    inset 0 2px 6px oklch(0 0 0 / 0.28),
+    0 1px 0 oklch(1 0 0 / 0.08);
+}
+
+/* Split-flap cell. Each cell is two hinged halves of an off-white card. */
+.flap {
+  --h: 1em;
+  position: relative;
+  display: inline-block;
+  width: 0.72em;
+  height: var(--h);
+  perspective: 3.5em;
+  border-radius: 0.09em;
+  color: var(--card-ink);
+  line-height: var(--h);
+  text-align: center;
+}
+
+.flap-half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  background: var(--card);
+  backface-visibility: hidden;
+}
+
+.flap-half > span {
+  display: block;
+  height: var(--h);
+  line-height: var(--h);
+}
+
+.flap-top {
+  top: 0;
+  border-radius: 0.09em 0.09em 0 0;
+  background: linear-gradient(to bottom, var(--card), var(--card-shade));
+  transform-origin: 50% 100%;
+}
+
+.flap-bottom {
+  bottom: 0;
+  border-radius: 0 0 0.09em 0.09em;
+  transform-origin: 50% 0%;
+}
+
+.flap-bottom > span {
+  transform: translateY(-50%);
+}
+
+/* The hinge line across the middle of every card. */
+.flap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - 0.5px);
+  height: 1px;
+  background: oklch(0.2 0.02 158 / 0.35);
+  z-index: 3;
+}
+
+.flap-fall {
+  z-index: 2;
+  animation: flap-fall 170ms var(--ease-in) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+.flap-rise {
+  z-index: 2;
+  animation: flap-rise 230ms var(--ease-out) both;
+  animation-delay: calc(var(--delay, 0ms) + 170ms);
+}
+
+@keyframes flap-fall {
+  from {
+    transform: rotateX(0deg);
+    filter: brightness(1);
+  }
+  to {
+    transform: rotateX(-90deg);
+    filter: brightness(0.82);
+  }
+}
+
+@keyframes flap-rise {
+  from {
+    transform: rotateX(90deg);
+    filter: brightness(0.82);
+  }
+  to {
+    transform: rotateX(0deg);
+    filter: brightness(1);
+  }
+}
+
+/* Unused cards stay in the board but step back, so the word reads first. */
+.flap {
+  transition: opacity 320ms var(--ease-out);
+}
+
+.flap[data-blank="true"] {
+  opacity: 0.22;
+}
+
+/* Period lamps */
+.lamp {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: var(--board-edge);
+  box-shadow: inset 0 1px 2px oklch(0 0 0 / 0.45);
+  transition:
+    background-color 220ms var(--ease-out),
+    box-shadow 220ms var(--ease-out);
+}
+
+.lamp[data-state="done"] {
+  background: var(--board-ink);
+  box-shadow: 0 0 0 1px oklch(1 0 0 / 0.2);
+}
+
+.lamp[data-state="live"] {
+  background: var(--amber);
+  box-shadow:
+    0 0 0 3px oklch(0.82 0.165 78 / 0.25),
+    0 2px 6px oklch(0.82 0.165 78 / 0.45);
+}
+
+/* Stock cells: lit, low (amber), or blank (sold out). */
+.cell {
+  background: var(--card);
+  color: var(--card-ink);
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    0 1px 2px oklch(0.2 0.02 158 / 0.08);
+  transition:
+    background-color 260ms var(--ease-out),
+    color 260ms var(--ease-out);
+}
+
+.on-board .cell {
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.2);
+}
+
+.cell[data-stock="low"] {
+  background: var(--amber);
+  color: var(--amber-ink);
+  box-shadow: none;
+}
+
+.cell[data-stock="out"] {
+  background: transparent;
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.on-board .cell[data-stock="out"] {
+  background: var(--board-deep);
+  color: var(--board-ink-2);
+  box-shadow: inset 0 2px 4px oklch(0 0 0 / 0.3);
+}
+
+/* ---------- Account sheet (native <dialog>) ---------- */
+
+/* Phones: a bottom sheet that rises and leaves along the same path.
+   Larger screens: a centered card that materializes (scale + blur), never just fades. */
+.auth-dialog {
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  width: min(30rem, calc(100vw - 2rem));
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  overflow: visible;
+  opacity: 0;
+  transform: translateY(12px) scale(0.965);
+  filter: blur(6px);
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 340ms var(--ease-out),
+    filter 260ms var(--ease-out),
+    overlay 340ms allow-discrete,
+    display 340ms allow-discrete;
+}
+
+.auth-dialog[open] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+@starting-style {
+  .auth-dialog[open] {
+    opacity: 0;
+    transform: translateY(12px) scale(0.965);
+    filter: blur(6px);
+  }
+}
+
+.auth-dialog::backdrop {
+  background: oklch(0.14 0.02 158 / 0);
+  -webkit-backdrop-filter: blur(0);
+  backdrop-filter: blur(0);
+  transition:
+    background-color 280ms var(--ease-out),
+    backdrop-filter 280ms var(--ease-out),
+    overlay 340ms allow-discrete,
+    display 340ms allow-discrete;
+}
+
+.auth-dialog[open]::backdrop {
+  background: oklch(0.14 0.02 158 / 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+@starting-style {
+  .auth-dialog[open]::backdrop {
+    background: oklch(0.14 0.02 158 / 0);
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+  }
+}
+
+.auth-sheet {
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 1.75rem;
+  background: var(--ground);
+  box-shadow:
+    0 0 0 1px oklch(0 0 0 / 0.06),
+    0 40px 80px -24px oklch(0.15 0.05 158 / 0.55);
+}
+
+.auth-head {
+  background:
+    radial-gradient(120% 90% at 50% -20%, oklch(1 0 0 / 0.08), transparent 60%),
+    var(--board);
+}
+
+@media (max-width: 639px) {
+  .auth-dialog {
+    margin: auto 0 0;
+    width: 100vw;
+    max-height: 94dvh;
+    opacity: 1;
+    filter: none;
+    transform: translateY(100%);
+    transition:
+      transform 420ms var(--ease-out),
+      overlay 420ms allow-discrete,
+      display 420ms allow-discrete;
+  }
+  .auth-head {
+    touch-action: none;
+  }
+  .auth-dialog[open] {
+    transform: none;
+  }
+  @starting-style {
+    .auth-dialog[open] {
+      transform: translateY(100%);
+    }
+  }
+  .auth-sheet {
+    border-radius: 1.5rem 1.5rem 0 0;
+  }
+}
+
+html:has(.auth-dialog[open]) {
+  overflow: hidden;
+}
+
+.auth-input {
+  height: 3rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  background: var(--ground-2);
+  color: var(--ink);
+  font-size: 1.0625rem;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: box-shadow 160ms var(--ease-out);
+}
+
+.auth-input::placeholder,
+.auth-input input::placeholder {
+  color: color-mix(in oklch, var(--ink-2) 75%, transparent);
+}
+
+.auth-input:focus-within {
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    0 0 0 2px var(--amber);
+}
+
+.auth-input.is-invalid {
+  box-shadow:
+    inset 0 0 0 1px var(--amber),
+    0 0 0 2px oklch(0.82 0.165 78 / 0.45);
+}
+
+input.auth-input:focus-visible,
+.auth-input input:focus-visible {
+  outline: none;
+}
+
+.auth-alert {
+  background: oklch(0.82 0.165 78 / 0.2);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px oklch(0.82 0.165 78 / 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-dialog,
+  .auth-dialog[open] {
+    transform: none;
+    filter: none;
+    transition:
+      opacity 180ms ease,
+      overlay 180ms allow-discrete,
+      display 180ms allow-discrete;
+  }
+  @starting-style {
+    .auth-dialog[open] {
+      opacity: 0;
+      transform: none;
+    }
+  }
+  .auth-dialog:not([open]) {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .auth-dialog[open]::backdrop {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: oklch(0.14 0.02 158 / 0.7);
+  }
+}
+
+/* ---------- Jersey illustration ---------- */
+
+.jersey * {
+  transition:
+    fill 480ms var(--ease-out),
+    stroke 480ms var(--ease-out),
+    opacity 480ms var(--ease-out);
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  /* Cards swap in place: the outgoing flap is dropped, the incoming card shows at rest. */
+  .flap-fall {
+    display: none;
+  }
+  .flap-rise {
+    animation: none;
+  }
+  .press:active:not(:disabled) {
+    transform: none;
+  }
+  .jersey * {
+    transition-duration: 1ms;
+  }
 }

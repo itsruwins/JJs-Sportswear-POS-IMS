@@ -1,0 +1,764 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-03T17:12:30.164448+00:00",
+  "title": "Design System: J&J Sportswear",
+  "extensions": {
+    "colorMeta": {
+      "board": {
+        "role": "primary",
+        "displayName": "Court Green",
+        "canonical": "oklch(0.43 0.105 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.105 158)",
+          "oklch(0.26 0.105 158)",
+          "oklch(0.37 0.105 158)",
+          "oklch(0.48 0.105 158)",
+          "oklch(0.60 0.105 158)",
+          "oklch(0.72 0.105 158)",
+          "oklch(0.84 0.105 158)",
+          "oklch(0.95 0.105 158)"
+        ]
+      },
+      "board-deep": {
+        "role": "primary",
+        "displayName": "Board Well Green",
+        "canonical": "oklch(0.355 0.09 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.09 158)",
+          "oklch(0.26 0.09 158)",
+          "oklch(0.37 0.09 158)",
+          "oklch(0.48 0.09 158)",
+          "oklch(0.60 0.09 158)",
+          "oklch(0.72 0.09 158)",
+          "oklch(0.84 0.09 158)",
+          "oklch(0.95 0.09 158)"
+        ]
+      },
+      "board-edge": {
+        "role": "primary",
+        "displayName": "Board Edge",
+        "canonical": "oklch(0.3 0.075 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.075 158)",
+          "oklch(0.26 0.075 158)",
+          "oklch(0.37 0.075 158)",
+          "oklch(0.48 0.075 158)",
+          "oklch(0.60 0.075 158)",
+          "oklch(0.72 0.075 158)",
+          "oklch(0.84 0.075 158)",
+          "oklch(0.95 0.075 158)"
+        ]
+      },
+      "board-line": {
+        "role": "primary",
+        "displayName": "Board Rule",
+        "canonical": "oklch(0.52 0.09 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.09 158)",
+          "oklch(0.26 0.09 158)",
+          "oklch(0.37 0.09 158)",
+          "oklch(0.48 0.09 158)",
+          "oklch(0.60 0.09 158)",
+          "oklch(0.72 0.09 158)",
+          "oklch(0.84 0.09 158)",
+          "oklch(0.95 0.09 158)"
+        ]
+      },
+      "board-text": {
+        "role": "primary",
+        "displayName": "Court Green Text",
+        "canonical": "oklch(0.43 0.105 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.105 158)",
+          "oklch(0.26 0.105 158)",
+          "oklch(0.37 0.105 158)",
+          "oklch(0.48 0.105 158)",
+          "oklch(0.60 0.105 158)",
+          "oklch(0.72 0.105 158)",
+          "oklch(0.84 0.105 158)",
+          "oklch(0.95 0.105 158)"
+        ]
+      },
+      "board-ink": {
+        "role": "primary",
+        "displayName": "Board Chalk",
+        "canonical": "oklch(0.975 0.012 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 158)",
+          "oklch(0.26 0.012 158)",
+          "oklch(0.37 0.012 158)",
+          "oklch(0.48 0.012 158)",
+          "oklch(0.60 0.012 158)",
+          "oklch(0.72 0.012 158)",
+          "oklch(0.84 0.012 158)",
+          "oklch(0.95 0.012 158)"
+        ]
+      },
+      "board-ink-2": {
+        "role": "primary",
+        "displayName": "Board Chalk Muted",
+        "canonical": "oklch(0.85 0.045 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.045 158)",
+          "oklch(0.26 0.045 158)",
+          "oklch(0.37 0.045 158)",
+          "oklch(0.48 0.045 158)",
+          "oklch(0.60 0.045 158)",
+          "oklch(0.72 0.045 158)",
+          "oklch(0.84 0.045 158)",
+          "oklch(0.95 0.045 158)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Flip Card",
+        "canonical": "oklch(0.985 0.002 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 158)",
+          "oklch(0.26 0.002 158)",
+          "oklch(0.37 0.002 158)",
+          "oklch(0.48 0.002 158)",
+          "oklch(0.60 0.002 158)",
+          "oklch(0.72 0.002 158)",
+          "oklch(0.84 0.002 158)",
+          "oklch(0.95 0.002 158)"
+        ]
+      },
+      "card-shade": {
+        "role": "neutral",
+        "displayName": "Card Shade",
+        "canonical": "oklch(0.93 0.004 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 158)",
+          "oklch(0.26 0.004 158)",
+          "oklch(0.37 0.004 158)",
+          "oklch(0.48 0.004 158)",
+          "oklch(0.60 0.004 158)",
+          "oklch(0.72 0.004 158)",
+          "oklch(0.84 0.004 158)",
+          "oklch(0.95 0.004 158)"
+        ]
+      },
+      "card-ink": {
+        "role": "neutral",
+        "displayName": "Card Ink",
+        "canonical": "oklch(0.17 0.012 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 158)",
+          "oklch(0.26 0.012 158)",
+          "oklch(0.37 0.012 158)",
+          "oklch(0.48 0.012 158)",
+          "oklch(0.60 0.012 158)",
+          "oklch(0.72 0.012 158)",
+          "oklch(0.84 0.012 158)",
+          "oklch(0.95 0.012 158)"
+        ]
+      },
+      "amber": {
+        "role": "secondary",
+        "displayName": "Shot-Clock Amber",
+        "canonical": "oklch(0.82 0.165 78)",
+        "tonalRamp": [
+          "oklch(0.15 0.165 78)",
+          "oklch(0.26 0.165 78)",
+          "oklch(0.37 0.165 78)",
+          "oklch(0.48 0.165 78)",
+          "oklch(0.60 0.165 78)",
+          "oklch(0.72 0.165 78)",
+          "oklch(0.84 0.165 78)",
+          "oklch(0.95 0.165 78)"
+        ]
+      },
+      "amber-ink": {
+        "role": "secondary",
+        "displayName": "Amber Ink",
+        "canonical": "oklch(0.28 0.06 65)",
+        "tonalRamp": [
+          "oklch(0.15 0.06 65)",
+          "oklch(0.26 0.06 65)",
+          "oklch(0.37 0.06 65)",
+          "oklch(0.48 0.06 65)",
+          "oklch(0.60 0.06 65)",
+          "oklch(0.72 0.06 65)",
+          "oklch(0.84 0.06 65)",
+          "oklch(0.95 0.06 65)"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Court Ground",
+        "canonical": "oklch(0.975 0.004 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 158)",
+          "oklch(0.26 0.004 158)",
+          "oklch(0.37 0.004 158)",
+          "oklch(0.48 0.004 158)",
+          "oklch(0.60 0.004 158)",
+          "oklch(0.72 0.004 158)",
+          "oklch(0.84 0.004 158)",
+          "oklch(0.95 0.004 158)"
+        ]
+      },
+      "ground-2": {
+        "role": "neutral",
+        "displayName": "Ground Raised",
+        "canonical": "oklch(0.948 0.007 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.007 158)",
+          "oklch(0.26 0.007 158)",
+          "oklch(0.37 0.007 158)",
+          "oklch(0.48 0.007 158)",
+          "oklch(0.60 0.007 158)",
+          "oklch(0.72 0.007 158)",
+          "oklch(0.84 0.007 158)",
+          "oklch(0.95 0.007 158)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(0.2 0.016 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.016 158)",
+          "oklch(0.26 0.016 158)",
+          "oklch(0.37 0.016 158)",
+          "oklch(0.48 0.016 158)",
+          "oklch(0.60 0.016 158)",
+          "oklch(0.72 0.016 158)",
+          "oklch(0.84 0.016 158)",
+          "oklch(0.95 0.016 158)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "oklch(0.42 0.018 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.018 158)",
+          "oklch(0.26 0.018 158)",
+          "oklch(0.37 0.018 158)",
+          "oklch(0.48 0.018 158)",
+          "oklch(0.60 0.018 158)",
+          "oklch(0.72 0.018 158)",
+          "oklch(0.84 0.018 158)",
+          "oklch(0.95 0.018 158)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "oklch(0.87 0.01 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 158)",
+          "oklch(0.26 0.01 158)",
+          "oklch(0.37 0.01 158)",
+          "oklch(0.48 0.01 158)",
+          "oklch(0.60 0.01 158)",
+          "oklch(0.72 0.01 158)",
+          "oklch(0.84 0.01 158)",
+          "oklch(0.95 0.01 158)"
+        ]
+      },
+      "nav-bg": {
+        "role": "neutral",
+        "displayName": "Nav Glass",
+        "canonical": "oklch(0.975 0.004 158 / 0.72)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 158)",
+          "oklch(0.26 0.004 158)",
+          "oklch(0.37 0.004 158)",
+          "oklch(0.48 0.004 158)",
+          "oklch(0.60 0.004 158)",
+          "oklch(0.72 0.004 158)",
+          "oklch(0.84 0.004 158)",
+          "oklch(0.95 0.004 158)"
+        ]
+      },
+      "board-dark": {
+        "role": "primary",
+        "displayName": "Court Green (dark)",
+        "canonical": "oklch(0.37 0.09 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.09 158)",
+          "oklch(0.26 0.09 158)",
+          "oklch(0.37 0.09 158)",
+          "oklch(0.48 0.09 158)",
+          "oklch(0.60 0.09 158)",
+          "oklch(0.72 0.09 158)",
+          "oklch(0.84 0.09 158)",
+          "oklch(0.95 0.09 158)"
+        ]
+      },
+      "board-deep-dark": {
+        "role": "primary",
+        "displayName": "Board Well Green (dark)",
+        "canonical": "oklch(0.3 0.075 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.075 158)",
+          "oklch(0.26 0.075 158)",
+          "oklch(0.37 0.075 158)",
+          "oklch(0.48 0.075 158)",
+          "oklch(0.60 0.075 158)",
+          "oklch(0.72 0.075 158)",
+          "oklch(0.84 0.075 158)",
+          "oklch(0.95 0.075 158)"
+        ]
+      },
+      "board-edge-dark": {
+        "role": "primary",
+        "displayName": "Board Edge (dark)",
+        "canonical": "oklch(0.24 0.06 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.06 158)",
+          "oklch(0.26 0.06 158)",
+          "oklch(0.37 0.06 158)",
+          "oklch(0.48 0.06 158)",
+          "oklch(0.60 0.06 158)",
+          "oklch(0.72 0.06 158)",
+          "oklch(0.84 0.06 158)",
+          "oklch(0.95 0.06 158)"
+        ]
+      },
+      "board-line-dark": {
+        "role": "primary",
+        "displayName": "Board Rule (dark)",
+        "canonical": "oklch(0.46 0.08 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.08 158)",
+          "oklch(0.26 0.08 158)",
+          "oklch(0.37 0.08 158)",
+          "oklch(0.48 0.08 158)",
+          "oklch(0.60 0.08 158)",
+          "oklch(0.72 0.08 158)",
+          "oklch(0.84 0.08 158)",
+          "oklch(0.95 0.08 158)"
+        ]
+      },
+      "board-text-dark": {
+        "role": "primary",
+        "displayName": "Court Green Text (dark)",
+        "canonical": "oklch(0.78 0.13 156)",
+        "tonalRamp": [
+          "oklch(0.15 0.13 156)",
+          "oklch(0.26 0.13 156)",
+          "oklch(0.37 0.13 156)",
+          "oklch(0.48 0.13 156)",
+          "oklch(0.60 0.13 156)",
+          "oklch(0.72 0.13 156)",
+          "oklch(0.84 0.13 156)",
+          "oklch(0.95 0.13 156)"
+        ]
+      },
+      "card-dark": {
+        "role": "neutral",
+        "displayName": "Flip Card (dark)",
+        "canonical": "oklch(0.935 0.004 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 158)",
+          "oklch(0.26 0.004 158)",
+          "oklch(0.37 0.004 158)",
+          "oklch(0.48 0.004 158)",
+          "oklch(0.60 0.004 158)",
+          "oklch(0.72 0.004 158)",
+          "oklch(0.84 0.004 158)",
+          "oklch(0.95 0.004 158)"
+        ]
+      },
+      "card-shade-dark": {
+        "role": "neutral",
+        "displayName": "Card Shade (dark)",
+        "canonical": "oklch(0.87 0.006 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 158)",
+          "oklch(0.26 0.006 158)",
+          "oklch(0.37 0.006 158)",
+          "oklch(0.48 0.006 158)",
+          "oklch(0.60 0.006 158)",
+          "oklch(0.72 0.006 158)",
+          "oklch(0.84 0.006 158)",
+          "oklch(0.95 0.006 158)"
+        ]
+      },
+      "ground-dark": {
+        "role": "neutral",
+        "displayName": "Court Ground (dark)",
+        "canonical": "oklch(0.165 0.012 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 158)",
+          "oklch(0.26 0.012 158)",
+          "oklch(0.37 0.012 158)",
+          "oklch(0.48 0.012 158)",
+          "oklch(0.60 0.012 158)",
+          "oklch(0.72 0.012 158)",
+          "oklch(0.84 0.012 158)",
+          "oklch(0.95 0.012 158)"
+        ]
+      },
+      "ground-2-dark": {
+        "role": "neutral",
+        "displayName": "Ground Raised (dark)",
+        "canonical": "oklch(0.205 0.015 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.015 158)",
+          "oklch(0.26 0.015 158)",
+          "oklch(0.37 0.015 158)",
+          "oklch(0.48 0.015 158)",
+          "oklch(0.60 0.015 158)",
+          "oklch(0.72 0.015 158)",
+          "oklch(0.84 0.015 158)",
+          "oklch(0.95 0.015 158)"
+        ]
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Ink (dark)",
+        "canonical": "oklch(0.955 0.01 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.01 158)",
+          "oklch(0.26 0.01 158)",
+          "oklch(0.37 0.01 158)",
+          "oklch(0.48 0.01 158)",
+          "oklch(0.60 0.01 158)",
+          "oklch(0.72 0.01 158)",
+          "oklch(0.84 0.01 158)",
+          "oklch(0.95 0.01 158)"
+        ]
+      },
+      "ink-2-dark": {
+        "role": "neutral",
+        "displayName": "Ink Muted (dark)",
+        "canonical": "oklch(0.76 0.018 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.018 158)",
+          "oklch(0.26 0.018 158)",
+          "oklch(0.37 0.018 158)",
+          "oklch(0.48 0.018 158)",
+          "oklch(0.60 0.018 158)",
+          "oklch(0.72 0.018 158)",
+          "oklch(0.84 0.018 158)",
+          "oklch(0.95 0.018 158)"
+        ]
+      },
+      "line-dark": {
+        "role": "neutral",
+        "displayName": "Rule (dark)",
+        "canonical": "oklch(0.31 0.016 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.016 158)",
+          "oklch(0.26 0.016 158)",
+          "oklch(0.37 0.016 158)",
+          "oklch(0.48 0.016 158)",
+          "oklch(0.60 0.016 158)",
+          "oklch(0.72 0.016 158)",
+          "oklch(0.84 0.016 158)",
+          "oklch(0.95 0.016 158)"
+        ]
+      },
+      "nav-bg-dark": {
+        "role": "neutral",
+        "displayName": "Nav Glass (dark)",
+        "canonical": "oklch(0.165 0.012 158 / 0.7)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 158)",
+          "oklch(0.26 0.012 158)",
+          "oklch(0.37 0.012 158)",
+          "oklch(0.48 0.012 158)",
+          "oklch(0.60 0.012 158)",
+          "oklch(0.72 0.012 158)",
+          "oklch(0.84 0.012 158)",
+          "oklch(0.95 0.012 158)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "board": {
+        "displayName": "Board",
+        "purpose": "Flip cards, counts, stage words, box-score row names, wordmark. Archivo wdth 62 / 800 / tabular."
+      },
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero and closing headline, left-aligned. wdth 72 / 800."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headlines in the display voice."
+      },
+      "body-lead": {
+        "displayName": "Body Lead",
+        "purpose": "Section intros, 36-52ch, Archivo normal width."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Detail copy, tables, nav links."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Form labels and column heads. wdth 85 / 650."
+      },
+      "board-label": {
+        "displayName": "Board Label",
+        "purpose": "Uppercase scoreboard field names (Home, Status, Paid)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "board-lift",
+        "value": "0 1px 0 oklch(1 0 0 / 0.12) inset, 0 30px 60px -30px oklch(0.25 0.08 158 / 0.55), 0 12px 24px -12px oklch(0.25 0.06 158 / 0.35)",
+        "purpose": "Scoreboard only (light)."
+      },
+      {
+        "name": "board-lift-dark",
+        "value": "0 1px 0 oklch(1 0 0 / 0.08) inset, 0 30px 60px -30px oklch(0 0 0 / 0.7)",
+        "purpose": "Scoreboard only (dark)."
+      },
+      {
+        "name": "well",
+        "value": "inset 0 2px 6px oklch(0 0 0 / 0.28), 0 1px 0 oklch(1 0 0 / 0.08)",
+        "purpose": "Recessed board wells: status window, control strip, input on board."
+      },
+      {
+        "name": "card-on-board",
+        "value": "0 1px 2px oklch(0 0 0 / 0.2)",
+        "purpose": "Stock cells on a rail."
+      },
+      {
+        "name": "cell-on-ground",
+        "value": "inset 0 0 0 1px var(--line), 0 1px 2px oklch(0.2 0.02 158 / 0.08)",
+        "purpose": "Cells off the board."
+      },
+      {
+        "name": "card-button-on-board",
+        "value": "0 1px 0 oklch(1 0 0 / 0.6) inset, 0 6px 14px -6px oklch(0 0 0 / 0.45)",
+        "purpose": "Off-white primary action on green."
+      },
+      {
+        "name": "lamp-idle",
+        "value": "inset 0 1px 2px oklch(0 0 0 / 0.45)",
+        "purpose": "Unlit period lamp."
+      },
+      {
+        "name": "lamp-live",
+        "value": "0 0 0 3px oklch(0.82 0.165 78 / 0.25), 0 2px 6px oklch(0.82 0.165 78 / 0.45)",
+        "purpose": "Live period lamp halo."
+      },
+      {
+        "name": "tile-selected",
+        "value": "0 10px 24px -14px oklch(0.2 0.02 158 / 0.6)",
+        "purpose": "Selected prompt tile."
+      },
+      {
+        "name": "focus-ring",
+        "value": "outline: 2px solid var(--amber); outline-offset: 3px",
+        "purpose": "Global :focus-visible."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "State transitions, press release, rising flap."
+      },
+      {
+        "name": "ease-in",
+        "value": "cubic-bezier(0.55, 0, 1, 0.45)",
+        "purpose": "Falling flap only."
+      },
+      {
+        "name": "flap-fall",
+        "value": "170ms ease-in, rotateX(0 to -90deg), brightness 1 to 0.82",
+        "purpose": "First half of the flip."
+      },
+      {
+        "name": "flap-rise",
+        "value": "230ms ease-out after 170ms, rotateX(90 to 0deg), brightness 0.82 to 1",
+        "purpose": "Second half of the flip."
+      },
+      {
+        "name": "flap-stagger",
+        "value": "28ms per cell",
+        "purpose": "Cascade across a readout."
+      },
+      {
+        "name": "board-advance",
+        "value": "2600ms",
+        "purpose": "Auto-advance interval; only while 35% visible, tab visible, no manual tap, no reduced motion."
+      },
+      {
+        "name": "press",
+        "value": "translateY(1px) scale(0.975); 60ms in, 120ms out",
+        "purpose": "Press travel on every control."
+      },
+      {
+        "name": "lamp",
+        "value": "220ms",
+        "purpose": "Lamp state change."
+      },
+      {
+        "name": "cell",
+        "value": "260ms",
+        "purpose": "Stock cell state change."
+      },
+      {
+        "name": "nav-fade",
+        "value": "200ms",
+        "purpose": "Scrolled nav edge fade."
+      },
+      {
+        "name": "jersey",
+        "value": "480ms",
+        "purpose": "Jersey preview color cross-fade."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "falling flap removed, rising card at rest; no press travel; no smooth scroll; jersey 1ms",
+        "purpose": "prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Board Button",
+      "kind": "button",
+      "refersTo": "button-board",
+      "description": "Primary action on ground: Court Green pill with press travel.",
+      "html": "<button class=\"ds-btn-board\">Create account</button>",
+      "css": ".ds-btn-board{background:var(--board,oklch(0.43 0.105 158));color:var(--board-ink,oklch(0.975 0.012 158));border:0;border-radius:999px;padding:8px 16px;font:600 0.9375rem/1.4 Archivo,ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:transform 120ms cubic-bezier(0.22,1,0.36,1),background-color 160ms cubic-bezier(0.22,1,0.36,1)}.ds-btn-board:hover{background:var(--board-deep,oklch(0.355 0.09 158))}.ds-btn-board:focus-visible{outline:2px solid var(--amber,oklch(0.82 0.165 78));outline-offset:3px}.ds-btn-board:active{transform:translateY(1px) scale(0.975);transition-duration:60ms}@media (prefers-reduced-motion:reduce){.ds-btn-board:active{transform:none}}"
+    },
+    {
+      "name": "Card Button (on board)",
+      "kind": "button",
+      "refersTo": "button-card",
+      "description": "Primary action set on green: off-white card, 48px, with a trailing arrow.",
+      "html": "<div class=\"ds-board-swatch\"><button class=\"ds-btn-card\">Create account <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button></div>",
+      "css": ".ds-board-swatch{background:var(--board,oklch(0.43 0.105 158));padding:20px;border-radius:16px}.ds-btn-card{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 20px;border:0;border-radius:12px;background:var(--card,oklch(0.985 0.002 158));color:var(--card-ink,oklch(0.17 0.012 158));font:600 1rem Archivo,ui-sans-serif,system-ui,sans-serif;box-shadow:0 1px 0 oklch(1 0 0/0.6) inset,0 6px 14px -6px oklch(0 0 0/0.45);cursor:pointer;transition:transform 120ms cubic-bezier(0.22,1,0.36,1)}.ds-btn-card:focus-visible{outline:2px solid var(--amber,oklch(0.82 0.165 78));outline-offset:3px}.ds-btn-card:active{transform:translateY(1px) scale(0.975);transition-duration:60ms}"
+    },
+    {
+      "name": "Ink Button",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "Secondary action on ground: Ink pill, 44px.",
+      "html": "<button class=\"ds-btn-ink\">Browse the shop</button>",
+      "css": ".ds-btn-ink{height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--ink,oklch(0.2 0.016 158));color:var(--ground,oklch(0.975 0.004 158));font:600 0.9375rem Archivo,ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:transform 120ms cubic-bezier(0.22,1,0.36,1),opacity 160ms}.ds-btn-ink:hover{opacity:.9}.ds-btn-ink:focus-visible{outline:2px solid var(--amber,oklch(0.82 0.165 78));outline-offset:3px}.ds-btn-ink:active{transform:translateY(1px) scale(0.975)}"
+    },
+    {
+      "name": "Username Field (ground)",
+      "kind": "input",
+      "refersTo": "input-ground",
+      "description": "48px field with @ prefix; amber ring on focus and error.",
+      "html": "<label class=\"ds-label\">Choose a username</label><div class=\"ds-field\"><span>@</span><input placeholder=\"mayon.blazers\"></div>",
+      "css": ".ds-label{display:block;margin-bottom:8px;font:650 0.8125rem Archivo,sans-serif;font-variation-settings:'wdth' 85;letter-spacing:.02em;color:var(--ink-2,oklch(0.42 0.018 158))}.ds-field{display:flex;align-items:center;height:48px;padding:0 16px;border-radius:12px;background:var(--ground-2,oklch(0.948 0.007 158));color:var(--ink,oklch(0.2 0.016 158));box-shadow:inset 0 0 0 1px var(--line,oklch(0.87 0.01 158));transition:box-shadow 200ms}.ds-field span{color:var(--ink-2,oklch(0.42 0.018 158))}.ds-field input{flex:1;min-width:0;margin-left:2px;border:0;background:transparent;font:400 1.0625rem Archivo,sans-serif;color:inherit;outline:none}.ds-field:focus-within{box-shadow:0 0 0 2px var(--amber,oklch(0.82 0.165 78))}"
+    },
+    {
+      "name": "Translucent Nav",
+      "kind": "nav",
+      "refersTo": "nav",
+      "description": "Sticky 64px glass bar with blurred ground; solid under reduced transparency.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-nav-mark\">J&amp;J</span><a href=\"#\">Custom orders</a><a href=\"#\">AI studio</a><a href=\"#\" class=\"ds-nav-cta\">Create account</a></nav>",
+      "css": ".ds-nav{display:flex;align-items:center;gap:8px;height:64px;padding:0 24px;background:var(--nav-bg,oklch(0.975 0.004 158/0.72));-webkit-backdrop-filter:blur(20px) saturate(170%);backdrop-filter:blur(20px) saturate(170%);font:400 0.9375rem Archivo,sans-serif}.ds-nav-mark{font-weight:800;font-variation-settings:'wdth' 62;color:var(--board-text,oklch(0.43 0.105 158));margin-right:16px}.ds-nav a{padding:8px 12px;border-radius:999px;color:var(--ink-2,oklch(0.42 0.018 158));text-decoration:none;transition:color 150ms}.ds-nav a:hover{color:var(--ink,oklch(0.2 0.016 158))}.ds-nav a.ds-nav-cta{margin-left:auto;padding:8px 16px;background:var(--board,oklch(0.43 0.105 158));color:var(--board-ink,oklch(0.975 0.012 158));font-weight:600}.ds-nav a.ds-nav-cta:hover{background:var(--board-deep,oklch(0.355 0.09 158))}@media (prefers-reduced-transparency:reduce){.ds-nav{background:var(--ground,oklch(0.975 0.004 158));backdrop-filter:none;-webkit-backdrop-filter:none}}"
+    },
+    {
+      "name": "Split-Flap Readout",
+      "kind": "custom",
+      "refersTo": "flap-cell",
+      "description": "Off-white hinged cards in the Board voice inside a board well; blanks step back to 22%.",
+      "html": "<div class=\"ds-board\"><div class=\"ds-well\"><span class=\"ds-flap\">R</span><span class=\"ds-flap\">E</span><span class=\"ds-flap\">A</span><span class=\"ds-flap\">D</span><span class=\"ds-flap\">Y</span><span class=\"ds-flap ds-blank\">&nbsp;</span></div></div>",
+      "css": ".ds-board{padding:24px;border-radius:1.75rem;color:var(--board-ink,oklch(0.975 0.012 158));background:radial-gradient(120% 80% at 50% -10%,oklch(1 0 0/0.07),transparent 60%),var(--board,oklch(0.43 0.105 158));box-shadow:0 1px 0 oklch(1 0 0/0.12) inset,0 30px 60px -30px oklch(0.25 0.08 158/0.55),0 12px 24px -12px oklch(0.25 0.06 158/0.35)}.ds-well{display:flex;justify-content:center;gap:.06em;padding:16px 12px;border-radius:16px;background:var(--board-deep,oklch(0.355 0.09 158));box-shadow:inset 0 2px 6px oklch(0 0 0/0.28),0 1px 0 oklch(1 0 0/0.08);font:800 3.6rem/1 Archivo,sans-serif;font-variation-settings:'wdth' 62;font-variant-numeric:tabular-nums;letter-spacing:-.01em}.ds-flap{position:relative;display:inline-block;width:.72em;height:1em;line-height:1em;text-align:center;border-radius:.09em;color:var(--card-ink,oklch(0.17 0.012 158));background:linear-gradient(to bottom,var(--card,oklch(0.985 0.002 158)),var(--card-shade,oklch(0.93 0.004 158)) 50%,var(--card,oklch(0.985 0.002 158)) 50%)}.ds-flap::after{content:'';position:absolute;left:0;right:0;top:calc(50% - .5px);height:1px;background:oklch(0.2 0.02 158/0.35)}.ds-blank{opacity:.22}"
+    },
+    {
+      "name": "Period Lamps",
+      "kind": "custom",
+      "refersTo": "lamp-live",
+      "description": "Idle, done, and live lamps in pill buttons on the board; live is the only amber.",
+      "html": "<div class=\"ds-lamps\"><button class=\"ds-period\"><span class=\"ds-lamp ds-done\"></span>Design</button><button class=\"ds-period\"><span class=\"ds-lamp ds-live\"></span>Down payment</button><button class=\"ds-period\"><span class=\"ds-lamp\"></span>Production</button></div>",
+      "css": ".ds-lamps{display:flex;gap:8px;padding:16px;border-radius:16px;background:var(--board,oklch(0.43 0.105 158))}.ds-period{display:flex;align-items:center;gap:10px;padding:8px 12px;border:0;border-radius:999px;background:transparent;color:var(--board-ink,oklch(0.975 0.012 158));font:500 0.9375rem Archivo,sans-serif;cursor:pointer;transition:transform 120ms cubic-bezier(0.22,1,0.36,1),background-color 160ms}.ds-period:hover{background:oklch(0.355 0.09 158/0.7)}.ds-period:focus-visible{outline:2px solid var(--amber,oklch(0.82 0.165 78));outline-offset:3px}.ds-period:active{transform:translateY(1px) scale(0.975)}.ds-lamp{width:.7rem;height:.7rem;border-radius:999px;background:var(--board-edge,oklch(0.3 0.075 158));box-shadow:inset 0 1px 2px oklch(0 0 0/0.45);transition:background-color 220ms,box-shadow 220ms}.ds-done{background:var(--board-ink,oklch(0.975 0.012 158));box-shadow:0 0 0 1px oklch(1 0 0/0.2)}.ds-live{background:var(--amber,oklch(0.82 0.165 78));box-shadow:0 0 0 3px oklch(0.82 0.165 78/0.25),0 2px 6px oklch(0.82 0.165 78/0.45)}"
+    },
+    {
+      "name": "Stock Size Rail",
+      "kind": "custom",
+      "refersTo": "size-rail",
+      "description": "Identical cells on a strip of board: lit in stock, amber low, blank well when sold out.",
+      "html": "<ul class=\"ds-rail\"><li class=\"ds-cell\"><small>S</small>12</li><li class=\"ds-cell\"><small>M</small>8</li><li class=\"ds-cell ds-low\"><small>L</small>2</li><li class=\"ds-cell ds-out\"><small>XL</small>–</li><li class=\"ds-cell\"><small>2XL</small>5</li></ul>",
+      "css": ".ds-rail{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:0;padding:6px;list-style:none;border-radius:12px;background:var(--board,oklch(0.43 0.105 158));max-width:22rem}.ds-cell{display:flex;flex-direction:column;align-items:center;justify-content:center;height:56px;border-radius:8px;background:var(--card,oklch(0.985 0.002 158));color:var(--card-ink,oklch(0.17 0.012 158));box-shadow:0 1px 2px oklch(0 0 0/0.2);font:800 1.375rem/1.1 Archivo,sans-serif;font-variation-settings:'wdth' 62;font-variant-numeric:tabular-nums;transition:background-color 260ms,color 260ms}.ds-cell small{font:650 .6875rem/1 Archivo,sans-serif;font-variation-settings:'wdth' 85;opacity:.7}.ds-low{background:var(--amber,oklch(0.82 0.165 78));color:var(--amber-ink,oklch(0.28 0.06 65));box-shadow:none}.ds-out{background:var(--board-deep,oklch(0.355 0.09 158));color:var(--board-ink-2,oklch(0.85 0.045 158));box-shadow:inset 0 2px 4px oklch(0 0 0/0.3)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Liga Scoreboard",
+    "overview": "Every custom order is a game in progress, kept on the hand-flipped scoreboard of a barangay covered court and rebuilt with Apple precision. The instrument surfaces are painted court-green boards; the readouts on them are true off-white split-flap cards carrying near-black condensed numerals; and one shot-clock amber is held back for the things that are happening right now. Everything around the board sits on a quiet neutral ground tinted toward the same green, so the board is always the loudest object in view.\n\nThe system is one family, Archivo, worked across its width axis: pulled to its narrowest for board numerals and display, kept at normal width for anything people read. Density follows the scoreboard: a strict cell module, identical cells in a run, ruled bands between readings, lamps for stage. Depth is physical and restrained (a lit, slightly convex board; recessed wells; cards that sit proud of the paint), and the only authored motion is the flip.",
+    "keyCharacteristics": [
+      "One saturated court green owns every instrument surface; the ground is near-neutral green-tinted paper.",
+      "Off-white flip cards with a hinge line are the signature readout, never decoration.",
+      "Amber means \"now\": live stage, low stock, focus, and a board-side error. Nothing else.",
+      "Archivo only, differentiated by width (62 / 72 / 85 / normal), weight, and tabular figures.",
+      "Light and dark are both first-class, switched by `prefers-color-scheme`.",
+      "Every control has press travel; the flip is the single authored animation."
+    ],
+    "rules": [
+      {
+        "name": "The Amber-Is-Now Rule",
+        "body": "Amber is for live and low: the stage in progress, a size about to run out, and the attention states that follow from them (keyboard focus, selection, an error on the board). It never fills a section, a headline, a button at rest, or an illustration chrome. If nothing is live or low, a screen should show no amber at all.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Green Rule",
+        "body": "One saturated green owns the instrument surfaces. Do not introduce a second brand hue; supporting surfaces are the green-tinted neutrals, and new states are expressed as card state (lit, amber, blank), not new colors.",
+        "section": "colors"
+      },
+      {
+        "name": "The Card Ink Rule",
+        "body": "On amber use `amber-ink`; on cards use `card-ink`; on green use `board-ink` / `board-ink-2`. On light ground, an error hint is semibold `ink` rather than amber text, because amber text on light ground is illegible.",
+        "section": "colors"
+      },
+      {
+        "name": "The Width-Is-Voice Rule",
+        "body": "Hierarchy is carried by the width axis and weight of one family, never by a second typeface. Board numerals are `wdth` 62, display is 72, labels 85, reading text normal width.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Board Rule",
+        "body": "Every number that can change (counts, percentages, dates, timestamps, order numbers) is set in tabular figures so the board never reflows.",
+        "section": "typography"
+      },
+      {
+        "name": "The Only-The-Board-Lifts Rule",
+        "body": "The large drop shadow belongs to the scoreboard. Other surfaces are flat with a hairline, or recessed as wells.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Flip Rule",
+        "body": "The flip is the single authored motion: the top flap falls (170ms, `--ease-in` `cubic-bezier(0.55, 0, 1, 0.45)`, rotateX 0 to -90deg, dimming to 82%), then the bottom flap rises (230ms, `--ease-out` `cubic-bezier(0.22, 1, 0.36, 1)`), staggered 28ms per cell. It is interruptible: a new value always starts from the card on screen. The board auto-advances (2.6s) only while at least 35% visible and the tab is visible, and stops for good after a manual tap. Everything else is state transition only (press travel, lamp, cell, nav fade, jersey color cross-fade at 480ms).",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** put live data on the board in flip cells with tabular figures and a fixed cell count.",
+      "**Do** express inventory state as card state: lit, amber for low, blank for sold out.",
+      "**Do** keep amber for live and low (plus focus, selection, and board-side error) only.",
+      "**Do** separate the voices with Archivo's width axis: 62 board, 72 display, 85 label, normal for reading.",
+      "**Do** give every control press travel and the global amber focus ring.",
+      "**Do** ship light and dark together; check `board-text` and card values in both.",
+      "**Do** honor reduced motion by swapping cards in place, and reduced transparency with a solid nav."
+    ],
+    "donts": [
+      "**Don't** use amber as a brand fill, a button color at rest, or decoration.",
+      "**Don't** add a second typeface or a second brand hue.",
+      "**Don't** animate anything else with an authored entrance, scroll reveal, or loop; the flip is the motion.",
+      "**Don't** put the board lift shadow on anything but the scoreboard.",
+      "**Don't** set amber text on light ground; use semibold ink.",
+      "**Don't** let a readout reflow when its value changes."
+    ]
+  }
+}
