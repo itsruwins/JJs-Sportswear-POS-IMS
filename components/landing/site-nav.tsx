@@ -14,7 +14,7 @@ const LINKS = [
 
 export function SiteNav() {
   const [scrolled, setScrolled] = useState(false);
-  const { openAuth, username, signOut } = useAuth();
+  const { openAuth, username, isStaff, signOut } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -54,13 +54,22 @@ export function SiteNav() {
               >
                 @{username}
               </button>
-              <button
-                type="button"
-                onClick={signOut}
-                className="press whitespace-nowrap rounded-full px-3 py-2 text-[0.9375rem] font-medium text-ink-2 shadow-[inset_0_0_0_1px_var(--line)] hover:text-ink"
-              >
-                Log out
-              </button>
+              {isStaff ? (
+                <a
+                  href="/admin"
+                  className="press whitespace-nowrap rounded-full bg-board px-4 py-2 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+                >
+                  Open admin
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="press whitespace-nowrap rounded-full px-3 py-2 text-[0.9375rem] font-medium text-ink-2 shadow-[inset_0_0_0_1px_var(--line)] hover:text-ink"
+                >
+                  Log out
+                </button>
+              )}
             </>
           ) : (
             <>

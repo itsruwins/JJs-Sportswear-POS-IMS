@@ -22,7 +22,8 @@ type AuthDialogProps = {
   prefill: string;
   nonce: number;
   username: string | null;
-  onSignedIn: (username: string) => void;
+  isStaff: boolean;
+  onSignedIn: (username: string, userId: string) => void;
   onSignOut: () => Promise<void>;
   onClose: () => void;
 };
@@ -38,7 +39,7 @@ function rubberband(overshoot: number, dimension: number, constant = 0.55) {
   return (overshoot * dimension * constant) / (dimension + constant * Math.abs(overshoot));
 }
 
-export function AuthDialog({ open, mode, prefill, nonce, username, onSignedIn, onSignOut, onClose }: AuthDialogProps) {
+export function AuthDialog({ open, mode, prefill, nonce, username, isStaff, onSignedIn, onSignOut, onClose }: AuthDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const pressedOnBackdrop = useRef(false);
   const titleId = useId();
@@ -130,6 +131,7 @@ export function AuthDialog({ open, mode, prefill, nonce, username, onSignedIn, o
           prefill={prefill}
           titleId={titleId}
           signedInAs={username}
+          isStaff={isStaff}
           onSignedIn={onSignedIn}
           onSignOut={onSignOut}
           onDone={() => ref.current?.close()}
@@ -144,7 +146,8 @@ type PanelProps = {
   prefill: string;
   titleId: string;
   signedInAs: string | null;
-  onSignedIn: (username: string) => void;
+  isStaff: boolean;
+  onSignedIn: (username: string, userId: string) => void;
   onSignOut: () => Promise<void>;
   onDone: () => void;
 };
@@ -166,7 +169,7 @@ const COPY = {
   },
 } as const;
 
-function AuthPanel({ initialMode, prefill, titleId, signedInAs, onSignedIn, onSignOut, onDone }: PanelProps) {
+function AuthPanel({ initialMode, prefill, titleId, signedInAs, isStaff, onSignedIn, onSignOut, onDone }: PanelProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [view, setView] = useState<"form" | "done">(signedInAs ? "done" : "form");
   const [who, setWho] = useState(signedInAs ?? "");
@@ -239,7 +242,7 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, onSignedIn, onSi
           });
         }
         setWho(username);
-        onSignedIn(username);
+        onSignedIn(username, data.session.user.id);
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: usernameToEmail(username),
@@ -248,7 +251,7 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, onSignedIn, onSi
         if (error) return applyFailure(describeLogInError(error));
         const actual = typeof data.user.user_metadata?.username === "string" ? data.user.user_metadata.username : username;
         setWho(actual);
-        onSignedIn(actual);
+        onSignedIn(actual, data.user.id);
       }
       setPassword("");
       setView("done");
@@ -266,17 +269,29 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, onSignedIn, onSi
         <div className="px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-7 sm:pb-7">
           <WelcomeBoard />
           <p className="mt-5 text-[0.9375rem] leading-relaxed text-ink-2">
-            Your custom orders, payments, and messages with the shop will all be under this account.
+            {isStaff
+              ? "Your staff tools are in the admin."
+              : "Your custom orders, payments, and messages with the shop will all be under this account."}
           </p>
           <div className="mt-6 flex flex-col gap-2.5 sm:flex-row-reverse">
-            <button
-              type="button"
-              data-autofocus
-              onClick={onDone}
-              className="press inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-board px-5 text-[1rem] font-semibold text-board-ink hover:bg-board-deep"
-            >
-              Done
-            </button>
+            {isStaff ? (
+              <a
+                href="/admin"
+                data-autofocus
+                className="press inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-board px-5 text-[1rem] font-semibold text-board-ink hover:bg-board-deep"
+              >
+                Open admin
+              </a>
+            ) : (
+              <button
+                type="button"
+                data-autofocus
+                onClick={onDone}
+                className="press inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-board px-5 text-[1rem] font-semibold text-board-ink hover:bg-board-deep"
+              >
+                Done
+              </button>
+            )}
             <button
               type="button"
               onClick={async () => {
