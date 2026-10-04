@@ -38,13 +38,17 @@ export function shiftDate(ymd: string, days: number) {
 }
 
 /** Reads and cleans the URL's filters; anything unrecognised falls back to the default view (last 7 days). */
-export function parseHistoryFilters(params: Record<string, string | string[] | undefined>): HistoryFilters {
+export function parseHistoryFilters(
+  params: Record<string, string | string[] | undefined>,
+  fallback: HistoryRange = "7d",
+): HistoryFilters {
   const one = (k: string) => {
     const v = params[k];
     return (Array.isArray(v) ? v[0] : v) ?? "";
   };
   const today = manilaToday();
-  let range = (RANGES.includes(one("range") as HistoryRange) ? one("range") : "7d") as HistoryRange;
+  let range = (RANGES.includes(one("range") as HistoryRange) ? one("range") : fallback) as HistoryRange;
+  if (range === "custom" && !isDate(one("from")) && !isDate(one("to"))) range = fallback;
   let from = isDate(one("from")) ? one("from") : shiftDate(today, -6);
   let to = isDate(one("to")) ? one("to") : today;
   if (range === "custom" && from > to) [from, to] = [to, from];
@@ -52,7 +56,6 @@ export function parseHistoryFilters(params: Record<string, string | string[] | u
     to = today;
     from = range === "today" ? today : range === "all" ? "" : shiftDate(today, range === "7d" ? -6 : -29);
   }
-  if (range === "custom" && !isDate(one("from")) && !isDate(one("to"))) range = "7d";
   const show = Math.min(MAX_SHOW, Math.max(HISTORY_STEP, Math.round(Number(one("show")) / HISTORY_STEP) * HISTORY_STEP || HISTORY_STEP));
   return {
     range,
@@ -65,10 +68,14 @@ export function parseHistoryFilters(params: Record<string, string | string[] | u
   };
 }
 
+/** The filters' date range as timestamps: midnight Manila time at the start, and the midnight after the last day. */
+export function historyBounds(f: Pick<HistoryFilters, "from" | "to">) {
+  return { fromIso: f.from ? `${f.from}T00:00:00+08:00` : "", toIso: `${shiftDate(f.to, 1)}T00:00:00+08:00` };
+}
+
 /** Stock changes matching the filters, newest first, plus totals for the whole filtered range. */
 export async function fetchHistory(supabase: SupabaseClient, f: HistoryFilters) {
-  const fromIso = f.from ? `${f.from}T00:00:00+08:00` : "";
-  const toIso = `${shiftDate(f.to, 1)}T00:00:00+08:00`;
+  const { fromIso, toIso } = historyBounds(f);
 
   let variantIds: string[] | null = null;
   if (f.product) {
@@ -86,26 +93,30 @@ export async function fetchHistory(supabase: SupabaseClient, f: HistoryFilters) 
     )
     .lt("created_at", toIso);
   if (fromIso) rowsQuery = rowsQuery.gte("created_at", fromIso);
-  const sumsPage = (start: number) => {
-    let q = supabase.from("inventory_transactions").select("quantity").lt("created_at", toIso);
+  const sumsPage = (afterId: string) => {
+    let q = supabase.from("inventory_transactions").select("id, quantity").lt("created_at", toIso);
+    if (afterId) q = q.gt("id", afterId);
     if (fromIso) q = q.gte("created_at", fromIso);
     if (f.type !== "all") q = q.eq("transaction_type", f.type);
     if (f.staff) q = q.eq("created_by", f.staff);
     if (variantIds) q = q.in("variant_id", variantIds);
-    return q.order("id").range(start, start + SUM_PAGE - 1);
+    return q.order("id").limit(SUM_PAGE);
   };
   if (f.type !== "all") rowsQuery = rowsQuery.eq("transaction_type", f.type);
   if (f.staff) rowsQuery = rowsQuery.eq("created_by", f.staff);
   if (variantIds) rowsQuery = rowsQuery.in("variant_id", variantIds);
 
-  // The API returns at most 1,000 rows per request, so the in/out totals read the range page by page.
+  // The API caps each response (1,000 rows by default, possibly fewer), so the in/out totals read
+  // the range page by page after the last id seen, until a page comes back empty.
   const sumAll = async () => {
     const qty: number[] = [];
-    for (let start = 0; start < SUM_PAGE * 50; start += SUM_PAGE) {
-      const { data, error } = await sumsPage(start);
+    let afterId = "";
+    for (let i = 0; i < 100; i++) {
+      const { data, error } = await sumsPage(afterId);
       if (error) return { qty, error };
+      if (data.length === 0) break;
       qty.push(...data.map((r) => r.quantity as number));
-      if (data.length < SUM_PAGE) break;
+      afterId = data[data.length - 1].id as string;
     }
     return { qty, error: null };
   };
@@ -137,4 +148,45 @@ export async function fetchHistoryOptions(supabase: SupabaseClient) {
       name: ((s.full_name as string | null)?.trim() || `@${s.username}`) as string,
     })),
   };
+}
+
+const EXPORT_PAGE = 1000;
+const EXPORT_MAX = 50_000;
+
+/** Every stock change matching the filters (not just one screen's worth), newest first, for the CSV export. */
+export async function fetchHistoryForExport(supabase: SupabaseClient, f: HistoryFilters) {
+  const { fromIso, toIso: endIso } = historyBounds(f);
+  // Changes made while the export runs are left out, so the newest-first pages can't shift under it.
+  const startedAt = new Date().toISOString();
+  const toIso = new Date(endIso) < new Date(startedAt) ? endIso : startedAt;
+  let variantIds: string[] | null = null;
+  if (f.product) {
+    const { data, error } = await supabase.from("product_variants").select("id").eq("product_id", f.product);
+    if (error) return { moves: [] as (StockMove & { sku: string | null })[], error, truncated: false };
+    variantIds = (data ?? []).map((v) => v.id as string);
+    if (variantIds.length === 0) return { moves: [], error: null, truncated: false };
+  }
+  const moves: (StockMove & { sku: string | null })[] = [];
+  for (let start = 0; start < EXPORT_MAX; ) {
+    let q = supabase
+      .from("inventory_transactions")
+      .select(
+        "id, transaction_type, quantity, previous_stock, new_stock, reason, created_at, variant:product_variants (size, color, sku, product:products (id, name)), actor:profiles (username, full_name)",
+      )
+      .lt("created_at", toIso);
+    if (fromIso) q = q.gte("created_at", fromIso);
+    if (f.type !== "all") q = q.eq("transaction_type", f.type);
+    if (f.staff) q = q.eq("created_by", f.staff);
+    if (variantIds) q = q.in("variant_id", variantIds);
+    const { data, error } = await q
+      .order("created_at", { ascending: false })
+      .order("id")
+      .range(start, start + EXPORT_PAGE - 1);
+    if (error) return { moves, error, truncated: false };
+    const rows = data as unknown as (StockMove & { variant: { sku: string | null } | null })[];
+    if (rows.length === 0) return { moves, error: null, truncated: false };
+    moves.push(...rows.map((m) => ({ ...m, sku: m.variant?.sku ?? null })));
+    start += rows.length;
+  }
+  return { moves, error: null, truncated: true };
 }

@@ -69,6 +69,7 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 - An overview: low and out-of-stock counts, recent movements, and stock value.
 - An inventory report that can be printed or exported to CSV.
 - **Done when:** the owner gets the inventory picture on one screen and can print or export it.
+- **Built (2026-10-04):** Home is the dashboard. It shows pieces on hand, stock value (owner only, at selling price), pieces in and out over the last 7 days, Needs restock, and Recent changes. `/admin/reports` (owner only, in the More menu) has a summary, Needs restock, Stock movement for a chosen period (Today / 7 / 30 / All time / custom), and Stock on hand grouped by product. Each section downloads as CSV, and "Print report" gives a clean A4 printout. History has an owner-only CSV download of its current filters. There's no cost price yet, so profit and margin wait for a future cost-price column.
 
 ## Later phases (planned in detail when we reach them)
 

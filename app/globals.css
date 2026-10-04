@@ -1013,3 +1013,94 @@ button.admin-dock-item[aria-expanded="true"]:hover {
     transition-duration: 1ms;
   }
 }
+
+/* -----------------------------------------------------------------------------
+   Print (the inventory report): light, no app chrome, tables that break cleanly. */
+.print-only {
+  display: none;
+}
+
+@media print {
+  :root,
+  :root:not([data-theme="light"]),
+  :root[data-theme="dark"] {
+    color-scheme: light;
+    --ground: oklch(1 0 0);
+    --ground-2: oklch(0.96 0.004 158);
+    --ink: oklch(0.15 0.012 158);
+    --ink-2: oklch(0.38 0.016 158);
+    --line: oklch(0.82 0.01 158);
+  }
+  @page {
+    size: A4;
+    margin: 14mm 12mm 16mm;
+    @bottom-left {
+      content: "J&J Sportswear · Inventory report";
+      font-size: 8pt;
+      color: oklch(0.38 0.016 158);
+    }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 8pt;
+      color: oklch(0.38 0.016 158);
+    }
+  }
+  body {
+    background: white;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .site-nav,
+  .admin-dock,
+  .admin-toasts,
+  [data-print="hide"] {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+  span.print-only {
+    display: inline;
+  }
+  main {
+    padding-bottom: 0 !important;
+  }
+  main > div {
+    padding-top: 0 !important;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .report-scroll {
+    overflow: visible;
+  }
+  .report-scroll table {
+    min-width: 0;
+    font-size: 10pt;
+  }
+  .report-scroll td,
+  .report-scroll th {
+    padding-top: 4pt;
+    padding-bottom: 4pt;
+  }
+  .report-section {
+    margin-top: 1.75rem;
+  }
+  /* A section's heading never sits alone at the foot of a page. */
+  .report-section > :first-child {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+  .report-section thead,
+  .report-section tbody:first-of-type tr:first-child {
+    break-before: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr,
+  .report-group {
+    break-inside: avoid;
+  }
+}

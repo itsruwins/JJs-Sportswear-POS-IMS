@@ -2,16 +2,8 @@
 
 import { useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { LoaderCircle } from "lucide-react";
-import type { HistoryFilters as Filters, HistoryRange, HistoryType } from "@/lib/admin/history";
-
-const RANGES: { id: HistoryRange; label: string }[] = [
-  { id: "today", label: "Today" },
-  { id: "7d", label: "7 days" },
-  { id: "30d", label: "30 days" },
-  { id: "all", label: "All time" },
-  { id: "custom", label: "Custom" },
-];
+import type { HistoryFilters as Filters, HistoryType } from "@/lib/admin/history";
+import { filterSelect as select, RangePicker } from "./range-picker";
 
 const TYPES: { id: HistoryType; label: string }[] = [
   { id: "all", label: "All changes" },
@@ -21,12 +13,6 @@ const TYPES: { id: HistoryType; label: string }[] = [
   { id: "adjustment", label: "Recounts" },
   { id: "sale", label: "Sales" },
 ];
-
-// Typing a year fires change events for "0002", "0020"…; the inputs stay uncontrolled so typing isn't undone, and only a real date applies.
-const fullDate = (v: string) => /^(19|20)\d{2}-\d{2}-\d{2}$/.test(v);
-
-const select =
-  "h-10 min-w-0 rounded-full bg-ground-2 px-3.5 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] outline-none focus-visible:shadow-[0_0_0_2px_var(--amber)]";
 
 /** History filters live in the URL, so a filtered view survives a refresh and can be shared. */
 export function HistoryFilters({
@@ -68,55 +54,7 @@ export function HistoryFilters({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <div role="group" aria-label="Date range" className="flex flex-wrap gap-1.5">
-          {RANGES.map((r) => {
-            const on = filters.range === r.id;
-            return (
-              <button
-                key={r.id}
-                type="button"
-                aria-pressed={on}
-                onClick={() =>
-                  go(r.id === "custom" ? { range: "custom", from: filters.from || filters.to, to: filters.to } : { range: r.id })
-                }
-                className={`press inline-flex h-10 items-center rounded-full px-2.5 text-[0.875rem] font-semibold sm:px-3.5 ${
-                  on ? "bg-ink text-ground" : "text-ink-2 shadow-[inset_0_0_0_1px_var(--line)] hover:text-ink"
-                }`}
-              >
-                {r.label}
-              </button>
-            );
-          })}
-        </div>
-        {filters.range === "custom" && (
-          <div className="flex flex-wrap items-center gap-2 text-[0.875rem] text-ink-2">
-            <label className="flex items-center gap-2">
-              From
-              <input
-                key={filters.from}
-                type="date"
-                defaultValue={filters.from}
-                max={filters.to}
-                onChange={(e) => fullDate(e.target.value) && go({ from: e.target.value })}
-                className={select}
-              />
-            </label>
-            <label className="flex items-center gap-2">
-              to
-              <input
-                key={filters.to}
-                type="date"
-                defaultValue={filters.to}
-                min={filters.from}
-                onChange={(e) => fullDate(e.target.value) && go({ to: e.target.value })}
-                className={select}
-              />
-            </label>
-          </div>
-        )}
-        {pending && <LoaderCircle aria-label="Updating" className="size-4 animate-spin text-ink-2" />}
-      </div>
+      <RangePicker range={filters.range} from={filters.from} to={filters.to} pending={pending} onPick={go} />
 
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
         <label className="sr-only" htmlFor="h-type">

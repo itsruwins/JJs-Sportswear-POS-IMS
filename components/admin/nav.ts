@@ -36,7 +36,7 @@ export const MORE_SECTIONS: AdminSection[] = [
   { label: "Custom orders", icon: ClipboardList, description: "Accept, track, and finish orders" },
   { label: "Payments", icon: Wallet, description: "Check GCash and cash payments" },
   { label: "Chat", icon: MessageCircle, description: "Messages with customers" },
-  { label: "Reports", icon: ChartColumn, description: "Sales and inventory reports", ownerOnly: true },
+  { label: "Reports", icon: ChartColumn, href: "/admin/reports", description: "Inventory report and exports", ownerOnly: true },
   { label: "Staff", icon: Users, description: "Accounts and roles", ownerOnly: true },
 ];
 

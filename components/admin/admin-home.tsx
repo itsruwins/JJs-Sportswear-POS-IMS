@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Check, ChevronRight, Shirt } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, Shirt } from "lucide-react";
+import { formatPeso, type StockMove } from "@/lib/admin/catalog";
 import type { StaffRole } from "@/lib/admin/session";
+import { RecentMoves } from "./stock/recent-moves";
 import { DOCK_SECTIONS, MORE_SECTIONS, ROLE_LABEL, visibleTo } from "./nav";
 import { ReadoutBoard, type Readout } from "./readout-board";
 
@@ -25,6 +27,9 @@ type Props = {
   productCount: number;
   needsRestock: RestockRow[];
   attentionCount: number;
+  /** Stock on hand and this week's movement; value is null for staff (owner only). */
+  stockLine: { pieces: number; value: number | null; weekIn: number | null; weekOut: number | null };
+  recentMoves: StockMove[] | null;
 };
 
 /** The admin home screen. The page fetches; this only renders. */
@@ -39,6 +44,8 @@ export function AdminHomeView({
   productCount,
   needsRestock,
   attentionCount,
+  stockLine,
+  recentMoves,
 }: Props) {
   return (
     <div className="mx-auto max-w-[80rem] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
@@ -64,7 +71,26 @@ export function AdminHomeView({
           We couldn’t load the shop’s numbers just now. Refresh the page to try again.
         </p>
       ) : (
-        <ReadoutBoard items={readouts} />
+        <>
+          <ReadoutBoard items={readouts} />
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-x-10 gap-y-5 border-b border-line pb-6">
+            <dl className="flex flex-wrap gap-x-10 gap-y-4">
+              <Figure label="Pieces on hand" value={stockLine.pieces.toLocaleString("en-PH")} />
+              {stockLine.value !== null && <Figure label="Stock value" value={formatPeso(stockLine.value)} />}
+              {stockLine.weekIn !== null && <Figure label="In, last 7 days" value={signed(stockLine.weekIn, "+")} />}
+              {stockLine.weekOut !== null && <Figure label="Out, last 7 days" value={signed(stockLine.weekOut, "−")} />}
+            </dl>
+            {role === "owner" && (
+              <Link
+                href="/admin/reports"
+                className="press inline-flex h-11 items-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2"
+              >
+                Inventory report
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </Link>
+            )}
+          </div>
+        </>
       )}
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-14">
@@ -125,6 +151,28 @@ export function AdminHomeView({
           )}
         </section>
 
+        <div className="flex flex-col gap-10">
+        <section aria-labelledby="recent-title">
+          <h2 id="recent-title" className="voice-display border-b border-line pb-3 text-[1.75rem]">
+            Recent changes
+          </h2>
+          {recentMoves === null ? (
+            <p className="py-6 text-[0.9375rem] text-ink-2">We couldn’t load recent changes. Refresh to try again.</p>
+          ) : (
+            <>
+              <RecentMoves moves={recentMoves} />
+              {recentMoves.length > 0 && (
+                <Link
+                  href="/admin/history"
+                  className="press mt-3 inline-flex items-center gap-1.5 rounded-full py-1.5 text-[0.9375rem] font-semibold text-ink hover:underline"
+                >
+                  See all history
+                  <ArrowRight aria-hidden="true" className="size-4" />
+                </Link>
+              )}
+            </>
+          )}
+        </section>
         {role === "owner" ? (
           <section aria-labelledby="setup-title">
             <h2 id="setup-title" className="voice-display border-b border-line pb-3 text-[1.75rem]">
@@ -162,7 +210,19 @@ export function AdminHomeView({
             </ul>
           </section>
         )}
+        </div>
       </div>
+    </div>
+  );
+}
+
+const signed = (n: number, sign: string) => (n === 0 ? "0" : `${sign}${n.toLocaleString("en-PH")}`);
+
+function Figure({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[0.8125rem] text-ink-2">{label}</dt>
+      <dd className="voice-board tabular mt-1 text-[1.75rem] leading-none text-ink">{value}</dd>
     </div>
   );
 }
