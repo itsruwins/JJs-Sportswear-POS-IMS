@@ -81,6 +81,8 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 ## Hardening to consider (deferred on purpose)
 
 - **Atomic product save:** move the product save into one database function (a new migration) so a failure midway can't leave partial changes. Phase 3 instead makes every step self-correcting on retry and keeps new products hidden until the save completes.
+- **Batch stock save:** one database function that applies a whole multi-size adjustment in a single transaction (with a request id so a retried save can't double a restock). Phase 4 runs each change separately, a few at a time, and reports any that fail.
+- **Atomic recount:** a database function that sets a counted number under the row lock, so a sale landing at the same instant can't skew the correction. Phase 4 reads the count milliseconds before writing.
 - **Edit conflicts:** check `updated_at` so two people editing the same product don't overwrite each other's changes.
 
 ## How each phase runs

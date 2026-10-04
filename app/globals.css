@@ -564,6 +564,13 @@ input[type="search"]::-webkit-search-cancel-button {
   }
 }
 
+/* Wider sheet for size × color grids (stock adjustments). */
+@media (min-width: 640px) {
+  .auth-dialog.dialog-wide {
+    width: min(42rem, calc(100vw - 2rem));
+  }
+}
+
 html:has(.auth-dialog[open]) {
   overflow: hidden;
 }
@@ -609,6 +616,17 @@ html:has(.auth-dialog[open]) {
 input.auth-input:focus-visible,
 .auth-input input:focus-visible {
   outline: none;
+}
+
+/* A field with a problem: a solid ink ring, so it never reads as the amber focus ring. */
+.auth-input.is-error {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.auth-input.is-error:focus-within {
+  box-shadow:
+    inset 0 0 0 2px var(--ink),
+    0 0 0 2px var(--amber);
 }
 
 .auth-alert {

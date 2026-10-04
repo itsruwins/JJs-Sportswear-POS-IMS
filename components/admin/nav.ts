@@ -26,7 +26,7 @@ export type AdminSection = {
 export const DOCK_SECTIONS: AdminSection[] = [
   { label: "Home", icon: House, href: "/admin", description: "Today at the shop" },
   { label: "Products", icon: Shirt, href: "/admin/products", description: "Catalog, sizes, and colors" },
-  { label: "Stock", icon: PackagePlus, description: "Restock and adjust counts" },
+  { label: "Stock", icon: PackagePlus, href: "/admin/stock", description: "Restock and adjust counts" },
   { label: "History", icon: History, description: "Every stock change, logged" },
 ];
 

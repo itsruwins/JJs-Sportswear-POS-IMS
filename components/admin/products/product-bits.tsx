@@ -28,7 +28,16 @@ export function ProductThumb({ src, name, size = "md" }: { src: string | null; n
 }
 
 /** Stock per size: lit card in stock, amber when a color is low or out (a notch when out), hollow when none are left. */
-export function SizeRail({ sizes, compact = false }: { sizes: SizeSummary[]; compact?: boolean }) {
+export function SizeRail({
+  sizes,
+  compact = false,
+  onSelect,
+}: {
+  sizes: SizeSummary[];
+  compact?: boolean;
+  /** When set, each size is a button (e.g. to adjust that size's stock). */
+  onSelect?: (size: string) => void;
+}) {
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label="Stock by size">
       {sizes.map((s) => {
@@ -42,24 +51,47 @@ export function SizeRail({ sizes, compact = false }: { sizes: SizeSummary[]; com
                 ? "running low"
                 : "in stock";
         return (
-          <li
-            key={s.size}
-            data-stock={s.state}
-            data-partial={s.colorOut || undefined}
-            title={`${s.size}: ${s.total} (${detail})`}
-            aria-label={`${s.size}: ${s.total}, ${label}`}
-            className={`cell flex flex-col items-center justify-center rounded-lg ${compact ? "h-11 min-w-10 px-1.5" : "h-12 min-w-12 px-2"}`}
-          >
-            <span aria-hidden="true" className="voice-label text-[0.6875rem] leading-none opacity-75">
-              {s.size}
-            </span>
-            <span aria-hidden="true" className="voice-board tabular mt-0.5 text-[1.25rem] leading-none">
-              {s.total}
-            </span>
+          <li key={s.size}>
+            {onSelect ? (
+              <button
+                type="button"
+                onClick={() => onSelect(s.size)}
+                data-stock={s.state}
+                data-partial={s.colorOut || undefined}
+                title={`${s.size}: ${s.total} (${detail}). Adjust`}
+                aria-label={`${s.size}: ${s.total}, ${label}. Adjust ${s.size}`}
+                className={`cell press flex flex-col items-center justify-center rounded-lg hover:brightness-95 ${compact ? "h-11 min-w-10 px-1.5" : "h-12 min-w-12 px-2"}`}
+              >
+                <CellFace size={s.size} total={s.total} />
+              </button>
+            ) : (
+              <span
+                data-stock={s.state}
+                data-partial={s.colorOut || undefined}
+                title={`${s.size}: ${s.total} (${detail})`}
+                aria-label={`${s.size}: ${s.total}, ${label}`}
+                className={`cell flex flex-col items-center justify-center rounded-lg ${compact ? "h-11 min-w-10 px-1.5" : "h-12 min-w-12 px-2"}`}
+              >
+                <CellFace size={s.size} total={s.total} />
+              </span>
+            )}
           </li>
         );
       })}
     </ul>
+  );
+}
+
+function CellFace({ size, total }: { size: string; total: number }) {
+  return (
+    <>
+      <span aria-hidden="true" className="voice-label text-[0.6875rem] leading-none opacity-75">
+        {size}
+      </span>
+      <span aria-hidden="true" className="voice-board tabular mt-0.5 text-[1.25rem] leading-none">
+        {total}
+      </span>
+    </>
   );
 }
 

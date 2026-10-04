@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CircleCheck } from "lucide-react";
 import { ProductActions } from "@/components/admin/products/product-actions";
+import { AdjustStockButton } from "@/components/admin/stock/adjust-button";
 import { Pill, ProductThumb } from "@/components/admin/products/product-bits";
 import {
   fetchProduct,
@@ -126,6 +127,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
               archived={!product.is_active}
               isOwner={profile.role === "owner"}
               canDelete={canDelete}
+              lead={product.is_active ? <AdjustStockButton product={product} /> : undefined}
             />
             <p className="mt-3 text-[0.8125rem] text-ink-2">Last updated {updated}</p>
           </div>

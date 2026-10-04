@@ -6,13 +6,23 @@ import { useRouter } from "next/navigation";
 import { Archive, ArchiveRestore, LoaderCircle, Pencil, Trash2 } from "lucide-react";
 import { deleteProduct, setProductArchived } from "@/app/admin/products/actions";
 
-type Props = { id: string; name: string; archived: boolean; isOwner: boolean; canDelete: boolean };
+type Props = {
+  id: string;
+  name: string;
+  archived: boolean;
+  isOwner: boolean;
+  canDelete: boolean;
+  /** Rendered first, e.g. the Adjust stock button. */
+  lead?: React.ReactNode;
+};
 
+const primary =
+  "press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep";
 const secondary =
   "press inline-flex h-11 items-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 disabled:opacity-70";
 
 /** Edit, archive or restore, and (owner only) delete. */
-export function ProductActions({ id, name, archived, isOwner, canDelete }: Props) {
+export function ProductActions({ id, name, archived, isOwner, canDelete, lead }: Props) {
   const router = useRouter();
   const confirmRef = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState<"archive" | "delete" | null>(null);
@@ -43,10 +53,8 @@ export function ProductActions({ id, name, archived, isOwner, canDelete }: Props
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2.5">
-        <Link
-          href={`/admin/products/${id}/edit`}
-          className="press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
-        >
+        {lead}
+        <Link href={`/admin/products/${id}/edit`} className={lead ? secondary : primary}>
           <Pencil aria-hidden="true" className="size-4" />
           Edit product
         </Link>
