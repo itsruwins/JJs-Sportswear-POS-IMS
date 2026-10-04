@@ -12,7 +12,7 @@ const LABEL: Record<StockMove["transaction_type"], string> = {
 const time = new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" });
 
 /** The latest stock changes, so a save is visible in the log right away. */
-export function RecentMoves({ moves }: { moves: StockMove[] }) {
+export function RecentMoves({ moves, withProduct = true }: { moves: StockMove[]; withProduct?: boolean }) {
   if (moves.length === 0) {
     return <p className="py-6 text-[0.9375rem] text-ink-2">No stock changes yet. Every restock, return, damage, and recount shows up here.</p>;
   }
@@ -33,14 +33,14 @@ export function RecentMoves({ moves }: { moves: StockMove[] }) {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[0.9375rem] leading-snug text-ink">
-                {m.variant?.product ? (
+                {!withProduct ? null : m.variant?.product ? (
                   <Link href={`/admin/products/${m.variant.product.id}`} className="font-semibold hover:underline">
                     {m.variant.product.name}
                   </Link>
                 ) : (
                   <span className="font-semibold">Removed product</span>
                 )}{" "}
-                <span className="text-ink-2">
+                <span className={withProduct ? "text-ink-2" : "font-semibold"}>
                   {[m.variant?.size, m.variant?.color].filter(Boolean).join(" · ")}
                 </span>
               </p>

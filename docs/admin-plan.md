@@ -63,6 +63,7 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 - A live notifications bell.
 - Add `products` and `product_variants` to the `supabase_realtime` publication (a new migration), so the admin's counts update the moment stock moves. Phase 1 refreshes them on tab focus and every minute instead.
 - **Done when:** staff can answer "who changed this, when, and why" and see what needs restocking.
+- **Built (2026-10-04):** `/admin/history` (filters in the URL: Today / 7 days / 30 days / All time / custom dates in Manila time, kind, product, staff; changes and pieces in/out totals; grouped by day; "Show more" in steps of 50), a "Stock history" section on each product page, and "See all history" from Stock. The notification bell shows unread count, list, mark read on tap, and mark all read, with brief pop-ups for new alerts. Low-stock alerts open the product. Realtime migration `20261005000000_realtime_stock.sql` adds products, product_variants, and inventory_transactions to the publication; pages refresh when stock moves, and the focus/one-minute refresh remains the fallback. The low-stock list is Home's "Needs restock" plus the Stock page's filter.
 
 ### Phase 6: Inventory dashboard + report
 - An overview: low and out-of-stock counts, recent movements, and stock value.
@@ -83,6 +84,7 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 - **Atomic product save:** move the product save into one database function (a new migration) so a failure midway can't leave partial changes. Phase 3 instead makes every step self-correcting on retry and keeps new products hidden until the save completes.
 - **Batch stock save:** one database function that applies a whole multi-size adjustment in a single transaction (with a request id so a retried save can't double a restock). Phase 4 runs each change separately, a few at a time, and reports any that fail.
 - **Atomic recount:** a database function that sets a counted number under the row lock, so a sale landing at the same instant can't skew the correction. Phase 4 reads the count milliseconds before writing.
+- **History totals in SQL:** a `security invoker` function that sums pieces in/out for the history filters. Phase 5 reads the quantities 1,000 rows at a time, which is fine for a shop's volume but slower at scale. The list itself shows up to 500 rows per view.
 - **Edit conflicts:** check `updated_at` so two people editing the same product don't overwrite each other's changes.
 
 ## How each phase runs

@@ -886,6 +886,86 @@ button.admin-dock-item[aria-expanded="true"]:hover {
   }
 }
 
+/* Notifications drop from the bell, like the account menu. */
+.admin-notifications {
+  top: 4.375rem;
+  right: 1rem;
+  width: min(23rem, calc(100vw - 2rem));
+  transform: translateY(-6px) scale(0.97);
+  transform-origin: 100% 0;
+}
+
+.admin-notifications:popover-open {
+  transform: none;
+}
+
+@starting-style {
+  .admin-notifications:popover-open {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+}
+
+@media (min-width: 640px) {
+  .admin-notifications {
+    right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-notifications {
+    right: max(2.5rem, calc((100vw - 80rem) / 2 + 2.5rem));
+  }
+}
+
+/* Alert pop-ups: top-right under the bar; they slide in from the bell's side and fade out. */
+.admin-toasts {
+  position: fixed;
+  z-index: calc(var(--z-sticky) + 1);
+  top: 4.5rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(22rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .admin-toasts {
+    right: max(2.5rem, calc((100vw - 80rem) / 2 + 2.5rem));
+  }
+}
+
+.admin-toast {
+  pointer-events: auto;
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 18px 40px -18px oklch(0.15 0.05 158 / 0.45);
+  animation: toast-in 320ms var(--ease-out) both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-toast {
+    animation: none;
+  }
+  .admin-notifications,
+  .admin-notifications:popover-open {
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .admin-pop,
   .admin-pop:popover-open {

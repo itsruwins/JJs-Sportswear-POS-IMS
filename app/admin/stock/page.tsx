@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { LiveRefresh } from "@/components/admin/live-refresh";
 import { RecentMoves } from "@/components/admin/stock/recent-moves";
 import { StockBrowser } from "@/components/admin/stock/stock-browser";
@@ -37,6 +39,15 @@ export default async function StockPage() {
             Recent changes
           </h2>
           <RecentMoves moves={moves} />
+          {moves.length > 0 && (
+            <Link
+              href="/admin/history"
+              className="press mt-3 inline-flex items-center gap-1.5 rounded-full py-1.5 text-[0.9375rem] font-semibold text-ink hover:underline"
+            >
+              See all history
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </Link>
+          )}
         </section>
       </div>
     </div>

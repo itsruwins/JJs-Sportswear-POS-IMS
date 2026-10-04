@@ -9,9 +9,10 @@ import type { StaffRole } from "@/lib/admin/session";
 import { Wordmark } from "@/components/landing/wordmark";
 import { ThemeButton } from "@/components/theme-button";
 import { ROLE_LABEL } from "./nav";
+import { NotificationBell } from "./notification-bell";
 import { usePopoverOpen } from "./use-popover-open";
 
-type Props = { username: string; fullName: string | null; role: StaffRole };
+type Props = { userId: string; username: string; fullName: string | null; role: StaffRole };
 
 function initials(fullName: string | null, username: string) {
   const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
@@ -19,7 +20,7 @@ function initials(fullName: string | null, username: string) {
   return (parts[0]?.[0] ?? username[0] ?? "?").toUpperCase();
 }
 
-export function AdminTopBar({ username, fullName, role }: Props) {
+export function AdminTopBar({ userId, username, fullName, role }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const router = useRouter();
@@ -52,6 +53,7 @@ export function AdminTopBar({ username, fullName, role }: Props) {
         </Link>
 
         <ThemeButton className="ml-auto" />
+        <NotificationBell userId={userId} />
         <button
           type="button"
           popoverTarget="admin-account"
