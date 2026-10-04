@@ -160,14 +160,16 @@ a {
   text-decoration-thickness: 1px;
 }
 
+/* Only the wrapping style: the text-wrap shorthand would also reset the wrap mode and undo
+   `truncate` (white-space: nowrap) on any heading or paragraph. */
 h1,
 h2,
 h3 {
-  text-wrap: balance;
+  text-wrap-style: balance;
 }
 
 p {
-  text-wrap: pretty;
+  text-wrap-style: pretty;
 }
 
 html {
@@ -666,6 +668,24 @@ input.auth-input:focus-visible,
 
 /* ---------- Admin: dock ---------- */
 
+/* Point of sale: the running sale, floating just above the dock on phones and tablets. */
+.pos-cartbar {
+  position: fixed;
+  z-index: var(--z-sticky);
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(env(safe-area-inset-bottom) + 4.75rem);
+}
+@media (min-width: 640px) {
+  .pos-cartbar {
+    left: 50%;
+    right: auto;
+    width: min(30rem, calc(100vw - 3rem));
+    transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom) + 5.625rem);
+  }
+}
+
 /* A solid white bar that floats over the page. Inset padding and the pill's radius
    are paired (pill radius = bar radius − padding) so the corners stay concentric. */
 .admin-dock {
@@ -1104,5 +1124,53 @@ button.admin-dock-item[data-current="true"]:hover {
   tr,
   .report-group {
     break-inside: avoid;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Receipts (point of sale): a slip of paper on screen, an 80 mm roll or A4 in print.
+   ReceiptActions sets html[data-paper] and the page size just before printing. */
+.receipt-rule {
+  border-top: 1px dashed color-mix(in oklch, var(--card-ink) 35%, transparent);
+}
+.receipt-void {
+  box-shadow: inset 0 0 0 1.5px var(--card-ink);
+}
+
+@media print {
+  html[data-paper="thermal"] {
+    font-size: 13px;
+  }
+  /* Thermal heads drop or dither grey, so everything prints in full black. */
+  html[data-paper] .receipt [class*="opacity-"] {
+    opacity: 1;
+  }
+  html[data-paper="a4"] {
+    font-size: 15px;
+  }
+  html[data-paper] .receipt {
+    max-width: none;
+    padding: 0;
+    background: white;
+    color: black;
+    box-shadow: none;
+  }
+  html[data-paper] main > div {
+    padding: 0 !important;
+    max-width: none;
+  }
+  html[data-paper="thermal"] .receipt {
+    width: 72mm;
+    margin: 0;
+  }
+  html[data-paper="a4"] .receipt {
+    width: 120mm;
+    margin: 0 auto;
+  }
+  html[data-paper] .receipt-rule {
+    border-top-color: black;
+  }
+  html[data-paper] .receipt-void {
+    box-shadow: inset 0 0 0 1.5px black;
   }
 }

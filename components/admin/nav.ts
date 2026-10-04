@@ -5,6 +5,7 @@ import {
   House,
   MessageCircle,
   PackagePlus,
+  ReceiptText,
   ScanBarcode,
   Shirt,
   Users,
@@ -32,7 +33,8 @@ export const DOCK_SECTIONS: AdminSection[] = [
 
 /** Behind the dock's More button. */
 export const MORE_SECTIONS: AdminSection[] = [
-  { label: "Point of sale", icon: ScanBarcode, description: "Ring up counter sales" },
+  { label: "Point of sale", icon: ScanBarcode, href: "/admin/pos", description: "Ring up counter sales" },
+  { label: "Sales", icon: ReceiptText, href: "/admin/sales", description: "Receipts, reprints, and voids" },
   { label: "Custom orders", icon: ClipboardList, description: "Accept, track, and finish orders" },
   { label: "Payments", icon: Wallet, description: "Check GCash and cash payments" },
   { label: "Chat", icon: MessageCircle, description: "Messages with customers" },

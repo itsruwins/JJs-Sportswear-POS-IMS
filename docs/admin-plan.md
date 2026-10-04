@@ -76,6 +76,23 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 7. **Staff and roles:** the owner promotes accounts to staff (`set_user_role`).
    - **Built (2026-10-04):** `/admin/staff` (owner only, in the More menu). Team lists every owner and staff member with role, contact, joined date, last stock change, and a link to their History. Staff can be made owner or removed from staff, other owners can be changed to staff, and the owner's own row can't be changed (another owner can). Add staff searches customer accounts by username, name, email, or phone. Every change asks first; making someone an owner needs their username typed. Removed staff lose access on their next page or action. The database still refuses to remove the last owner. History keeps a former staff member in its staff filter, marked "(former staff)", so their history link still works. Migration `20261006000000_safe_role_changes.sql` makes role changes run one at a time, so two owners can't remove each other at once and leave the shop with none. It also re-checks the role the owner saw under the row lock. The screen works before this migration is run, but without those two protections.
 8. **Point of sale:** sales at the counter, cash or GCash, change, receipts (`create_pos_sale`).
+   - **Built (2026-10-04):**
+     - **`/admin/pos`** (staff and owner, in the More menu):
+       - Find an item by name, SKU, size, or color, then tap a size in its color × size grid. Each cell shows what's left after the current sale; sold-out sizes can't be tapped.
+       - The sale lists items with quantities, the total, and Cash or GCash. Cash has Exact and quick amounts and shows the change. GCash needs the 13-digit reference.
+       - Layout: side by side on desktop; on phones and tablets the sale is a second step behind a "Review sale" bar.
+       - Stock clashes: if stock moves while a sale is open, the line is flagged with a fix ("Change to N" or "Remove"), and Charge waits until it's fixed. The database's own refusals at checkout point back to the line.
+     - **Receipts** (`/admin/sales/[id]`): a paper slip that prints on an 80 mm roll or A4. Shop details are placeholders in `lib/admin/shop.ts`, and the slip says "This is not an official receipt."
+     - **Voids:** the owner can void a sale with a reason. The stock goes back as a return, and the receipt is stamped VOIDED.
+     - **`/admin/sales`:** staff see today's sales; the owner picks any period and sees totals (sales, total, cash, GCash; voids excluded).
+     - **Migration `20261007000000_pos_gcash_and_voids.sql`:** adds the GCash reference (one live sale per reference) and voids. Until it runs, cash sales still work, but GCash sales and voids ask for the update. It also adds:
+       - a one-time key per sale, so a Charge retried after a lost reply returns the same sale instead of recording it twice
+       - GCash pays exactly the database's total
+       - refusals name the variant, so the cart line is found even when a SKU has spaces
+     - **Keeping the sale:** the open sale is kept in the browser tab, so a stray tap or a refresh doesn't lose it.
+     - **Reports:** a voided sale's stock return counts against "Sold", not as a customer return.
+     - **Owner totals:** the Sales page's totals cover the whole period, not just the 300 sales listed.
+     - No discounts: everything sells at its listed price.
 9. **Sales reports:** owner only.
 10. **Custom orders:** accept or decline, production status, finished photo.
 11. **Payment verification:** GCash reference and screenshot review, down payment and balance.
@@ -90,6 +107,8 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 - **Edit conflicts:** check `updated_at` so two people editing the same product don't overwrite each other's changes.
 - **Staff invite links:** the owner enters an email and the person signs up straight into staff. Accounts log in by username today, so this needs a server-side key and email setup. Phase 7 asks new staff to sign up as customers first.
 - **Instant removal:** add `profiles` to the realtime publication so a removed staff member's open admin tab leaves at once, instead of on their next page or action.
+- **Sales visibility:** staff seeing only today's sales is a screen rule; the `sales` read policy lets any staff member read every sale through the API. Narrow it in RLS if older sales should be owner-only at the data level.
+- **Sales totals in SQL:** the Sales page sums the period 1,000 rows at a time in the app. Phase 9's reports should sum in the database instead.
 - **Contact privacy (existing RLS):** the profiles read policy lets any signed-in customer read every column of staff and owner profiles, including email and phone. That access exists for chat names. It also lets every staff member, not only the owner, read all customers' contact details through the API. Fix with a view or `security definer` function that exposes only `id, username, full_name, avatar_url` for chat, and keep the table itself to "own row, or staff". The Staff screen's owner-only contact column is a screen rule, not a data boundary, until then.
 
 ## How each phase runs

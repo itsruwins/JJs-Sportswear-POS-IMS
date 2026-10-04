@@ -147,7 +147,8 @@ export function RestockTable({ rows }: { rows: StockRow[] }) {
 /** Zero reads as a dash so the real numbers stand out; pieces out carry a minus so a row adds across to Net. */
 const qty = (n: number, sign: "none" | "auto" | "minus" = "none") => {
   if (n === 0) return <span className="text-ink-2">–</span>;
-  if (sign === "minus") return `−${n}`;
+  // Pieces out read as minus; a negative count (a void after its sale's period) reads as plus.
+  if (sign === "minus") return n > 0 ? `−${n}` : `+${-n}`;
   if (sign === "auto") return n > 0 ? `+${n}` : `−${-n}`;
   return n;
 };

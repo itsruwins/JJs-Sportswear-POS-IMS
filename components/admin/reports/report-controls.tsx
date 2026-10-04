@@ -6,15 +6,25 @@ import { Printer } from "lucide-react";
 import { RangePicker, type RangePatch } from "@/components/admin/history/range-picker";
 import type { HistoryRange } from "@/lib/admin/history";
 
-/** The movement summary's period, kept in the URL (30 days is the default). */
-export function ReportPeriod({ range, from, to }: { range: HistoryRange; from: string; to: string }) {
+/** A page's period, kept in the URL; the default range (30 days on Reports) stays out of it. */
+export function ReportPeriod({
+  range,
+  from,
+  to,
+  defaultRange = "30d",
+}: {
+  range: HistoryRange;
+  from: string;
+  to: string;
+  defaultRange?: HistoryRange;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
   const pick = (patch: RangePatch) => {
     const next = { range, from, to, ...patch };
     const params = new URLSearchParams();
-    if (next.range !== "30d") params.set("range", next.range);
+    if (next.range !== defaultRange) params.set("range", next.range);
     if (next.range === "custom") {
       params.set("from", next.from);
       params.set("to", next.to);

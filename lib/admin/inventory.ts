@@ -163,7 +163,7 @@ export async function fetchMovements(supabase: SupabaseClient, fromIso: string, 
   for (let i = 0; i < MAX_PAGES; i++) {
     let q = supabase
       .from("inventory_transactions")
-      .select("id, transaction_type, quantity, variant:product_variants (product_id, product:products (name))")
+      .select("id, transaction_type, quantity, reason, variant:product_variants (product_id, product:products (name))")
       .lt("created_at", toIso);
     if (fromIso) q = q.gte("created_at", fromIso);
     if (afterId) q = q.gt("id", afterId);
@@ -175,6 +175,7 @@ export async function fetchMovements(supabase: SupabaseClient, fromIso: string, 
           id: string;
           transaction_type: string;
           quantity: number;
+          reason: string | null;
           variant: { product_id: string; product: { name: string } | null } | null;
         }[]
       >();
@@ -188,8 +189,12 @@ export async function fetchMovements(supabase: SupabaseClient, fromIso: string, 
       const id = t.variant?.product_id ?? "";
       let m = byProduct.get(id);
       if (!m) byProduct.set(id, (m = blank(id, t.variant?.product?.name ?? "Removed product")));
+      // A voided sale's stock comes back logged as a return ("Voided sale RCPT-…"); it undoes the
+      // sale, so it counts against Sold rather than as a customer return.
+      const voidedSale = t.transaction_type === "return" && (t.reason ?? "").startsWith("Voided sale ");
       for (const target of [m, total]) {
         if (t.transaction_type === "restock") target.restocked += t.quantity;
+        else if (voidedSale) target.sold -= t.quantity;
         else if (t.transaction_type === "return") target.returned += t.quantity;
         else if (t.transaction_type === "damage") target.damaged -= t.quantity;
         else if (t.transaction_type === "adjustment") target.recounted += t.quantity;
