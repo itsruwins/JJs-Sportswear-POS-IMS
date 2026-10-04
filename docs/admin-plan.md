@@ -63,25 +63,86 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 - A live notifications bell.
 - Add `products` and `product_variants` to the `supabase_realtime` publication (a new migration), so the admin's counts update the moment stock moves. Phase 1 refreshes them on tab focus and every minute instead.
 - **Done when:** staff can answer "who changed this, when, and why" and see what needs restocking.
+- **Built (2026-10-04):** `/admin/history` (filters in the URL: Today / 7 days / 30 days / All time / custom dates in Manila time, kind, product, staff; changes and pieces in/out totals; grouped by day; "Show more" in steps of 50), a "Stock history" section on each product page, and "See all history" from Stock. The notification bell shows unread count, list, mark read on tap, and mark all read, with brief pop-ups for new alerts. Low-stock alerts open the product. Realtime migration `20261005000000_realtime_stock.sql` adds products, product_variants, and inventory_transactions to the publication; pages refresh when stock moves, and the focus/one-minute refresh remains the fallback. The low-stock list is Home's "Needs restock" plus the Stock page's filter.
 
 ### Phase 6: Inventory dashboard + report
 - An overview: low and out-of-stock counts, recent movements, and stock value.
 - An inventory report that can be printed or exported to CSV.
 - **Done when:** the owner gets the inventory picture on one screen and can print or export it.
+- **Built (2026-10-04):** Home is the dashboard. It shows pieces on hand, stock value (owner only, at selling price), pieces in and out over the last 7 days, Needs restock, and Recent changes. `/admin/reports` (owner only, in the More menu) has a summary, Needs restock, Stock movement for a chosen period (Today / 7 / 30 / All time / custom), and Stock on hand grouped by product. Each section downloads as CSV, and "Print report" gives a clean A4 printout. History has an owner-only CSV download of its current filters. There's no cost price yet, so profit and margin wait for a future cost-price column.
 
 ## Later phases (planned in detail when we reach them)
 
 7. **Staff and roles:** the owner promotes accounts to staff (`set_user_role`).
+   - **Built (2026-10-04):** `/admin/staff` (owner only, in the More menu). Team lists every owner and staff member with role, contact, joined date, last stock change, and a link to their History. Staff can be made owner or removed from staff, other owners can be changed to staff, and the owner's own row can't be changed (another owner can). Add staff searches customer accounts by username, name, email, or phone. Every change asks first; making someone an owner needs their username typed. Removed staff lose access on their next page or action. The database still refuses to remove the last owner. History keeps a former staff member in its staff filter, marked "(former staff)", so their history link still works. Migration `20261006000000_safe_role_changes.sql` makes role changes run one at a time, so two owners can't remove each other at once and leave the shop with none. It also re-checks the role the owner saw under the row lock. The screen works before this migration is run, but without those two protections.
 8. **Point of sale:** sales at the counter, cash or GCash, change, receipts (`create_pos_sale`).
+   - **Built (2026-10-04):**
+     - **`/admin/pos`** (staff and owner, in the More menu):
+       - Find an item by name, SKU, size, or color, then tap a size in its color × size grid. Each cell shows what's left after the current sale; sold-out sizes can't be tapped.
+       - The sale lists items with quantities, the total, and Cash or GCash. Cash has Exact and quick amounts and shows the change. GCash needs the 13-digit reference.
+       - Layout: side by side on desktop; on phones and tablets the sale is a second step behind a "Review sale" bar.
+       - Stock clashes: if stock moves while a sale is open, the line is flagged with a fix ("Change to N" or "Remove"), and Charge waits until it's fixed. The database's own refusals at checkout point back to the line.
+     - **Receipts** (`/admin/sales/[id]`): a paper slip that prints on an 80 mm roll or A4. Shop details are placeholders in `lib/admin/shop.ts`, and the slip says "This is not an official receipt."
+     - **Voids:** the owner can void a sale with a reason. The stock goes back as a return, and the receipt is stamped VOIDED.
+     - **`/admin/sales`:** staff see today's sales; the owner picks any period and sees totals (sales, total, cash, GCash; voids excluded).
+     - **Migration `20261007000000_pos_gcash_and_voids.sql`:** adds the GCash reference (one live sale per reference) and voids. Until it runs, cash sales still work, but GCash sales and voids ask for the update. It also adds:
+       - a one-time key per sale, so a Charge retried after a lost reply returns the same sale instead of recording it twice
+       - GCash pays exactly the database's total
+       - refusals name the variant, so the cart line is found even when a SKU has spaces
+     - **Keeping the sale:** the open sale is kept in the browser tab, so a stray tap or a refresh doesn't lose it.
+     - **Reports:** a voided sale's stock return counts against "Sold", not as a customer return.
+     - **Owner totals:** the Sales page's totals cover the whole period, not just the 300 sales listed.
+     - No discounts: everything sells at its listed price.
 9. **Sales reports:** owner only.
+   - **Built (2026-10-05):** Reports now has two tabs, Sales (the default) and Inventory (the Phase 6 report), sharing one period picker that's kept when switching tabs. The Sales tab has:
+     - **Summary:** sales total, number of sales, average sale, and pieces sold, each compared with the same-length period before (none for All time). Cash and GCash show with their share; voided sales are noted and left out.
+     - **Sales over time:** a column chart per hour (one day), per day (up to about three months), or per month, with a table version.
+     - **Best sellers:** top 10 products by sales total, and top 10 sizes and colors by pieces.
+     - **By cashier:** sales, average, total, and share for each person.
+     - **Print and CSV:** every section prints and downloads as CSV.
+     - **Migration `20261008000000_sales_report.sql`:** adds `rpc('sales_report')`, which sums everything in the database (owner only, through RLS). The follow-up `20261008120000_sales_report_ties.sql` ends ties in the top-10 lists on name and id, so the page and its CSV always list the same rows.
+     - **Print:** each report prints with its own footer ("Sales report" / "Inventory report") through named print pages.
+     - **Phone tables:** the tables scroll sideways in labelled regions with the first column pinned, and the cashier table drops Average on phones.
+     - **Home:** the "Inventory report" button now opens the Inventory tab.
+   - **Follow-up migration `20261007120000_pos_sale_key.sql`:** brings Phase 8's sale function to its final reviewed version, because the first draft of `20261007000000_pos_gcash_and_voids.sql` had already been applied.
+   - Not yet possible: profit and margin (no cost price), and custom orders and online payments (Phases 10–11).
 10. **Custom orders:** accept or decline, production status, finished photo.
+    - **Built (2026-10-05):**
+      - **`/admin/orders`** (More → Custom orders): status tabs with counts (Open, New, Accepted, In production, Ready, Completed, Declined or cancelled, All) and a search over order number, customer, and items.
+      - **The order page:** a progress track, then the next step for the order's status:
+        - New: set the price and accept, or decline with a reason the customer sees.
+        - In production: tick off printing, cutting, sewing, inspection, and folding and packing. A failed inspection sends the order back to printing with a note.
+        - Ready, once all five steps are done.
+        - Picked up.
+      - Also on the page: what was ordered, up to 4 finished photos for the customer, the customer's contact, the price with its 50% down payment and balance, the full history, and cancel with a reason.
+      - **Migration `20261009000000_custom_order_production.sql`:**
+        - production steps, changed through `set_production_step` and `reprint_custom_order` and taken in order; a reprint clears every step
+        - `reopen_custom_order`: a ready order goes back to production with a reason in its history, and the customer gets a gentler message
+        - live updates for orders, steps, photos, and history
+        - finished photos, at most 4, in the private `order-photos` bucket
+        - status moves limited to real transitions, with ready requiring every step done
+      - **Sample orders:** `supabase/seed/sample-custom-orders.sql` loads nine across every status, from four sample customers who can't log in; `remove-sample-custom-orders.sql` removes them.
+      - **Deferred:**
+        - staff entering orders for walk-in customers
+        - the customer's own order page
+        - enforcing the down payment (Phase 11)
+        - telling the customer when an accepted order's price changes
+        - searching orders beyond the newest 300 in a tab
 11. **Payment verification:** GCash reference and screenshot review, down payment and balance.
 12. **Chat and notifications:** customer and staff messaging per order.
 
 ## Hardening to consider (deferred on purpose)
 
 - **Atomic product save:** move the product save into one database function (a new migration) so a failure midway can't leave partial changes. Phase 3 instead makes every step self-correcting on retry and keeps new products hidden until the save completes.
+- **Batch stock save:** one database function that applies a whole multi-size adjustment in a single transaction (with a request id so a retried save can't double a restock). Phase 4 runs each change separately, a few at a time, and reports any that fail.
+- **Atomic recount:** a database function that sets a counted number under the row lock, so a sale landing at the same instant can't skew the correction. Phase 4 reads the count milliseconds before writing.
+- **History totals in SQL:** a `security invoker` function that sums pieces in/out for the history filters. Phase 5 reads the quantities 1,000 rows at a time, which is fine for a shop's volume but slower at scale. The list itself shows up to 500 rows per view.
 - **Edit conflicts:** check `updated_at` so two people editing the same product don't overwrite each other's changes.
+- **Staff invite links:** the owner enters an email and the person signs up straight into staff. Accounts log in by username today, so this needs a server-side key and email setup. Phase 7 asks new staff to sign up as customers first.
+- **Instant removal:** add `profiles` to the realtime publication so a removed staff member's open admin tab leaves at once, instead of on their next page or action.
+- **Sales visibility:** staff seeing only today's sales is a screen rule; the `sales` read policy lets any staff member read every sale through the API. Narrow it in RLS if older sales should be owner-only at the data level.
+- **Sales totals in SQL:** the Sales report sums in the database (Phase 9). The Sales list's owner totals still add up 1,000 rows at a time in the app; they could call `sales_report` instead.
+- **Contact privacy (existing RLS):** the profiles read policy lets any signed-in customer read every column of staff and owner profiles, including email and phone. That access exists for chat names. It also lets every staff member, not only the owner, read all customers' contact details through the API. Fix with a view or `security definer` function that exposes only `id, username, full_name, avatar_url` for chat, and keep the table itself to "own row, or staff". The Staff screen's owner-only contact column is a screen rule, not a data boundary, until then.
 
 ## How each phase runs
 

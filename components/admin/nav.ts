@@ -5,6 +5,7 @@ import {
   House,
   MessageCircle,
   PackagePlus,
+  ReceiptText,
   ScanBarcode,
   Shirt,
   Users,
@@ -26,18 +27,19 @@ export type AdminSection = {
 export const DOCK_SECTIONS: AdminSection[] = [
   { label: "Home", icon: House, href: "/admin", description: "Today at the shop" },
   { label: "Products", icon: Shirt, href: "/admin/products", description: "Catalog, sizes, and colors" },
-  { label: "Stock", icon: PackagePlus, description: "Restock and adjust counts" },
-  { label: "History", icon: History, description: "Every stock change, logged" },
+  { label: "Stock", icon: PackagePlus, href: "/admin/stock", description: "Restock and adjust counts" },
+  { label: "History", icon: History, href: "/admin/history", description: "Every stock change, logged" },
 ];
 
 /** Behind the dock's More button. */
 export const MORE_SECTIONS: AdminSection[] = [
-  { label: "Point of sale", icon: ScanBarcode, description: "Ring up counter sales" },
-  { label: "Custom orders", icon: ClipboardList, description: "Accept, track, and finish orders" },
+  { label: "Point of sale", icon: ScanBarcode, href: "/admin/pos", description: "Ring up counter sales" },
+  { label: "Sales", icon: ReceiptText, href: "/admin/sales", description: "Receipts, reprints, and voids" },
+  { label: "Custom orders", icon: ClipboardList, href: "/admin/orders", description: "Accept, track, and finish orders" },
   { label: "Payments", icon: Wallet, description: "Check GCash and cash payments" },
   { label: "Chat", icon: MessageCircle, description: "Messages with customers" },
-  { label: "Reports", icon: ChartColumn, description: "Sales and inventory reports", ownerOnly: true },
-  { label: "Staff", icon: Users, description: "Accounts and roles", ownerOnly: true },
+  { label: "Reports", icon: ChartColumn, href: "/admin/reports", description: "Sales and inventory, print and CSV", ownerOnly: true },
+  { label: "Staff", icon: Users, href: "/admin/staff", description: "Accounts and roles", ownerOnly: true },
 ];
 
 export function visibleTo(role: StaffRole) {

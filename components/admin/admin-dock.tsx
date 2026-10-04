@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Ellipsis } from "lucide-react";
+import { ChevronRight, Ellipsis } from "lucide-react";
 import type { StaffRole } from "@/lib/admin/session";
 import { DOCK_SECTIONS, MORE_SECTIONS, visibleTo, type AdminSection } from "./nav";
 import { usePopoverOpen } from "./use-popover-open";
@@ -68,6 +68,8 @@ export function AdminDock({ role, activeHref }: { role: StaffRole; activeHref?: 
   const moreRef = useRef<HTMLDivElement>(null);
   const moreOpen = usePopoverOpen(moreRef);
   const more = MORE_SECTIONS.filter(visibleTo(role));
+  // On a page that lives behind More (Reports, Staff), More is the current dock item.
+  const inMore = more.some((s) => isActive(s.href, current));
 
   return (
     <nav aria-label="Admin sections" className="admin-dock">
@@ -83,6 +85,7 @@ export function AdminDock({ role, activeHref }: { role: StaffRole; activeHref?: 
             popoverTarget="admin-more"
             aria-expanded={moreOpen}
             aria-controls="admin-more"
+            data-current={inMore ? "true" : undefined}
             className="admin-dock-item press"
           >
             <Ellipsis aria-hidden="true" className="size-[1.375rem]" strokeWidth={1.9} />
@@ -96,19 +99,42 @@ export function AdminDock({ role, activeHref }: { role: StaffRole; activeHref?: 
         <ul>
           {more.map((s) => {
             const Icon = s.icon;
-            return (
-              <li key={s.label} className="flex items-center gap-3 rounded-xl px-3 py-2.5">
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-ground-2 text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]">
+            const active = isActive(s.href, current);
+            const body = (
+              <>
+                <span
+                  className={`grid size-10 shrink-0 place-items-center rounded-xl shadow-[inset_0_0_0_1px_var(--line)] ${
+                    active ? "bg-board text-board-ink shadow-none" : s.href ? "bg-ground-2 text-ink" : "bg-ground-2 text-ink-2"
+                  }`}
+                >
                   <Icon aria-hidden="true" className="size-5" strokeWidth={1.8} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[0.9375rem] font-semibold leading-tight text-ink">{s.label}</span>
+                  <span className={`block text-[0.9375rem] font-semibold leading-tight ${s.href ? "text-ink" : "text-ink-2"}`}>{s.label}</span>
                   <span className="block text-[0.8125rem] leading-snug text-ink-2">{s.description}</span>
                 </span>
-                {!s.href && (
-                  <span className="shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-bold uppercase tracking-[0.02em] text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]">
-                    Soon
-                  </span>
+              </>
+            );
+            return (
+              <li key={s.label}>
+                {s.href ? (
+                  // Built sections are links; the panel closes as the page changes.
+                  <Link
+                    href={s.href}
+                    aria-current={active ? "page" : undefined}
+                    onClick={() => moreRef.current?.hidePopover()}
+                    className="press flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-ground-2"
+                  >
+                    {body}
+                    <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-ink-2" />
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-3 rounded-xl px-3 py-2.5">
+                    {body}
+                    <span className="shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-bold uppercase tracking-[0.02em] text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]">
+                      Soon
+                    </span>
+                  </div>
                 )}
               </li>
             );

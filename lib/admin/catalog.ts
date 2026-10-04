@@ -188,3 +188,34 @@ export function formContext(products: CatalogProduct[], excludeId?: string) {
     .filter((s): s is string => Boolean(s));
   return { suggestions: { colors, tags }, takenSkus };
 }
+
+// ---------------------------------------------------------------------------
+// Stock history (latest changes)
+// ---------------------------------------------------------------------------
+
+export type StockMove = {
+  id: string;
+  transaction_type: "restock" | "sale" | "adjustment" | "damage" | "return";
+  quantity: number;
+  previous_stock: number;
+  new_stock: number;
+  reason: string | null;
+  created_at: string;
+  variant: { size: string | null; color: string | null; product: { id: string; name: string } | null } | null;
+  actor: { username: string; full_name: string | null } | null;
+};
+
+/** The most recent stock changes, newest first, optionally for some variants only. Staff only (RLS). */
+export async function fetchRecentMoves(supabase: SupabaseClient, limit = 8, variantIds?: string[]) {
+  if (variantIds && variantIds.length === 0) return { moves: [] as StockMove[], error: null };
+  let query = supabase
+    .from("inventory_transactions")
+    .select(
+      "id, transaction_type, quantity, previous_stock, new_stock, reason, created_at, variant:product_variants (size, color, product:products (id, name)), actor:profiles (username, full_name)",
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (variantIds) query = query.in("variant_id", variantIds);
+  const { data, error } = await query.returns<StockMove[]>();
+  return { moves: data ?? [], error };
+}

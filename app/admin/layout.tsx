@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       >
         Skip to content
       </a>
-      <AdminTopBar username={profile.username} fullName={profile.full_name} role={profile.role} />
+      <AdminTopBar userId={profile.id} username={profile.username} fullName={profile.full_name} role={profile.role} />
       <main id="main" className="flex-1 pb-36 sm:pb-40">
         {children}
       </main>

@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CircleCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, CircleCheck } from "lucide-react";
+import { LiveRefresh } from "@/components/admin/live-refresh";
 import { ProductActions } from "@/components/admin/products/product-actions";
+import { AdjustStockButton } from "@/components/admin/stock/adjust-button";
+import { RecentMoves } from "@/components/admin/stock/recent-moves";
 import { Pill, ProductThumb } from "@/components/admin/products/product-bits";
 import {
   fetchProduct,
+  fetchRecentMoves,
   formatPeso,
   isSample,
   priceRange,
@@ -34,13 +38,13 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   if (error) throw error;
   if (!product) notFound();
 
+  const variantIds = product.variants.map((v) => v.id);
+  const [history, stockHistory] = await Promise.all([
+    hasStockHistory(supabase, variantIds).catch(() => true),
+    fetchRecentMoves(supabase, 6, variantIds),
+  ]);
   // Only the owner deletes, and only products that never held stock; work that out before offering it.
-  const canDelete =
-    profile.role === "owner" &&
-    !(await hasStockHistory(
-      supabase,
-      product.variants.map((v) => v.id),
-    ).catch(() => true));
+  const canDelete = profile.role === "owner" && !history;
 
   const sizes = sortSizes(unique(product.variants.map((v) => v.size ?? "One size")));
   const colors = sortColors(unique(product.variants.map((v) => v.color ?? "—")));
@@ -59,6 +63,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
 
   return (
     <div className="mx-auto max-w-[80rem] px-4 pt-6 sm:px-6 sm:pt-8 lg:px-10">
+      <LiveRefresh />
       <Link
         href="/admin/products"
         className="press -ml-2 inline-flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[0.9375rem] font-medium text-ink-2 hover:text-ink"
@@ -126,6 +131,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
               archived={!product.is_active}
               isOwner={profile.role === "owner"}
               canDelete={canDelete}
+              lead={product.is_active ? <AdjustStockButton product={product} /> : undefined}
             />
             <p className="mt-3 text-[0.8125rem] text-ink-2">Last updated {updated}</p>
           </div>
@@ -196,6 +202,29 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
               </tbody>
             </table>
           </div>
+        )}
+      </section>
+
+      {/* Latest stock changes for this product */}
+      <section aria-labelledby="history-title" className="mt-12 max-w-[44rem]">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-line pb-3">
+          <h2 id="history-title" className="voice-display text-[1.75rem]">
+            Stock history
+          </h2>
+          {stockHistory.moves.length > 0 && (
+            <Link
+              href={`/admin/history?product=${product.id}&range=all`}
+              className="press inline-flex items-center gap-1.5 rounded-full py-1 text-[0.9375rem] font-semibold text-ink hover:underline"
+            >
+              Full history
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </Link>
+          )}
+        </div>
+        {stockHistory.error ? (
+          <p className="py-6 text-[0.9375rem] text-ink-2">We couldn’t load this product’s stock history. Refresh to try again.</p>
+        ) : (
+          <RecentMoves moves={stockHistory.moves} withProduct={false} />
         )}
       </section>
 

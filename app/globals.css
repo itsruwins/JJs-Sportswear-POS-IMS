@@ -160,14 +160,16 @@ a {
   text-decoration-thickness: 1px;
 }
 
+/* Only the wrapping style: the text-wrap shorthand would also reset the wrap mode and undo
+   `truncate` (white-space: nowrap) on any heading or paragraph. */
 h1,
 h2,
 h3 {
-  text-wrap: balance;
+  text-wrap-style: balance;
 }
 
 p {
-  text-wrap: pretty;
+  text-wrap-style: pretty;
 }
 
 html {
@@ -564,6 +566,13 @@ input[type="search"]::-webkit-search-cancel-button {
   }
 }
 
+/* Wider sheet for size × color grids (stock adjustments). */
+@media (min-width: 640px) {
+  .auth-dialog.dialog-wide {
+    width: min(42rem, calc(100vw - 2rem));
+  }
+}
+
 html:has(.auth-dialog[open]) {
   overflow: hidden;
 }
@@ -611,6 +620,17 @@ input.auth-input:focus-visible,
   outline: none;
 }
 
+/* A field with a problem: a solid ink ring, so it never reads as the amber focus ring. */
+.auth-input.is-error {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.auth-input.is-error:focus-within {
+  box-shadow:
+    inset 0 0 0 2px var(--ink),
+    0 0 0 2px var(--amber);
+}
+
 .auth-alert {
   background: oklch(0.82 0.165 78 / 0.2);
   color: var(--ink);
@@ -647,6 +667,24 @@ input.auth-input:focus-visible,
 }
 
 /* ---------- Admin: dock ---------- */
+
+/* Point of sale: the running sale, floating just above the dock on phones and tablets. */
+.pos-cartbar {
+  position: fixed;
+  z-index: var(--z-sticky);
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(env(safe-area-inset-bottom) + 4.75rem);
+}
+@media (min-width: 640px) {
+  .pos-cartbar {
+    left: 50%;
+    right: auto;
+    width: min(30rem, calc(100vw - 3rem));
+    transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom) + 5.625rem);
+  }
+}
 
 /* A solid white bar that floats over the page. Inset padding and the pill's radius
    are paired (pill radius = bar radius − padding) so the corners stay concentric. */
@@ -695,13 +733,15 @@ button.admin-dock-item:not([aria-disabled="true"]):hover {
 }
 
 .admin-dock-item[aria-current="page"],
-.admin-dock-item[aria-expanded="true"] {
+.admin-dock-item[aria-expanded="true"],
+.admin-dock-item[data-current="true"] {
   background: var(--board);
   color: var(--board-ink);
 }
 
 a.admin-dock-item[aria-current="page"]:hover,
-button.admin-dock-item[aria-expanded="true"]:hover {
+button.admin-dock-item[aria-expanded="true"]:hover,
+button.admin-dock-item[data-current="true"]:hover {
   color: var(--board-ink);
 }
 
@@ -868,6 +908,86 @@ button.admin-dock-item[aria-expanded="true"]:hover {
   }
 }
 
+/* Notifications drop from the bell, like the account menu. */
+.admin-notifications {
+  top: 4.375rem;
+  right: 1rem;
+  width: min(23rem, calc(100vw - 2rem));
+  transform: translateY(-6px) scale(0.97);
+  transform-origin: 100% 0;
+}
+
+.admin-notifications:popover-open {
+  transform: none;
+}
+
+@starting-style {
+  .admin-notifications:popover-open {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+}
+
+@media (min-width: 640px) {
+  .admin-notifications {
+    right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-notifications {
+    right: max(2.5rem, calc((100vw - 80rem) / 2 + 2.5rem));
+  }
+}
+
+/* Alert pop-ups: top-right under the bar; they slide in from the bell's side and fade out. */
+.admin-toasts {
+  position: fixed;
+  z-index: calc(var(--z-sticky) + 1);
+  top: 4.5rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(22rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .admin-toasts {
+    right: max(2.5rem, calc((100vw - 80rem) / 2 + 2.5rem));
+  }
+}
+
+.admin-toast {
+  pointer-events: auto;
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 18px 40px -18px oklch(0.15 0.05 158 / 0.45);
+  animation: toast-in 320ms var(--ease-out) both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-toast {
+    animation: none;
+  }
+  .admin-notifications,
+  .admin-notifications:popover-open {
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .admin-pop,
   .admin-pop:popover-open {
@@ -913,5 +1033,182 @@ button.admin-dock-item[aria-expanded="true"]:hover {
   }
   .jersey * {
     transition-duration: 1ms;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Print (the inventory report): light, no app chrome, tables that break cleanly. */
+.print-only {
+  display: none;
+}
+
+@media print {
+  :root,
+  :root:not([data-theme="light"]),
+  :root[data-theme="dark"] {
+    color-scheme: light;
+    --ground: oklch(1 0 0);
+    --ground-2: oklch(0.96 0.004 158);
+    --ink: oklch(0.15 0.012 158);
+    --ink-2: oklch(0.38 0.016 158);
+    --line: oklch(0.82 0.01 158);
+  }
+  @page {
+    size: A4;
+    margin: 14mm 12mm 16mm;
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 8pt;
+      color: oklch(0.38 0.016 158);
+    }
+  }
+  /* Each report names its own pages, so the footer says which report it is. */
+  @page sales-report {
+    @bottom-left {
+      content: "J&J Sportswear · Sales report";
+      font-size: 8pt;
+      color: oklch(0.38 0.016 158);
+    }
+  }
+  @page inventory-report {
+    @bottom-left {
+      content: "J&J Sportswear · Inventory report";
+      font-size: 8pt;
+      color: oklch(0.38 0.016 158);
+    }
+  }
+  [data-report="sales"] {
+    page: sales-report;
+  }
+  [data-report="inventory"] {
+    page: inventory-report;
+  }
+  body {
+    background: white;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .site-nav,
+  .admin-dock,
+  .admin-toasts,
+  [data-print="hide"] {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+  span.print-only {
+    display: inline;
+  }
+  main {
+    padding-bottom: 0 !important;
+  }
+  main > div {
+    padding-top: 0 !important;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .report-scroll {
+    overflow: visible;
+  }
+  .report-scroll table {
+    min-width: 0;
+    font-size: 10pt;
+  }
+  .report-scroll td,
+  .report-scroll th {
+    padding-top: 4pt;
+    padding-bottom: 4pt;
+  }
+  .report-section {
+    margin-top: 1.75rem;
+  }
+  /* A section's heading never sits alone at the foot of a page. */
+  .report-section > :first-child {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+  .report-section thead,
+  .report-section tbody:first-of-type tr:first-child {
+    break-before: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr,
+  .report-group {
+    break-inside: avoid;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Sales chart: one series in court green. Dark mode uses its own step (L 0.64),
+   validated against the dark ground, not the light green inverted. */
+.sales-bar {
+  background: oklch(0.43 0.105 158);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sales-bar {
+    background: oklch(0.64 0.125 156);
+  }
+}
+:root[data-theme="dark"] .sales-bar {
+  background: oklch(0.64 0.125 156);
+}
+@media print {
+  .sales-bar,
+  :root:not([data-theme="light"]) .sales-bar,
+  :root[data-theme="dark"] .sales-bar {
+    background: oklch(0.43 0.105 158);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Receipts (point of sale): a slip of paper on screen, an 80 mm roll or A4 in print.
+   ReceiptActions sets html[data-paper] and the page size just before printing. */
+.receipt-rule {
+  border-top: 1px dashed color-mix(in oklch, var(--card-ink) 35%, transparent);
+}
+.receipt-void {
+  box-shadow: inset 0 0 0 1.5px var(--card-ink);
+}
+
+@media print {
+  html[data-paper="thermal"] {
+    font-size: 13px;
+  }
+  /* Thermal heads drop or dither grey, so everything prints in full black. */
+  html[data-paper] .receipt [class*="opacity-"] {
+    opacity: 1;
+  }
+  html[data-paper="a4"] {
+    font-size: 15px;
+  }
+  html[data-paper] .receipt {
+    max-width: none;
+    padding: 0;
+    background: white;
+    color: black;
+    box-shadow: none;
+  }
+  html[data-paper] main > div {
+    padding: 0 !important;
+    max-width: none;
+  }
+  html[data-paper="thermal"] .receipt {
+    width: 72mm;
+    margin: 0;
+  }
+  html[data-paper="a4"] .receipt {
+    width: 120mm;
+    margin: 0 auto;
+  }
+  html[data-paper] .receipt-rule {
+    border-top-color: black;
+  }
+  html[data-paper] .receipt-void {
+    box-shadow: inset 0 0 0 1.5px black;
   }
 }

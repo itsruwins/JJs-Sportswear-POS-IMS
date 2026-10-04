@@ -508,7 +508,7 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
             <p className="mb-5 max-w-[60ch] text-[0.9375rem] text-ink-2">
               {isNew
                 ? "How many of each are on the shelf right now. This is logged as the opening stock."
-                : "Existing stock changes through Stock (coming soon) so every change is logged. New sizes and colors start with the opening stock you enter."}
+                : "Change existing stock with Adjust stock on the product page or in Stock, so every change is logged. New sizes and colors start with the opening stock you enter."}
             </p>
             <div className="flex flex-col gap-6">
               {colors.map((color) => (
