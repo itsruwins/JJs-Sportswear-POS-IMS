@@ -18,8 +18,16 @@ create temp table _sample_orders on commit drop as
 select id from public.custom_orders where customer_id in (select id from _sample_users);
 
 delete from public.notifications where reference_id in (select id from _sample_orders);
--- Payments (Phase 11) keep their order; clear them first so the orders can go.
+delete from public.notifications where reference_id in (select id from public.payments where order_id in (select id from _sample_orders));
+-- Payments and refunds keep their order; clear them first so the orders can go.
 delete from public.payments where order_id in (select id from _sample_orders);
+do $$
+begin
+  if to_regclass('public.custom_order_refunds') is not null then
+    delete from public.custom_order_refunds where order_id in (select id from _sample_orders);
+  end if;
+end;
+$$;
 delete from public.custom_orders where id in (select id from _sample_orders);
 delete from auth.users where id in (select id from _sample_users);
 

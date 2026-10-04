@@ -37,7 +37,8 @@ export const VIEWS: { id: OrderView; label: string; statuses: OrderStatus[] }[] 
 /** The shop asks for at least half before production; rounded up to the peso. */
 export const downPayment = (total: number) => Math.ceil(total / 2);
 
-const MIGRATION = "supabase/migrations/20261009000000_custom_order_production.sql";
+// The reviewed version arrived as a follow-up (the first file was applied before its fixes).
+const MIGRATION = "supabase/migrations/20261009120000_custom_order_production_fixes.sql";
 /** The list shows the newest 300 orders in a tab; the page says so when there are more. */
 const LIST_LIMIT = 300;
 /** Photo links last a working day, so a page left open (and refreshed live) keeps showing the same images. */
@@ -235,4 +236,12 @@ export async function fetchOrder(supabase: SupabaseClient, id: string): Promise<
 export { MIGRATION as PRODUCTION_MIGRATION };
 
 /** What the order screens watch for live updates (added to the realtime publication by the production migration). */
-export const ORDER_TABLES = ["custom_orders", "custom_order_steps", "custom_order_photos", "order_status_history"] as const;
+export const ORDER_TABLES = [
+  "custom_orders",
+  "custom_order_steps",
+  "custom_order_photos",
+  "order_status_history",
+  "payments",
+  "custom_order_refunds",
+  "custom_order_overrides",
+] as const;

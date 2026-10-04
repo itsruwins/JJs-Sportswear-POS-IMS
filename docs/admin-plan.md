@@ -129,6 +129,42 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
         - telling the customer when an accepted order's price changes
         - searching orders beyond the newest 300 in a tab
 11. **Payment verification:** GCash reference and screenshot review, down payment and balance.
+    - **Built (2026-10-05):**
+      - **`/admin/payments`** (More → Payments): tabs To review (oldest first, with a live lamp), Verified, Rejected, and All, each with exact counts. Rows show order, customer, type and method, amount, and status.
+      - **A payment's page:**
+        - To review: the GCash reference, the order total, what was paid before, and what's still due. Then Verify, or Reject with a reason the customer sees, plus the screenshot (a signed link to the private `payment-proofs` bucket).
+        - A payment above what's due, or on an order that was never accepted or was declined, can only be rejected.
+        - On a cancelled order it can still be verified, so it counts toward the refund.
+        - Verified: a **payment slip** that prints on the 80 mm roll or on A4. It shows the order as it stood when this payment was verified.
+      - **On the order page, "Price and payments":**
+        - totals (paid so far, still due, waiting for review), every payment linked to its page
+        - **Record a payment**: any amount up to what's due; cash, or GCash with its 13-digit reference and an optional screenshot; a note. It counts as verified at once, and the customer is told. Chips fill in the rest of the down payment or the balance, and the dialog warns when a customer payment is still waiting for review.
+        - On cancelled orders, the owner records **refunds** (up to what was paid less what was refunded, with a note); the customer is told.
+      - **The 50% rule:**
+        - Production waits for the down payment, and pickup for the full amount.
+        - The owner can make an exception with a reason, which goes into the history.
+        - An order picked up on that exception can still take its balance.
+      - **Migration `20261010000000_custom_order_payments.sql`:**
+        - the payment, verify, reject, refund, and exception functions
+        - refund and exception tables
+        - the rule in the status trigger
+        - one GCash reference per live payment
+        - staff screenshot uploads
+        - live updates
+      - **Follow-up `20261010120000_custom_order_payment_fixes.sql`:**
+        - Payments are written only through those functions. Staff can't insert or edit payment rows directly.
+        - Customers submit only GCash, as "submitted", with a 13-digit reference, and can't write the staff note.
+        - References are stored as digits only.
+        - Only a submitted GCash payment can be verified.
+        - Verify works on completed and cancelled orders.
+        - Refunds notify the customer.
+        - The price can't change once production starts, or drop below what's paid.
+      - **Sample payments:** `supabase/seed/sample-payments.sql` (run after the sample orders). `remove-sample-custom-orders.sql` removes them too.
+      - **For the customer app:** insert a payment with `status = 'submitted'`, `method = 'gcash'`, the 13-digit `gcash_reference`, and optionally `gcash_screenshot_url` under `payment-proofs/{customer_id}/{order_id}/`.
+      - **Deferred:**
+        - a request key on recorded payments, so a retried save after a lost response can't record the same cash twice (as the POS sale key does)
+        - payments on walk-in orders
+        - the customer's own payment screen
 12. **Chat and notifications:** customer and staff messaging per order.
 
 ## Hardening to consider (deferred on purpose)
@@ -140,6 +176,7 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 - **Edit conflicts:** check `updated_at` so two people editing the same product don't overwrite each other's changes.
 - **Staff invite links:** the owner enters an email and the person signs up straight into staff. Accounts log in by username today, so this needs a server-side key and email setup. Phase 7 asks new staff to sign up as customers first.
 - **Instant removal:** add `profiles` to the realtime publication so a removed staff member's open admin tab leaves at once, instead of on their next page or action.
+- **Recorded-payment retries:** `record_custom_order_payment` has no request key. If the response is lost after the save, a retry records a second payment (still capped at what's due). Add a key like the POS sale's.
 - **Sales visibility:** staff seeing only today's sales is a screen rule; the `sales` read policy lets any staff member read every sale through the API. Narrow it in RLS if older sales should be owner-only at the data level.
 - **Sales totals in SQL:** the Sales report sums in the database (Phase 9). The Sales list's owner totals still add up 1,000 rows at a time in the app; they could call `sales_report` instead.
 - **Contact privacy (existing RLS):** the profiles read policy lets any signed-in customer read every column of staff and owner profiles, including email and phone. That access exists for chat names. It also lets every staff member, not only the owner, read all customers' contact details through the API. Fix with a view or `security definer` function that exposes only `id, username, full_name, avatar_url` for chat, and keep the table itself to "own row, or staff". The Staff screen's owner-only contact column is a screen rule, not a data boundary, until then.
