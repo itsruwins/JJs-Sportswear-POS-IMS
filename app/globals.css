@@ -1056,16 +1056,32 @@ button.admin-dock-item[data-current="true"]:hover {
   @page {
     size: A4;
     margin: 14mm 12mm 16mm;
-    @bottom-left {
-      content: "J&J Sportswear · Inventory report";
-      font-size: 8pt;
-      color: oklch(0.38 0.016 158);
-    }
     @bottom-right {
       content: "Page " counter(page) " of " counter(pages);
       font-size: 8pt;
       color: oklch(0.38 0.016 158);
     }
+  }
+  /* Each report names its own pages, so the footer says which report it is. */
+  @page sales-report {
+    @bottom-left {
+      content: "J&J Sportswear · Sales report";
+      font-size: 8pt;
+      color: oklch(0.38 0.016 158);
+    }
+  }
+  @page inventory-report {
+    @bottom-left {
+      content: "J&J Sportswear · Inventory report";
+      font-size: 8pt;
+      color: oklch(0.38 0.016 158);
+    }
+  }
+  [data-report="sales"] {
+    page: sales-report;
+  }
+  [data-report="inventory"] {
+    page: inventory-report;
   }
   body {
     background: white;
@@ -1124,6 +1140,28 @@ button.admin-dock-item[data-current="true"]:hover {
   tr,
   .report-group {
     break-inside: avoid;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Sales chart: one series in court green. Dark mode uses its own step (L 0.64),
+   validated against the dark ground, not the light green inverted. */
+.sales-bar {
+  background: oklch(0.43 0.105 158);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sales-bar {
+    background: oklch(0.64 0.125 156);
+  }
+}
+:root[data-theme="dark"] .sales-bar {
+  background: oklch(0.64 0.125 156);
+}
+@media print {
+  .sales-bar,
+  :root:not([data-theme="light"]) .sales-bar,
+  :root[data-theme="dark"] .sales-bar {
+    background: oklch(0.43 0.105 158);
   }
 }
 

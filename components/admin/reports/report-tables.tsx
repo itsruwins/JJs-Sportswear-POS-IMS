@@ -56,7 +56,7 @@ export function CsvLink({ href, text = "CSV", label }: { href: string; text?: st
 }
 
 /** A table that may scroll sideways on phones; focusable and labeled so keyboard and screen-reader users can scroll it too. */
-function Scroll({ label, children }: { label: string; children: React.ReactNode }) {
+export function Scroll({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div role="region" aria-label={label} tabIndex={0} className="report-scroll overflow-x-auto outline-offset-2">
       {children}
@@ -65,7 +65,7 @@ function Scroll({ label, children }: { label: string; children: React.ReactNode 
 }
 
 // The first column stays put while the rest scroll sideways on phones.
-const stick = "sticky left-0 z-[1] bg-ground";
+export const stick = "sticky left-0 z-[1] bg-ground";
 
 export function StatusPill({ state }: { state: StockState }) {
   if (state === "zero")

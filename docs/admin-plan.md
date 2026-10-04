@@ -94,6 +94,18 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
      - **Owner totals:** the Sales page's totals cover the whole period, not just the 300 sales listed.
      - No discounts: everything sells at its listed price.
 9. **Sales reports:** owner only.
+   - **Built (2026-10-05):** Reports now has two tabs, Sales (the default) and Inventory (the Phase 6 report), sharing one period picker that's kept when switching tabs. The Sales tab has:
+     - **Summary:** sales total, number of sales, average sale, and pieces sold, each compared with the same-length period before (none for All time). Cash and GCash show with their share; voided sales are noted and left out.
+     - **Sales over time:** a column chart per hour (one day), per day (up to about three months), or per month, with a table version.
+     - **Best sellers:** top 10 products by sales total, and top 10 sizes and colors by pieces.
+     - **By cashier:** sales, average, total, and share for each person.
+     - **Print and CSV:** every section prints and downloads as CSV.
+     - **Migration `20261008000000_sales_report.sql`:** adds `rpc('sales_report')`, which sums everything in the database (owner only, through RLS). The follow-up `20261008120000_sales_report_ties.sql` ends ties in the top-10 lists on name and id, so the page and its CSV always list the same rows.
+     - **Print:** each report prints with its own footer ("Sales report" / "Inventory report") through named print pages.
+     - **Phone tables:** the tables scroll sideways in labelled regions with the first column pinned, and the cashier table drops Average on phones.
+     - **Home:** the "Inventory report" button now opens the Inventory tab.
+   - **Follow-up migration `20261007120000_pos_sale_key.sql`:** brings Phase 8's sale function to its final reviewed version, because the first draft of `20261007000000_pos_gcash_and_voids.sql` had already been applied.
+   - Not yet possible: profit and margin (no cost price), and custom orders and online payments (Phases 10–11).
 10. **Custom orders:** accept or decline, production status, finished photo.
 11. **Payment verification:** GCash reference and screenshot review, down payment and balance.
 12. **Chat and notifications:** customer and staff messaging per order.
@@ -108,7 +120,7 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 - **Staff invite links:** the owner enters an email and the person signs up straight into staff. Accounts log in by username today, so this needs a server-side key and email setup. Phase 7 asks new staff to sign up as customers first.
 - **Instant removal:** add `profiles` to the realtime publication so a removed staff member's open admin tab leaves at once, instead of on their next page or action.
 - **Sales visibility:** staff seeing only today's sales is a screen rule; the `sales` read policy lets any staff member read every sale through the API. Narrow it in RLS if older sales should be owner-only at the data level.
-- **Sales totals in SQL:** the Sales page sums the period 1,000 rows at a time in the app. Phase 9's reports should sum in the database instead.
+- **Sales totals in SQL:** the Sales report sums in the database (Phase 9). The Sales list's owner totals still add up 1,000 rows at a time in the app; they could call `sales_report` instead.
 - **Contact privacy (existing RLS):** the profiles read policy lets any signed-in customer read every column of staff and owner profiles, including email and phone. That access exists for chat names. It also lets every staff member, not only the owner, read all customers' contact details through the API. Fix with a view or `security definer` function that exposes only `id, username, full_name, avatar_url` for chat, and keep the table itself to "own row, or staff". The Staff screen's owner-only contact column is a screen rule, not a data boundary, until then.
 
 ## How each phase runs

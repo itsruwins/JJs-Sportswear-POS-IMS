@@ -82,7 +82,7 @@ export function AdminHomeView({
             </dl>
             {role === "owner" && (
               <Link
-                href="/admin/reports"
+                href="/admin/reports?tab=inventory"
                 className="press inline-flex h-11 items-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2"
               >
                 Inventory report

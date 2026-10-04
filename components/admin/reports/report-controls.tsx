@@ -23,7 +23,9 @@ export function ReportPeriod({
   const [pending, startTransition] = useTransition();
   const pick = (patch: RangePatch) => {
     const next = { range, from, to, ...patch };
-    const params = new URLSearchParams();
+    // Other parameters (such as the Reports tab) stay as they are.
+    const params = new URLSearchParams(window.location.search);
+    for (const k of ["range", "from", "to"]) params.delete(k);
     if (next.range !== defaultRange) params.set("range", next.range);
     if (next.range === "custom") {
       params.set("from", next.from);

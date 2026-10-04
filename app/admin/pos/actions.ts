@@ -4,7 +4,8 @@ import { requireStaff } from "@/lib/admin/session";
 import type { PaymentMethod } from "@/lib/admin/sales";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MIGRATION = "supabase/migrations/20261007000000_pos_gcash_and_voids.sql";
+// The final sale function arrives with this follow-up (after 20261007000000_pos_gcash_and_voids.sql).
+const MIGRATION = "supabase/migrations/20261007120000_pos_sale_key.sql";
 
 export type CartItem = { variantId: string; quantity: number };
 

@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PrintButton, ReportPeriod } from "@/components/admin/reports/report-controls";
 import { CsvLink, MovementTable, ReportSection, RestockTable, StockTable } from "@/components/admin/reports/report-tables";
+import { SalesReportView } from "@/components/admin/reports/sales-report";
 import { formatPeso } from "@/lib/admin/catalog";
 import { historyBounds, parseHistoryFilters, type HistoryFilters } from "@/lib/admin/history";
 import { fetchMovements, fetchStockRows, groupByProduct, needsRestock, stockSummary } from "@/lib/admin/inventory";
+import { fetchSalesReport } from "@/lib/admin/sales-report";
 import { requireStaff } from "@/lib/admin/session";
 
-export const metadata: Metadata = { title: "Inventory report · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Reports · J&J Sportswear Admin" };
 
 const TZ = "Asia/Manila";
 const day = (ymd: string, withYear = false) =>
@@ -23,28 +26,42 @@ function periodLabel(f: HistoryFilters) {
   return f.from === f.to ? day(f.from, true) : `${day(f.from)} – ${day(f.to, true)}`;
 }
 
-/** The owner's inventory report: what's on hand, what needs restocking, and how stock moved. Prints and exports. */
+type Tab = "sales" | "inventory";
+const TABS: { id: Tab; label: string }[] = [
+  { id: "sales", label: "Sales" },
+  { id: "inventory", label: "Inventory" },
+];
+
+/** The owner's reports: sales (counter sales over a period) and inventory (stock on hand and how it moved). Both print and export. */
 export default async function ReportsPage({ searchParams }: PageProps<"/admin/reports">) {
-  const { supabase, profile } = await requireStaff();
+  // requireStaff is cached per request, so each tab reuses this same session and check.
+  const { profile } = await requireStaff();
   if (profile.role !== "owner") redirect("/admin");
 
-  const filters = parseHistoryFilters(await searchParams, "30d");
-  const { fromIso, toIso } = historyBounds(filters);
-  const [stock, moves] = await Promise.all([fetchStockRows(supabase), fetchMovements(supabase, fromIso, toIso)]);
-
-  const summary = stockSummary(stock.rows);
-  const restock = needsRestock(stock.rows);
-  const groups = groupByProduct(stock.rows);
-  const asOf = new Intl.DateTimeFormat("en-PH", { dateStyle: "full", timeStyle: "short", timeZone: TZ }).format(new Date());
+  const params = await searchParams;
+  const tab: Tab = params.tab === "inventory" ? "inventory" : "sales";
+  const filters = parseHistoryFilters(params, "30d");
   const periodQs = new URLSearchParams({ range: filters.range, ...(filters.range === "custom" ? { from: filters.from, to: filters.to } : {}) });
+  const asOf = new Intl.DateTimeFormat("en-PH", { dateStyle: "full", timeStyle: "short", timeZone: TZ }).format(new Date());
+  // Switching tabs keeps the period.
+  const tabHref = (t: Tab) => {
+    const q = new URLSearchParams(periodQs);
+    if (filters.range === "30d") q.delete("range");
+    if (t === "inventory") q.set("tab", "inventory");
+    const s = q.toString();
+    return s ? `/admin/reports?${s}` : "/admin/reports";
+  };
 
   return (
-    <div className="mx-auto max-w-[80rem] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
+    <div data-report={tab} className="mx-auto max-w-[80rem] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
       <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
-          <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">Inventory report</h1>
+          <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">{tab === "sales" ? "Sales report" : "Inventory report"}</h1>
           <p className="mt-2 max-w-[60ch] text-[0.9375rem] text-ink-2">
-            <span className="print-only">J&amp;J Sportswear, Legazpi City. </span>As of {asOf}. Values use selling prices; archived products and hidden sizes aren’t counted.
+            <span className="print-only">J&amp;J Sportswear, Legazpi City. </span>As of {asOf}.{" "}
+            {tab === "sales"
+              ? "Counter sales; voided sales aren’t counted."
+              : "Values use selling prices; archived products and hidden sizes aren’t counted."}
           </p>
         </div>
         <div data-print="hide">
@@ -52,6 +69,60 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
         </div>
       </header>
 
+      <nav aria-label="Reports" data-print="hide" className="mt-6 inline-grid grid-cols-2 gap-1 rounded-xl bg-ground-2 p-1 shadow-[inset_0_0_0_1px_var(--line)]">
+        {TABS.map((t) => (
+          <Link
+            key={t.id}
+            href={tabHref(t.id)}
+            aria-current={tab === t.id ? "page" : undefined}
+            className={`press inline-flex h-10 items-center justify-center rounded-lg px-5 text-[0.9375rem] font-semibold ${
+              tab === t.id ? "bg-ink text-ground" : "text-ink-2 hover:text-ink"
+            }`}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </nav>
+
+      {tab === "sales" ? <SalesTab filters={filters} periodQs={periodQs} /> : <InventoryTab filters={filters} periodQs={periodQs} />}
+    </div>
+  );
+}
+
+async function SalesTab({ filters, periodQs }: { filters: HistoryFilters; periodQs: URLSearchParams }) {
+  const { supabase } = await requireStaff();
+  const { report, error } = await fetchSalesReport(supabase, filters);
+  return (
+    <>
+      <div data-print="hide" className="mt-6">
+        <ReportPeriod range={filters.range} from={filters.from} to={filters.to} />
+      </div>
+      {/* On paper the period otherwise rides on the Summary; with no Summary, it prints here. */}
+      {(error || !report || (report.totals.sales === 0 && report.totals.voided === 0)) && (
+        <p className="print-only mt-4 text-[0.9375rem]">{periodLabel(filters)}</p>
+      )}
+      {error || !report ? (
+        <p role="alert" className="auth-alert mt-6 rounded-2xl px-5 py-4 text-[0.9375rem]">
+          {error}
+        </p>
+      ) : (
+        <SalesReportView report={report} periodLabel={periodLabel(filters)} csv={`/admin/reports/export?${periodQs}`} />
+      )}
+    </>
+  );
+}
+
+async function InventoryTab({ filters, periodQs }: { filters: HistoryFilters; periodQs: URLSearchParams }) {
+  const { supabase } = await requireStaff();
+  const { fromIso, toIso } = historyBounds(filters);
+  const [stock, moves] = await Promise.all([fetchStockRows(supabase), fetchMovements(supabase, fromIso, toIso)]);
+
+  const summary = stockSummary(stock.rows);
+  const restock = needsRestock(stock.rows);
+  const groups = groupByProduct(stock.rows);
+
+  return (
+    <>
       {stock.error ? (
         <p role="alert" className="auth-alert mt-6 rounded-2xl px-5 py-4 text-[0.9375rem]">
           We couldn’t load the inventory just now. Refresh the page to try again.
@@ -102,7 +173,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
           <StockTable groups={groups} pieces={summary.pieces} value={summary.value} />
         </ReportSection>
       )}
-    </div>
+    </>
   );
 }
 

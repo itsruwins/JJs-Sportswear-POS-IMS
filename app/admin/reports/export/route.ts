@@ -2,7 +2,10 @@ import type { NextRequest } from "next/server";
 import { csvResponse } from "@/lib/admin/csv";
 import { fetchHistoryForExport, historyBounds, manilaToday, parseHistoryFilters } from "@/lib/admin/history";
 import { fetchMovements, fetchStockRows, needsRestock, STATE_LABEL } from "@/lib/admin/inventory";
+import { fetchSalesReport } from "@/lib/admin/sales-report";
 import { requireStaff } from "@/lib/admin/session";
+
+const SALES_KINDS = ["sales-summary", "sales-series", "sales-products", "sales-variants", "sales-cashiers"];
 
 const TYPE_LABEL: Record<string, string> = {
   restock: "Restock",
@@ -59,6 +62,60 @@ export async function GET(request: NextRequest) {
       line({ ...total, productName: "Total" }),
       ...(truncated ? [["Stopped at 50,000 changes. Pick a shorter period for complete totals."]] : []),
     ]);
+  }
+
+  if (kind && SALES_KINDS.includes(kind)) {
+    const { report, error } = await fetchSalesReport(supabase, filters);
+    if (error || !report) {
+      return new Response(error ?? "We couldn’t build that report just now. Try again.", { status: /owner/i.test(error ?? "") ? 403 : 500 });
+    }
+    const t = report.totals;
+    // Shares as whole percents, the same rounding as the screen.
+    const share = (part: number) => (t.revenue > 0 ? Math.round((part / t.revenue) * 100) : 0);
+    const p = report.previous;
+    const file = (name: string) => `jj-sales-${name}-${period}.csv`;
+    if (kind === "sales-summary") {
+      const rows: (string | number)[][] = [["Figure", "This period", ...(p ? ["Period before"] : [])]];
+      const add = (label: string, now: number, before?: number) => rows.push([label, now, ...(p ? [before ?? 0] : [])]);
+      add("Sales total (PHP)", t.revenue, p?.revenue);
+      add("Sales", t.sales, p?.sales);
+      add("Average sale (PHP)", t.sales ? Math.round((t.revenue / t.sales) * 100) / 100 : 0, p?.sales ? Math.round((p.revenue / p.sales) * 100) / 100 : 0);
+      add("Pieces sold", t.pieces, p?.pieces);
+      add("Cash (PHP)", t.cash, p?.cash);
+      add("GCash (PHP)", t.gcash, p?.gcash);
+      add("Voided sales (not counted)", t.voided, p?.voided);
+      add("Voided total (PHP, not counted)", t.voided_revenue, p?.voided_revenue);
+      return csvResponse(file("summary"), rows);
+    }
+    if (kind === "sales-series") {
+      const head = report.bucket === "hour" ? "Hour" : report.bucket === "day" ? "Date" : "Month";
+      return csvResponse(file(`by-${report.bucket}`), [[head, "Sales", "Total (PHP)"], ...report.series.map((s) => [report.bucket === "hour" ? s.label : s.bucket, s.sales, s.revenue])]);
+    }
+    if (kind === "sales-products") {
+      return csvResponse(file("best-products"), [
+        ["Rank", "Product", "Pieces", "Total (PHP)", "Share (%)"],
+        ...report.products.map((x, i) => [i + 1, x.name, x.pieces, x.revenue, share(x.revenue)]),
+      ]);
+    }
+    if (kind === "sales-variants") {
+      return csvResponse(file("best-sizes-colors"), [
+        ["Rank", "Product", "Size", "Color", "Pieces", "Total (PHP)"],
+        ...report.variants.map((x, i) => [i + 1, x.name, x.size, x.color, x.pieces, x.revenue]),
+      ]);
+    }
+    if (kind === "sales-cashiers") {
+      return csvResponse(file("by-cashier"), [
+        ["Cashier", "Username", "Sales", "Average (PHP)", "Total (PHP)", "Share (%)"],
+        ...report.cashiers.map((c) => [
+          c.full_name?.trim() || "",
+          c.username,
+          c.sales,
+          Math.round((c.revenue / c.sales) * 100) / 100,
+          c.revenue,
+          share(c.revenue),
+        ]),
+      ]);
+    }
   }
 
   if (kind === "history") {
