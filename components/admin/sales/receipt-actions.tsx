@@ -148,7 +148,7 @@ export function VoidSaleButton({ saleId, receiptNumber }: { saleId: string; rece
             maxLength={300}
             rows={3}
             placeholder="Wrong size rung up, customer changed their mind…"
-            className="auth-input auth-input-grow mt-2 resize-none py-3"
+            className="auth-input auth-input-grow mt-2 min-h-24 resize-none px-4 py-3 leading-relaxed"
           />
           {error && (
             <p role="alert" className="auth-alert mt-4 rounded-xl px-4 py-3 text-[0.9375rem]">

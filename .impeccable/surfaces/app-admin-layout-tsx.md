@@ -61,3 +61,21 @@ Home becomes the inventory dashboard: under the readout board, a line of board-n
 - **By cashier:** sales, average (hidden on phones), total, and share.
 
 Tables scroll sideways on phones inside labelled regions with the first column pinned. An empty period shows one line with a link to Point of sale. Before the migration runs, the tab shows a plain "needs the latest database update" message. Home's "Inventory report" button opens the Inventory tab.
+
+## Phase 10 additions (Custom orders)
+
+/admin/orders (More → Custom orders):
+- **List:** status tabs with exact counts (Open default, New with a live amber lamp, Accepted, In production, Ready, Completed, Declined or cancelled, All), a search over number, customer, and items, and rows (number + age, customer, garments + pieces, price or "Needs a price", status pill, chevron), stacked on phones. A note shows when a tab holds more than the newest 300.
+
+/admin/orders/[id]:
+- **Header:** a back link to the tab the order was opened from, the order number in display type, the customer and placed date (relative time only within the week), the status pill, and a one-line outcome strip for status moves (focused and announced).
+- **Stage board:** a small Court Green strip with a period lamp per stage (lit for passed, live amber for now), on phones with the stage name and "n/5" in board numerals. Declined and cancelled orders show a reason panel instead.
+- **Main column, by status:**
+  - "Review and price": ₱ field, live "Down payment (50%)" hint, green Accept, outlined Decline → reason dialog.
+  - "Hand over": green "Picked up: complete order", plus "Back to production" → reason dialog.
+  - "Production": five tick rows with who and when, in order, where only the next step reads "Tap when done". "Mark ready for pickup" (green) is enabled at 5/5; "Failed inspection: reprint" → reason dialog, shown once sewing is done.
+  - "What they ordered": items with ×qty in board numerals, request, notes, and AI design.
+  - "Finished photos": up to 4 on the photo backdrop; two taps to remove.
+- **Side column:** Customer (tel/mailto), Price (total, down payment 50%, balance at pickup, payments-later note, price editable while accepted), History (newest first, production notes inline), and "Cancel this order" → reason dialog.
+
+The order screens refresh live on order, step, photo, and history changes. Amber stays limited to New and the live lamp.

@@ -13,8 +13,10 @@ const LIVE_TABLES = ["products", "product_variants", "inventory_transactions"] a
  * where the realtime migration (supabase/migrations/20261005000000_realtime_stock.sql)
  * hasn't been run yet.
  */
-export function LiveRefresh({ intervalMs = 60_000 }: { intervalMs?: number }) {
+export function LiveRefresh({ intervalMs = 60_000, tables = LIVE_TABLES }: { intervalMs?: number; tables?: readonly string[] }) {
   const router = useRouter();
+  // The table list as a value, so a new array with the same tables doesn't resubscribe.
+  const watched = tables.join(",");
 
   useEffect(() => {
     let timer: number | undefined;
@@ -29,7 +31,7 @@ export function LiveRefresh({ intervalMs = 60_000 }: { intervalMs?: number }) {
     const supabase = createClient();
     // A fresh topic per mount: reusing one while the previous page's copy is still leaving hands back a dead channel.
     const channel = supabase.channel(`admin-live-stock-${Math.random().toString(36).slice(2)}`);
-    for (const table of LIVE_TABLES) {
+    for (const table of watched.split(",")) {
       channel.on("postgres_changes", { event: "*", schema: "public", table }, refreshSoon);
     }
     channel.subscribe();
@@ -44,7 +46,7 @@ export function LiveRefresh({ intervalMs = 60_000 }: { intervalMs?: number }) {
       document.removeEventListener("visibilitychange", onVisible);
       supabase.removeChannel(channel);
     };
-  }, [router, intervalMs]);
+  }, [router, intervalMs, watched]);
 
   return null;
 }

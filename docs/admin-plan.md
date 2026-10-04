@@ -107,6 +107,27 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
    - **Follow-up migration `20261007120000_pos_sale_key.sql`:** brings Phase 8's sale function to its final reviewed version, because the first draft of `20261007000000_pos_gcash_and_voids.sql` had already been applied.
    - Not yet possible: profit and margin (no cost price), and custom orders and online payments (Phases 10–11).
 10. **Custom orders:** accept or decline, production status, finished photo.
+    - **Built (2026-10-05):**
+      - **`/admin/orders`** (More → Custom orders): status tabs with counts (Open, New, Accepted, In production, Ready, Completed, Declined or cancelled, All) and a search over order number, customer, and items.
+      - **The order page:** a progress track, then the next step for the order's status:
+        - New: set the price and accept, or decline with a reason the customer sees.
+        - In production: tick off printing, cutting, sewing, inspection, and folding and packing. A failed inspection sends the order back to printing with a note.
+        - Ready, once all five steps are done.
+        - Picked up.
+      - Also on the page: what was ordered, up to 4 finished photos for the customer, the customer's contact, the price with its 50% down payment and balance, the full history, and cancel with a reason.
+      - **Migration `20261009000000_custom_order_production.sql`:**
+        - production steps, changed through `set_production_step` and `reprint_custom_order` and taken in order; a reprint clears every step
+        - `reopen_custom_order`: a ready order goes back to production with a reason in its history, and the customer gets a gentler message
+        - live updates for orders, steps, photos, and history
+        - finished photos, at most 4, in the private `order-photos` bucket
+        - status moves limited to real transitions, with ready requiring every step done
+      - **Sample orders:** `supabase/seed/sample-custom-orders.sql` loads nine across every status, from four sample customers who can't log in; `remove-sample-custom-orders.sql` removes them.
+      - **Deferred:**
+        - staff entering orders for walk-in customers
+        - the customer's own order page
+        - enforcing the down payment (Phase 11)
+        - telling the customer when an accepted order's price changes
+        - searching orders beyond the newest 300 in a tab
 11. **Payment verification:** GCash reference and screenshot review, down payment and balance.
 12. **Chat and notifications:** customer and staff messaging per order.
 
