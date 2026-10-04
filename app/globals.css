@@ -713,13 +713,15 @@ button.admin-dock-item:not([aria-disabled="true"]):hover {
 }
 
 .admin-dock-item[aria-current="page"],
-.admin-dock-item[aria-expanded="true"] {
+.admin-dock-item[aria-expanded="true"],
+.admin-dock-item[data-current="true"] {
   background: var(--board);
   color: var(--board-ink);
 }
 
 a.admin-dock-item[aria-current="page"]:hover,
-button.admin-dock-item[aria-expanded="true"]:hover {
+button.admin-dock-item[aria-expanded="true"]:hover,
+button.admin-dock-item[data-current="true"]:hover {
   color: var(--board-ink);
 }
 

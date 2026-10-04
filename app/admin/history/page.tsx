@@ -14,7 +14,7 @@ export default async function HistoryPage({ searchParams }: PageProps<"/admin/hi
   const { supabase, profile } = await requireStaff();
   const params = await searchParams;
   const filters = parseHistoryFilters(params);
-  const [history, options] = await Promise.all([fetchHistory(supabase, filters), fetchHistoryOptions(supabase)]);
+  const [history, options] = await Promise.all([fetchHistory(supabase, filters), fetchHistoryOptions(supabase, filters.staff)]);
 
   const today = manilaToday();
   const yesterday = shiftDate(today, -1);

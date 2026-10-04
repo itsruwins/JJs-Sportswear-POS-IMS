@@ -135,18 +135,26 @@ export async function fetchHistory(supabase: SupabaseClient, f: HistoryFilters) 
   };
 }
 
-/** Products and staff to offer in the filters. */
-export async function fetchHistoryOptions(supabase: SupabaseClient) {
+/**
+ * Products and staff to offer in the filters. Someone who has since left the team still
+ * appears while they're the selected filter, so a link to their history keeps its label.
+ */
+export async function fetchHistoryOptions(supabase: SupabaseClient, selectedStaff = "") {
+  const former = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(selectedStaff) ? `,id.eq.${selectedStaff}` : "";
   const [products, staff] = await Promise.all([
     supabase.from("products").select("id, name").order("name"),
-    supabase.from("profiles").select("id, username, full_name").in("role", ["staff", "owner"]).order("full_name"),
+    supabase
+      .from("profiles")
+      .select("id, username, full_name, role")
+      .or(`role.in.(staff,owner)${former}`)
+      .order("full_name"),
   ]);
   return {
     products: (products.data ?? []) as { id: string; name: string }[],
-    staff: (staff.data ?? []).map((s) => ({
-      id: s.id as string,
-      name: ((s.full_name as string | null)?.trim() || `@${s.username}`) as string,
-    })),
+    staff: (staff.data ?? []).map((s) => {
+      const name = ((s.full_name as string | null)?.trim() || `@${s.username}`) as string;
+      return { id: s.id as string, name: s.role === "customer" ? `${name} (former staff)` : name };
+    }),
   };
 }
 

@@ -74,6 +74,7 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 ## Later phases (planned in detail when we reach them)
 
 7. **Staff and roles:** the owner promotes accounts to staff (`set_user_role`).
+   - **Built (2026-10-04):** `/admin/staff` (owner only, in the More menu). Team lists every owner and staff member with role, contact, joined date, last stock change, and a link to their History. Staff can be made owner or removed from staff, other owners can be changed to staff, and the owner's own row can't be changed (another owner can). Add staff searches customer accounts by username, name, email, or phone. Every change asks first; making someone an owner needs their username typed. Removed staff lose access on their next page or action. The database still refuses to remove the last owner. History keeps a former staff member in its staff filter, marked "(former staff)", so their history link still works. Migration `20261006000000_safe_role_changes.sql` makes role changes run one at a time, so two owners can't remove each other at once and leave the shop with none. It also re-checks the role the owner saw under the row lock. The screen works before this migration is run, but without those two protections.
 8. **Point of sale:** sales at the counter, cash or GCash, change, receipts (`create_pos_sale`).
 9. **Sales reports:** owner only.
 10. **Custom orders:** accept or decline, production status, finished photo.
@@ -87,6 +88,9 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 - **Atomic recount:** a database function that sets a counted number under the row lock, so a sale landing at the same instant can't skew the correction. Phase 4 reads the count milliseconds before writing.
 - **History totals in SQL:** a `security invoker` function that sums pieces in/out for the history filters. Phase 5 reads the quantities 1,000 rows at a time, which is fine for a shop's volume but slower at scale. The list itself shows up to 500 rows per view.
 - **Edit conflicts:** check `updated_at` so two people editing the same product don't overwrite each other's changes.
+- **Staff invite links:** the owner enters an email and the person signs up straight into staff. Accounts log in by username today, so this needs a server-side key and email setup. Phase 7 asks new staff to sign up as customers first.
+- **Instant removal:** add `profiles` to the realtime publication so a removed staff member's open admin tab leaves at once, instead of on their next page or action.
+- **Contact privacy (existing RLS):** the profiles read policy lets any signed-in customer read every column of staff and owner profiles, including email and phone. That access exists for chat names. It also lets every staff member, not only the owner, read all customers' contact details through the API. Fix with a view or `security definer` function that exposes only `id, username, full_name, avatar_url` for chat, and keep the table itself to "own row, or staff". The Staff screen's owner-only contact column is a screen rule, not a data boundary, until then.
 
 ## How each phase runs
 

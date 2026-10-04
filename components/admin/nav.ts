@@ -37,7 +37,7 @@ export const MORE_SECTIONS: AdminSection[] = [
   { label: "Payments", icon: Wallet, description: "Check GCash and cash payments" },
   { label: "Chat", icon: MessageCircle, description: "Messages with customers" },
   { label: "Reports", icon: ChartColumn, href: "/admin/reports", description: "Inventory report and exports", ownerOnly: true },
-  { label: "Staff", icon: Users, description: "Accounts and roles", ownerOnly: true },
+  { label: "Staff", icon: Users, href: "/admin/staff", description: "Accounts and roles", ownerOnly: true },
 ];
 
 export function visibleTo(role: StaffRole) {
