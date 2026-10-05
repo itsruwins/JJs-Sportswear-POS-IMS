@@ -1,6 +1,6 @@
 "use server";
 
-import { requireStaff } from "@/lib/admin/session";
+import { ownerSession } from "@/lib/admin/session";
 import { MAX_AMOUNT, STOCK_ACTIONS, stockReason, type StockAction } from "@/lib/admin/stock-types";
 
 export type StockEntry = { variantId: string; amount: number };
@@ -36,7 +36,9 @@ export async function adjustStock(
   reasonPick: string,
   note: string,
 ): Promise<StockResult> {
-  const { supabase } = await requireStaff();
+  const session = await ownerSession();
+  if (!session) return { ok: false, message: "Only the owner can change stock.", results: [] };
+  const { supabase } = session;
   const info = STOCK_ACTIONS.find((a) => a.id === action);
   if (!info) return { ok: false, message: "Choose what kind of change this is.", results: [] };
   if (!info.reasons.includes(reasonPick)) return { ok: false, message: "Pick a reason for this change.", results: [] };

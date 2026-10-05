@@ -8,7 +8,7 @@ import { formatPeso } from "@/lib/admin/catalog";
 import { historyBounds, parseHistoryFilters, type HistoryFilters } from "@/lib/admin/history";
 import { fetchMovements, fetchStockRows, groupByProduct, needsRestock, stockSummary } from "@/lib/admin/inventory";
 import { fetchSalesReport } from "@/lib/admin/sales-report";
-import { requireStaff } from "@/lib/admin/session";
+import { requireStaff, STAFF_HOME } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "Reports · J&J Sportswear Admin" };
 
@@ -36,7 +36,7 @@ const TABS: { id: Tab; label: string }[] = [
 export default async function ReportsPage({ searchParams }: PageProps<"/admin/reports">) {
   // requireStaff is cached per request, so each tab reuses this same session and check.
   const { profile } = await requireStaff();
-  if (profile.role !== "owner") redirect("/admin");
+  if (profile.role !== "owner") redirect(STAFF_HOME);
 
   const params = await searchParams;
   const tab: Tab = params.tab === "inventory" ? "inventory" : "sales";

@@ -4,7 +4,7 @@ import type { Readout } from "@/components/admin/readout-board";
 import { fetchRecentMoves } from "@/lib/admin/catalog";
 import { historyBounds, manilaToday, shiftDate } from "@/lib/admin/history";
 import { fetchMovements, fetchStockRows, needsRestock, stockSummary } from "@/lib/admin/inventory";
-import { firstName, requireStaff } from "@/lib/admin/session";
+import { firstName, requireOwner } from "@/lib/admin/session";
 
 const TZ = "Asia/Manila";
 
@@ -16,7 +16,7 @@ function greeting(now: Date) {
 }
 
 export default async function AdminHome() {
-  const { supabase, profile } = await requireStaff();
+  const { supabase, profile } = await requireOwner();
   const now = new Date();
   const today = manilaToday(now);
   const week = historyBounds({ from: shiftDate(today, -6), to: today });

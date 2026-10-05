@@ -1,6 +1,6 @@
 "use server";
 
-import { requireStaff } from "@/lib/admin/session";
+import { ownerSession } from "@/lib/admin/session";
 import { displayName, PROFILE_COLUMNS, toAccount, type Account, type AccountRole } from "@/lib/admin/staff";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -10,15 +10,9 @@ const SEARCH_LIMIT = 12;
 export type SearchResult = { ok: true; accounts: Account[]; more: boolean } | { ok: false; message: string };
 export type RoleResult = { ok: true; message: string } | { ok: false; message: string; stale?: boolean };
 
-/** Owner only. Every check runs here too, since server actions can be called directly. */
-async function requireOwner() {
-  const session = await requireStaff();
-  return session.profile.role === "owner" ? session : null;
-}
-
 /** Customer accounts matching a username, name, email, or phone, for "Add staff". */
 export async function searchAccounts(raw: string): Promise<SearchResult> {
-  const session = await requireOwner();
+  const session = await ownerSession();
   if (!session) return { ok: false, message: "Only the owner can manage staff." };
 
   // Characters that carry meaning in a PostgREST filter list (or as wildcards) are dropped rather than
@@ -59,7 +53,7 @@ const DONE: Record<AccountRole, (who: string) => string> = {
  * the meantime isn't silently overwritten. Making someone an owner needs their username typed.
  */
 export async function changeRole(userId: string, from: AccountRole, to: AccountRole, typed = ""): Promise<RoleResult> {
-  const session = await requireOwner();
+  const session = await ownerSession();
   if (!session) return { ok: false, message: "Only the owner can change roles." };
   const { supabase, profile } = session;
 

@@ -6,12 +6,12 @@ import { CsvLink } from "@/components/admin/reports/report-tables";
 import { HistoryList } from "@/components/admin/history/history-list";
 import { LiveRefresh } from "@/components/admin/live-refresh";
 import { fetchHistory, fetchHistoryOptions, HISTORY_STEP, MAX_SHOW, manilaToday, parseHistoryFilters, shiftDate } from "@/lib/admin/history";
-import { requireStaff } from "@/lib/admin/session";
+import { requireOwner } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "History · J&J Sportswear Admin" };
 
 export default async function HistoryPage({ searchParams }: PageProps<"/admin/history">) {
-  const { supabase, profile } = await requireStaff();
+  const { supabase } = await requireOwner();
   const params = await searchParams;
   const filters = parseHistoryFilters(params);
   const [history, options] = await Promise.all([fetchHistory(supabase, filters), fetchHistoryOptions(supabase, filters.staff)]);
@@ -43,7 +43,7 @@ export default async function HistoryPage({ searchParams }: PageProps<"/admin/hi
             Every stock change: who made it, when, by how much, and why.
           </p>
         </div>
-        {profile.role === "owner" && history.total > 0 && <CsvLink href={`/admin/reports/export?${csvParams}`} label="Stock history with these filters" />}
+        {history.total > 0 && <CsvLink href={`/admin/reports/export?${csvParams}`} label="Stock history with these filters" />}
       </header>
 
       <HistoryFilters filters={filters} products={options.products} staff={options.staff} />

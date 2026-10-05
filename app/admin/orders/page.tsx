@@ -21,7 +21,7 @@ const EMPTY: Record<OrderView, string> = {
 
 /** Custom orders: what's new, what's in production, and what's ready to hand over. */
 export default async function OrdersPage({ searchParams }: PageProps<"/admin/orders">) {
-  const { supabase } = await requireStaff();
+  const { supabase, profile } = await requireStaff();
   const raw = (await searchParams).view;
   const view = (VIEWS.some((v) => v.id === raw) ? raw : "open") as OrderView;
   const { orders, more, counts, migrated, error } = await fetchOrders(supabase, view, "");
@@ -35,7 +35,9 @@ export default async function OrdersPage({ searchParams }: PageProps<"/admin/ord
       <header className="mb-6">
         <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">Custom orders</h1>
         <p className="mt-2 max-w-[60ch] text-[0.9375rem] text-ink-2">
-          Review new orders, set the price, and follow each one through production to pickup.
+          {profile.role === "owner"
+            ? "Review new orders, set the price, and follow each one through production to pickup."
+            : "Follow each order from new through production to pickup, and record payments for them."}
         </p>
       </header>
 

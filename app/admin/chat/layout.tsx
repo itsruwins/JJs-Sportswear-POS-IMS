@@ -3,14 +3,14 @@ import { redirect } from "next/navigation";
 import { ChatShell } from "@/components/admin/chat/chat-shell";
 import { LiveRefresh } from "@/components/admin/live-refresh";
 import { CHAT_MIGRATION, fetchInbox } from "@/lib/admin/chat";
-import { requireStaff } from "@/lib/admin/session";
+import { requireStaff, STAFF_HOME } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "Chat · J&J Sportswear Admin" };
 
 /** The owner's chat with customers: the inbox, and the open conversation beside it. */
 export default async function ChatLayout({ children }: LayoutProps<"/admin/chat">) {
   const { supabase, profile } = await requireStaff();
-  if (profile.role !== "owner") redirect("/admin");
+  if (profile.role !== "owner") redirect(STAFF_HOME);
   const { rows, migrated, error } = await fetchInbox(supabase);
 
   return (

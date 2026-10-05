@@ -1,14 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 import { ChatThread } from "@/components/admin/chat/chat-thread";
 import { fetchThread, findCustomer } from "@/lib/admin/chat";
-import { requireStaff } from "@/lib/admin/session";
+import { requireStaff, STAFF_HOME } from "@/lib/admin/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** One customer's conversation. `?order=` picks the order a new message is about. */
 export default async function ChatThreadPage({ params, searchParams }: PageProps<"/admin/chat/[customerId]">) {
   const { supabase, profile } = await requireStaff();
-  if (profile.role !== "owner") redirect("/admin");
+  if (profile.role !== "owner") redirect(STAFF_HOME);
   const { customerId } = await params;
   if (!UUID.test(customerId)) notFound();
 
