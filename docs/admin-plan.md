@@ -166,6 +166,38 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
         - payments on walk-in orders
         - the customer's own payment screen
 12. **Chat and notifications:** customer and staff messaging per order.
+    - **Built (2026-10-05):**
+      - **Owner only.** Staff don't see Chat or customers' messages; the database enforces it too.
+      - **`/admin/chat`** (More → Chat): one conversation per customer, newest first.
+        - Each row shows the last message ("You:" when the shop wrote last), its order number, the time, and an amber unread count.
+        - A search appears once there are more than five conversations.
+        - On wide screens the inbox sits beside the open conversation; on phones it's one or the other.
+      - **A conversation:**
+        - **Header:** sticky, with the customer's name, username, phone, and email, plus their open orders as links.
+        - **Messages:** grouped by day, each tagged "About CO-…" when it's about an order.
+        - **Reply box:** sticks above the dock. It grows with the text, can tag one of the customer's orders, and sends with Ctrl/⌘ + Enter.
+        - Opening a conversation reads it, including the bell alert. Messages arrive live.
+      - **Alerts:**
+        - A customer's message alerts every owner, once per customer until it's read, so a burst of messages makes one alert.
+        - More shows an amber dot, and Chat in the menu shows the unread count, both live.
+      - **The bell:** every notification now opens its page. Low stock opens the product, new and cancelled orders open the order, payments to check open the payment, and messages open the conversation.
+      - **The order page:** owners see a Messages section under Customer, with the latest messages about that order and "Message {name}" / "Open conversation".
+      - **Migration `20261011000000_owner_chat.sql`:**
+        - The read, send, and mark-read rules move from staff to owners. Only customer accounts write to the shop.
+        - Owner alerts, one per customer until read. Reading a customer's messages clears every owner's alert about them.
+        - Senders can't set a message's time or id.
+        - `rpc(chat_inbox)`
+        - A 2,000-character limit on messages.
+        - It tidies leftovers from the old rules: staff/owner messages "to the shop", and chat alerts staff can no longer open.
+      - **Sample chats:** `supabase/seed/sample-chats.sql` (run after the sample orders and the migration) adds 11 messages from the four sample customers, 3 conversations unread. `remove-sample-custom-orders.sql` removes them too.
+      - **For the customer app:**
+        - **Sending:** insert into `chat_messages` with `receiver_id` null (the shop) or an owner's id, and an optional `order_id` of one of the customer's own orders. Writing to a staff member is no longer allowed.
+        - **Replies:** the customer is alerted with `type = 'chat'`, and `reference_id` points to the order (or to the sender).
+      - **Deferred:**
+        - photos in chat
+        - older messages beyond the latest 200 in a conversation
+        - assigning conversations
+        - staff access to chat
 
 ## Hardening to consider (deferred on purpose)
 

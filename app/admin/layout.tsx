@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AdminDock } from "@/components/admin/admin-dock";
 import { AdminTopBar } from "@/components/admin/admin-top-bar";
+import { fetchUnreadChats } from "@/lib/admin/chat";
 import { requireStaff } from "@/lib/admin/session";
 
 export const metadata: Metadata = {
@@ -9,7 +10,8 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
-  const { profile } = await requireStaff();
+  const { supabase, profile } = await requireStaff();
+  const unreadChats = profile.role === "owner" ? ((await fetchUnreadChats(supabase, profile.id)) ?? 0) : 0;
 
   return (
     <>
@@ -23,7 +25,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       <main id="main" className="flex-1 pb-36 sm:pb-40">
         {children}
       </main>
-      <AdminDock role={profile.role} />
+      <AdminDock role={profile.role} userId={profile.id} unreadChats={unreadChats} />
     </>
   );
 }

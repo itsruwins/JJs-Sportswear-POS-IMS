@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Mail, MessageCircle, Phone } from "lucide-react";
+import { clock, dayLabel, firstNameOf } from "@/components/admin/chat/chat-bits";
+import { unreadFor, type ChatMessage } from "@/lib/admin/chat";
 import { formatPeso } from "@/lib/admin/catalog";
 import { downPayment, PRODUCTION_MIGRATION, STATUS_LABEL, STEPS, VIEWS, type OrderDetail, type OrderStatus, type OrderView } from "@/lib/admin/orders";
 import { CancelOrderButton, HandoverPanel, OrderFlash, PhotoManager, ProductionChecklist, ReviewPanel } from "./order-actions";
@@ -36,6 +38,7 @@ export function OrderView({
   isOwner = false,
   now = new Date(),
   backView = "open",
+  chat,
 }: {
   order: OrderDetail;
   /** Payments, refunds, and exceptions (absent before the payments phase data is loaded). */
@@ -43,6 +46,8 @@ export function OrderView({
   isOwner?: boolean;
   now?: Date;
   backView?: OrderView;
+  /** The owner's view: the latest messages about this order. */
+  chat?: { messages: ChatMessage[]; total: number; error?: boolean; ownerId: string };
 }) {
   const closed = o.status === "declined" || o.status === "cancelled";
   const pieces = o.items.reduce((s, i) => s + i.quantity, 0);
@@ -287,13 +292,54 @@ export function OrderView({
                       </a>
                     </li>
                   )}
-                  {!o.customer.phone && !o.customer.email && <li className="text-ink-2">No phone or email on file. Reach them through chat.</li>}
+                  {!o.customer.phone && !o.customer.email && (
+                    <li className="text-ink-2">No phone or email on file. {isOwner ? "Reach them through chat." : "The owner can reach them through chat."}</li>
+                  )}
                 </ul>
               </>
             ) : (
               <p className="text-[0.9375rem] text-ink-2">Customer account not found.</p>
             )}
           </Section>
+
+          {isOwner && chat && o.customer && (
+            <Section
+              title="Messages"
+              aside={chat.total > chat.messages.length ? <span className="tabular text-[0.875rem] text-ink-2">Latest {chat.messages.length} of {chat.total}</span> : undefined}
+            >
+              {chat.error ? (
+                <p className="text-[0.9375rem] text-ink-2">We couldn’t load the messages just now. The conversation is still a tap away.</p>
+              ) : chat.messages.length === 0 ? (
+                <p className="text-[0.9375rem] text-ink-2">Nothing about this order yet.</p>
+              ) : (
+                <ol className="flex flex-col gap-2.5">
+                  {chat.messages.map((m) => (
+                    <li key={m.id} className={`flex flex-col ${m.fromCustomer ? "items-start" : "items-end"}`}>
+                      <p
+                        className={`line-clamp-4 max-w-[90%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[0.875rem] leading-relaxed ${
+                          m.fromCustomer ? "rounded-bl-md bg-ground-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]" : "rounded-br-md bg-ink text-ground"
+                        }`}
+                      >
+                        <span className="sr-only">{m.fromCustomer ? personName(o.customer) : "Shop"}: </span>
+                        {m.message}
+                      </p>
+                      <span className="tabular mt-0.5 px-1 text-[0.75rem] text-ink-2">
+                        {dayLabel(m.created_at, now)}, {clock(m.created_at)}
+                        {unreadFor(m, chat.ownerId) && <span className="font-semibold text-ink"> · New</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <Link
+                href={`/admin/chat/${o.customer.id}?order=${o.id}`}
+                className="press mt-4 inline-flex h-11 items-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2"
+              >
+                <MessageCircle aria-hidden="true" className="size-4" />
+                {chat.messages.length || chat.error ? "Open conversation" : `Message ${firstNameOf(o.customer)}`}
+              </Link>
+            </Section>
+          )}
 
           <Section title="Price and payments">
             {o.total_price === null ? (

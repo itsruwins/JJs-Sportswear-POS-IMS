@@ -3,7 +3,7 @@
 -- =============================================================================
 -- Deletes every order placed by a sample customer (accounts marked "sample" in
 -- their account metadata by the seed), with their items, steps, photos, payments,
--- history, and notifications, then the sample customer accounts. Real customers and
+-- history, chats, and notifications, then the sample customer accounts. Real customers and
 -- orders are untouched. Photos uploaded to sample orders stay in the order-photos
 -- bucket; remove those folders in Storage if any were added. Run in the Supabase SQL
 -- editor.
@@ -28,6 +28,10 @@ begin
   end if;
 end;
 $$;
+-- Chats with the sample customers (the owner's replies would otherwise stay behind with no recipient),
+-- and the owners' alerts about them.
+delete from public.chat_messages where sender_id in (select id from _sample_users) or receiver_id in (select id from _sample_users);
+delete from public.notifications where type = 'chat' and reference_id in (select id from _sample_users);
 delete from public.custom_orders where id in (select id from _sample_orders);
 delete from auth.users where id in (select id from _sample_users);
 

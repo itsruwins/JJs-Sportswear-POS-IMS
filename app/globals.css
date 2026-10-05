@@ -666,6 +666,34 @@ input.auth-input:focus-visible,
   }
 }
 
+/* Chat: the reply box sticks just above the dock while the conversation scrolls. */
+.chat-composer {
+  position: sticky;
+  z-index: calc(var(--z-sticky) - 1);
+  bottom: calc(env(safe-area-inset-bottom) + 4.75rem);
+  /* main's bottom padding (9rem) less the sticky offset, so it rests where it sticks. */
+  margin-bottom: -4.25rem;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 12px 32px -18px oklch(0.2 0.03 158 / 0.35);
+}
+/* The box shows focus for its text field, so the field itself doesn't draw a second ring. */
+.chat-composer:has(textarea:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--amber),
+    0 12px 32px -18px oklch(0.2 0.03 158 / 0.35);
+}
+.chat-composer textarea:focus-visible {
+  outline: none;
+}
+@media (min-width: 640px) {
+  .chat-composer {
+    bottom: calc(env(safe-area-inset-bottom) + 5.625rem);
+    margin-bottom: -4.375rem;
+  }
+}
+
 /* ---------- Admin: dock ---------- */
 
 /* Point of sale: the running sale, floating just above the dock on phones and tablets. */
@@ -765,6 +793,22 @@ button.admin-dock-item[data-current="true"]:hover {
   border-radius: 999px;
   background: var(--ink-2);
   box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* Unread customer messages behind More: a small amber dot on its icon. */
+.admin-unread-dot {
+  position: absolute;
+  top: -0.0625rem;
+  right: -0.25rem;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  border-radius: 999px;
+  background: var(--amber);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.admin-dock-item[aria-expanded="true"] .admin-unread-dot,
+.admin-dock-item[data-current="true"] .admin-unread-dot {
+  box-shadow: 0 0 0 2px var(--board);
 }
 
 /* "Coming soon" tooltip: on hover, keyboard focus, or a tap. */

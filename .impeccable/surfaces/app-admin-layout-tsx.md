@@ -108,3 +108,35 @@ The order screens refresh live on order, step, photo, and history changes. Amber
 - **Refunds:** on cancelled orders. The owner records them in a dialog with amount, method, and a required note.
 - **Notices:** the accepted-order "waiting for the down payment" notice locks the checklist. The hand-over "Balance due" notice disables Picked up and links to any GCash payment waiting for review. Both carry an owner-only "make an exception" link → reason dialog.
 
+## Phase 12 additions (Chat, owner only)
+
+/admin/chat (More → Chat; owners only):
+- **Inbox:** the "Chat" display heading and a line saying how many messages are new.
+  - A search appears past five conversations.
+  - Rows: an initials avatar (board green when unread, otherwise ground-2), the name (semibold when unread), a two-line preview ("You:" when the shop wrote last), the order number, the time ("2:14 PM", "Yesterday", "Mon", "Sep 28"), and an amber unread count.
+  - On wide screens it's a sticky 21rem column beside the open conversation; the column scrolls inside itself.
+  - On phones the inbox and a conversation are separate screens.
+- **No conversation picked (wide screens):** a quiet ground-2 panel saying "Pick a conversation".
+
+/admin/chat/[customerId]:
+- **Header:** sticky under the top bar.
+  - A back arrow on phones, the avatar, the name in display type, and @username · phone · email (on phones the phone shrinks to an icon under 400px and email hides).
+  - The customer's open orders as outlined chips in one row that scrolls sideways.
+- **Messages:**
+  - Day separators in the label voice ("Today", "Yesterday", "Monday", "Sep 28").
+  - "About CO-…" links above a message when the order it's about changes.
+  - Bubbles: the customer's are ground-2 with a hairline on the left (bottom-left corner tightened); the shop's are ink on the right (bottom-right tightened).
+  - Times are small and tabular, with the sender's name only when more than one owner has replied.
+- **Reply box:** a surface card that sticks just above the dock and rests at the same spot.
+  - A text field that grows to about eight lines, with "About" and an order select ("Not about an order" or an order and its status) and a green Send.
+  - A character counter appears near 2,000.
+  - Focus shows as one amber ring on the card.
+- **Reading:** opening a conversation reads it, or reads it when the tab comes back into view. The unread count, the amber dot on More, and the bell alert all clear.
+
+Elsewhere:
+- **Dock:** More shows an amber dot while customer messages are unread, and the Chat row in More shows an amber count. Both are live.
+- **Bell:** every alert opens its page. Pop-ups carry a matching action ("View product", "Open order", "Check payment", "Reply").
+- **Order page (owner):** a "Messages" section under Customer.
+  - It shows the latest four messages about the order in the same bubble language, with day and time, and "Latest 4 of N" when there are more.
+  - An outlined "Message {name}" or "Open conversation" button.
+
