@@ -135,10 +135,16 @@ export function OrderView({
         <div className="min-w-0">
           {o.status === "pending" && (
             <Section title="Review and price">
-              <p className="mb-4 max-w-[60ch] text-[0.9375rem] text-ink-2">
-                Check what they asked for below, agree the details with the customer, then set the price to accept it.
-              </p>
-              <ReviewPanel id={o.id} status={o.status} price={o.total_price} />
+              {isOwner ? (
+                <>
+                  <p className="mb-4 max-w-[60ch] text-[0.9375rem] text-ink-2">
+                    Check what they asked for below, agree the details with the customer, then set the price to accept it.
+                  </p>
+                  <ReviewPanel id={o.id} status={o.status} price={o.total_price} />
+                </>
+              ) : (
+                <p className="max-w-[60ch] text-[0.9375rem] text-ink-2">New order. The owner reviews it, agrees the details with the customer, and sets the price.</p>
+              )}
             </Section>
           )}
 
@@ -176,7 +182,11 @@ export function OrderView({
                   Owner allowed pickup before full payment: “{money.overrides.pickup.reason}”
                 </p>
               )}
-              <HandoverPanel id={o.id} balanceDue={balanceDue} />
+              {isOwner ? (
+                <HandoverPanel id={o.id} balanceDue={balanceDue} />
+              ) : (
+                <p className="text-[0.9375rem] text-ink-2">The owner completes the order when the customer picks it up.</p>
+              )}
             </Section>
           )}
 
@@ -211,7 +221,7 @@ export function OrderView({
               {money?.overrides.production && o.status === "accepted" && (
                 <p className="mb-4 text-[0.875rem] text-ink-2">Owner let production start before the down payment: “{money.overrides.production.reason}”</p>
               )}
-              <ProductionChecklist id={o.id} status={o.status} steps={steps} locked={waitingDown} />
+              <ProductionChecklist id={o.id} status={o.status} steps={steps} locked={waitingDown} readOnly={!isOwner} />
             </Section>
           )}
 
@@ -264,7 +274,7 @@ export function OrderView({
 
           {showPhotos && (
             <Section title="Finished photos" aside={<span className="text-[0.875rem] text-ink-2">The customer sees these</span>}>
-              <PhotoManager id={o.id} photos={o.photos} canEdit />
+              <PhotoManager id={o.id} photos={o.photos} canEdit={isOwner} />
             </Section>
           )}
         </div>
@@ -420,7 +430,7 @@ export function OrderView({
                 )}
               </div>
             )}
-            {o.status === "accepted" && (
+            {isOwner && o.status === "accepted" && (
               <div className="mt-5 border-t border-line pt-4">
                 <ReviewPanel id={o.id} status={o.status} price={o.total_price} />
               </div>
@@ -448,7 +458,7 @@ export function OrderView({
             </ol>
           </Section>
 
-          {!closed && o.status !== "completed" && (
+          {isOwner && !closed && o.status !== "completed" && (
             <div className="mt-8 border-t border-line pt-4">
               <CancelOrderButton id={o.id} />
             </div>

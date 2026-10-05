@@ -301,16 +301,19 @@ export function ProductionChecklist({
   status,
   steps,
   locked = false,
+  readOnly = false,
 }: {
   id: string;
   status: OrderStatus;
   steps: Partial<Record<Step, { done_at: string; by: string; when: string }>>;
   /** Waiting for the down payment: production can't start yet. */
   locked?: boolean;
+  /** Staff follow production; only the owner ticks steps. */
+  readOnly?: boolean;
 }) {
   const { busy, result, run } = useAction(id);
   const [reprinting, setReprinting] = useState(false);
-  const editable = status === "accepted" || status === "in_progress";
+  const editable = !readOnly && (status === "accepted" || status === "in_progress");
   const done = STEPS.filter((s) => steps[s.id]).length;
   // Steps go in order: only the next one can be ticked, and only the last done one unticked.
   const next = STEPS.findIndex((s) => !steps[s.id]);
@@ -352,9 +355,9 @@ export function ProductionChecklist({
         })}
       </ol>
 
-      {status === "accepted" && !locked && <p className="mt-3 text-[0.875rem] text-ink-2">Ticking the first step starts production and tells the customer.</p>}
+      {editable && status === "accepted" && !locked && <p className="mt-3 text-[0.875rem] text-ink-2">Ticking the first step starts production and tells the customer.</p>}
 
-      {status === "in_progress" && (
+      {editable && status === "in_progress" && (
         <div className="mt-4 flex flex-wrap gap-2.5">
           <button type="button" disabled={done < 5} aria-disabled={!!busy} onClick={() => run("ready", () => markReady(id))} className={green}>
             {busy === "ready" && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}

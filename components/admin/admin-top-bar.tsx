@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { StaffRole } from "@/lib/admin/session";
 import { Wordmark } from "@/components/landing/wordmark";
 import { ThemeButton } from "@/components/theme-button";
-import { ROLE_LABEL } from "./nav";
+import { ROLE_LABEL, STAFF_HOME } from "./nav";
 import { NotificationBell } from "./notification-bell";
 import { usePopoverOpen } from "./use-popover-open";
 
@@ -44,7 +44,7 @@ export function AdminTopBar({ userId, username, fullName, role }: Props) {
   return (
     <header className="site-nav sticky top-0" data-scrolled={scrolled}>
       <div className="mx-auto flex h-16 max-w-[80rem] items-center gap-3 px-4 sm:px-6 lg:px-10">
-        <Link href="/admin" className="press -ml-1 flex items-center gap-3 rounded-lg px-1 py-1" aria-label="J&J Sportswear admin home">
+        <Link href={role === "owner" ? "/admin" : STAFF_HOME} className="press -ml-1 flex items-center gap-3 rounded-lg px-1 py-1" aria-label="J&J Sportswear admin home">
           <Wordmark compact />
           <span aria-hidden="true" className="h-5 w-px bg-line" />
           <span aria-hidden="true" className="voice-label text-[0.9375rem] text-ink-2">

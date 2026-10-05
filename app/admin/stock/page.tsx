@@ -5,12 +5,12 @@ import { LiveRefresh } from "@/components/admin/live-refresh";
 import { RecentMoves } from "@/components/admin/stock/recent-moves";
 import { StockBrowser } from "@/components/admin/stock/stock-browser";
 import { fetchCatalog, fetchRecentMoves } from "@/lib/admin/catalog";
-import { requireStaff } from "@/lib/admin/session";
+import { requireOwner } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "Stock · J&J Sportswear Admin" };
 
 export default async function StockPage() {
-  const { supabase } = await requireStaff();
+  const { supabase } = await requireOwner();
   const [{ products, error }, { moves }] = await Promise.all([fetchCatalog(supabase), fetchRecentMoves(supabase, 8)]);
 
   return (

@@ -7,17 +7,17 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
 - **Scope:** inventory first, then POS, custom orders, payments, and reports in later phases, all in one admin.
 - **Devices:** desktop, tablet, and phone. Desktop gets dense tables, tablet gets touch-sized controls, phone gets quick stock checks and changes.
 - **Look:** the landing page's world (court green, Archivo, flip-card numerals), calmer for all-day use. Screens are mostly neutral; green and amber appear only where they carry meaning (live status, low stock).
-- **Roles:** staff manage products, stock, and sales. Only the owner deletes, manages staff and roles, and sees sales reports.
+- **Roles (revised 2026-10-06 to follow the manuscript):** staff ring up sales at the POS, see today's sales and reprint receipts, look up products and stock, follow custom orders without changing them, and check and record custom-order payments. The owner does everything else: products, stock, history, custom orders, refunds and exceptions, voids, reports, chat, and staff. See "Staff access follows the manuscript" below.
 - **Sizes:** picked from one standard list. The exact list is confirmed in Phase 3.
 - **Barcodes:** none. Search by name, SKU, tag, size, or color.
 - **Data:** realistic sample data first, real shop data later.
 
 ## Already enforced by the database (supabase/migrations)
 
-- **Product and variant permissions:** staff can create and edit products and variants. Only the owner can delete them.
-- **Stock changes:** stock only changes through `rpc('adjust_stock')` or `rpc('create_pos_sale')`, and every change is logged in `inventory_transactions`.
+- **Product and variant permissions:** only the owner creates, edits, and deletes products, variants, tags, and photos (staff could create and edit them until `20261012000000_staff_pos_access.sql`).
+- **Stock changes:** stock only changes through `rpc('adjust_stock')` (owner only) or `rpc('create_pos_sale')` (staff and owner), and every change is logged in `inventory_transactions`.
 - **Automatic triggers:** opening stock on a new variant is logged as a restock, and low-stock notifications to staff fire on their own.
-- **Product photos:** the `product-images` bucket is public to read, and only staff can upload to it.
+- **Product photos:** the `product-images` bucket is public to read, and only the owner can upload to it.
 - **Roles:** new accounts are customers. The first owner is set once in SQL, and after that owners assign roles with `rpc('set_user_role')`.
 
 ## Inventory phases
@@ -198,6 +198,17 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
         - older messages beyond the latest 200 in a conversation
         - assigning conversations
         - staff access to chat
+
+## Staff access follows the manuscript (2026-10-06)
+
+The manuscript (Importance of the Study; Scope and Delimitation) gives product management, including stock quantities, to the owner, and gives staff a quick way to check stock by size, design, and quantity. It doesn't define roles beyond that, so the owner answered the rest.
+
+- **Staff can open:** POS (where they land), Sales (today's receipts and reprints, no voids), Products (read only: list, stock by size and color, variants), Custom orders (read only), and Payments (unchanged: check, verify, reject, and record payments with proof).
+- **Owner only now:** Home dashboard, Stock (restock and adjust), History, adding, editing, archiving, and photographing products, and every custom-order action (price, accept, decline, production steps, reprint, back to production, hand over, cancel, finished photos). Reports, Staff, Chat, voids, refunds, and payment exceptions were already owner only.
+- **Navigation:** staff get their own five-tab dock (POS, Sales, Products, Orders, Payments) with no More. The wordmark takes them to the POS, and owner-only pages send them there (`STAFF_HOME`). Low-stock alerts still go to staff and the owner; a low-stock alert opens the product's read-only page.
+- **On screen:** staff don't see Add product, Edit, Archive, Adjust stock, or a product's Stock history. On an order they see where it stands and the production steps (no ticking), with a line saying the owner reviews new orders and completes pickups. Recording a payment stays.
+- **Server:** `requireOwner()` guards owner-only pages and `ownerSession()` guards owner-only server actions (`lib/admin/session.ts`).
+- **Migration `20261012000000_staff_pos_access.sql`:** `adjust_stock`, `set_production_step`, `reprint_custom_order`, `reopen_custom_order`, and `cancel_custom_order` check `is_owner()` (customers still cancel their own pending orders). The write policies on products, product images, tags, variants, custom orders, order items, and order photos, and on the `product-images` and `order-photos` buckets, move from staff to the owner. Reads, `create_pos_sale`, and the payment functions are unchanged. The app's own checks work before it's run; the migration makes the database refuse too.
 
 ## Hardening to consider (deferred on purpose)
 

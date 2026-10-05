@@ -1,6 +1,9 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
+import { STAFF_HOME } from "@/components/admin/nav";
 import { createClient } from "@/lib/supabase/server";
+
+export { STAFF_HOME };
 
 export type StaffRole = "staff" | "owner";
 
@@ -32,6 +35,22 @@ export const requireStaff = cache(async () => {
 
   return { supabase, profile: profile as StaffProfile };
 });
+
+/** Owner-only pages: staff are sent to the point of sale. */
+export async function requireOwner() {
+  const session = await requireStaff();
+  if (session.profile.role !== "owner") redirect(STAFF_HOME);
+  return session;
+}
+
+/**
+ * Owner-only server actions: the owner's session, or null for staff. Every check runs here
+ * too, since server actions can be called directly; callers answer staff with a message.
+ */
+export async function ownerSession() {
+  const session = await requireStaff();
+  return session.profile.role === "owner" ? session : null;
+}
 
 export function firstName(profile: Pick<StaffProfile, "full_name" | "username">) {
   return profile.full_name?.trim().split(/\s+/)[0] || profile.username;
