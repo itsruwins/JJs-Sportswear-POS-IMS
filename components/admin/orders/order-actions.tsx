@@ -81,7 +81,7 @@ export function OrderFlash({ orderId }: { orderId: string }) {
  * are ignored, so keyboard focus never drops to the page. `quiet` is for dialogs, which show
  * their own errors.
  */
-function useAction(orderId: string) {
+export function useAction(orderId: string) {
   const router = useRouter();
   const busyRef = useRef(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -112,7 +112,7 @@ function useAction(orderId: string) {
 }
 
 /** A problem with the action right here. */
-function Outcome({ result }: { result: OrderResult | null }) {
+export function Outcome({ result }: { result: OrderResult | null }) {
   return (
     <div role="alert">
       {result && !result.ok && result.message && <p className="auth-alert mt-3 rounded-xl px-4 py-3 text-[0.9375rem]">{result.message}</p>}
@@ -121,7 +121,7 @@ function Outcome({ result }: { result: OrderResult | null }) {
 }
 
 /** A confirmation that needs a short written reason (decline, cancel, reprint). */
-function ReasonDialog({
+export function ReasonDialog({
   open,
   title,
   body,
@@ -300,10 +300,13 @@ export function ProductionChecklist({
   id,
   status,
   steps,
+  locked = false,
 }: {
   id: string;
   status: OrderStatus;
   steps: Partial<Record<Step, { done_at: string; by: string; when: string }>>;
+  /** Waiting for the down payment: production can't start yet. */
+  locked?: boolean;
 }) {
   const { busy, result, run } = useAction(id);
   const [reprinting, setReprinting] = useState(false);
@@ -318,7 +321,7 @@ export function ProductionChecklist({
       <ol className="flex flex-col gap-1.5">
         {STEPS.map((s, i) => {
           const d = steps[s.id];
-          const tappable = editable && (i === nextIndex || i === nextIndex - 1);
+          const tappable = editable && !locked && (i === nextIndex || i === nextIndex - 1);
           return (
             <li key={s.id}>
               <button
@@ -349,7 +352,7 @@ export function ProductionChecklist({
         })}
       </ol>
 
-      {status === "accepted" && <p className="mt-3 text-[0.875rem] text-ink-2">Ticking the first step starts production and tells the customer.</p>}
+      {status === "accepted" && !locked && <p className="mt-3 text-[0.875rem] text-ink-2">Ticking the first step starts production and tells the customer.</p>}
 
       {status === "in_progress" && (
         <div className="mt-4 flex flex-wrap gap-2.5">
@@ -385,13 +388,13 @@ export function ProductionChecklist({
 }
 
 /** Ready orders: hand over, or reopen production (with what needs fixing) if something turns up. */
-export function HandoverPanel({ id }: { id: string }) {
+export function HandoverPanel({ id, balanceDue = 0 }: { id: string; balanceDue?: number }) {
   const { busy, result, run } = useAction(id);
   const [reopening, setReopening] = useState(false);
   return (
     <div>
       <div className="flex flex-wrap gap-2.5">
-        <button type="button" aria-disabled={!!busy} onClick={() => run("complete", () => completeOrder(id))} className={green}>
+        <button type="button" disabled={balanceDue > 0} aria-disabled={!!busy} onClick={() => run("complete", () => completeOrder(id))} className={green}>
           {busy === "complete" ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : <Check aria-hidden="true" className="size-4" strokeWidth={2.5} />}
           Picked up: complete order
         </button>

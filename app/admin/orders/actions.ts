@@ -17,6 +17,15 @@ function explain(error: DbError, fallback: string): OrderResult {
     return { ok: false, message: `This needs the latest database update (${PRODUCTION_MIGRATION}).` };
   }
   if (/Finish every production step/i.test(text)) return { ok: false, message: "Tick off every production step before marking it ready." };
+  const down = text.match(/Record the down payment \(₱([\d.]+)\)/);
+  if (down) return { ok: false, message: `Production starts once the down payment (₱${Number(down[1]).toLocaleString("en-PH")}) is paid. Record it under Price and payments.`, stale: true };
+  const balance = text.match(/Collect the balance \(₱([\d.]+)\)/);
+  if (balance) return { ok: false, message: `Collect the balance (₱${Number(balance[1]).toLocaleString("en-PH")}) before pickup. Record it under Price and payments.`, stale: true };
+  const floor = text.match(/less than the ₱([\d.]+) already paid/);
+  if (floor) return { ok: false, message: `The price can’t be less than the ₱${Number(floor[1]).toLocaleString("en-PH")} already paid.` };
+  if (/can't change once production has started/i.test(text)) {
+    return { ok: false, message: "The price is fixed once production starts. The page now shows the latest.", stale: true };
+  }
   if (/Set the total price/i.test(text)) return { ok: false, message: "Set the total price before accepting the order." };
   if (/can't go from|can no longer change/i.test(text)) return { ok: false, message: "The order moved on since this page loaded. The page now shows the latest.", stale: true };
   if (/up to 4 finished photos/i.test(text)) return { ok: false, message: "An order can have up to 4 photos. Remove one first." };

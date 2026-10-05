@@ -1,8 +1,13 @@
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Mail, MessageCircle, Phone } from "lucide-react";
+import { clock, dayLabel, firstNameOf } from "@/components/admin/chat/chat-bits";
+import { unreadFor, type ChatMessage } from "@/lib/admin/chat";
 import { formatPeso } from "@/lib/admin/catalog";
 import { downPayment, PRODUCTION_MIGRATION, STATUS_LABEL, STEPS, VIEWS, type OrderDetail, type OrderStatus, type OrderView } from "@/lib/admin/orders";
 import { CancelOrderButton, HandoverPanel, OrderFlash, PhotoManager, ProductionChecklist, ReviewPanel } from "./order-actions";
+import { PaymentException, RecordPayment, RecordRefund } from "@/components/admin/payments/payment-actions";
+import { PayPill } from "@/components/admin/payments/payment-bits";
+import { methodLine, PAY_TYPE_LABEL, PAYMENTS_MIGRATION, type OrderMoney } from "@/lib/admin/payments";
 import { ago, personName, StatusPill, when } from "./order-bits";
 
 const TRACK: { status: OrderStatus; label: string }[] = [
@@ -27,16 +32,36 @@ function Section({ title, children, aside }: { title: string; children: React.Re
 }
 
 /** One custom order: where it stands, what to do next, what was ordered, and everything that happened. */
-export function OrderView({ order: o, now = new Date(), backView = "open" }: { order: OrderDetail; now?: Date; backView?: OrderView }) {
+export function OrderView({
+  order: o,
+  money,
+  isOwner = false,
+  now = new Date(),
+  backView = "open",
+  chat,
+}: {
+  order: OrderDetail;
+  /** Payments, refunds, and exceptions (absent before the payments phase data is loaded). */
+  money?: OrderMoney;
+  isOwner?: boolean;
+  now?: Date;
+  backView?: OrderView;
+  /** The owner's view: the latest messages about this order. */
+  chat?: { messages: ChatMessage[]; total: number; error?: boolean; ownerId: string };
+}) {
   const closed = o.status === "declined" || o.status === "cancelled";
   const pieces = o.items.reduce((s, i) => s + i.quantity, 0);
-  const cancelNote = o.status === "cancelled" ? o.history.find((h) => h.status === "cancelled")?.note : null;
+  // History is newest first; the first cancelled row is the reason (later ones are refunds).
+  const cancelNote = o.status === "cancelled" ? [...o.history].reverse().find((h) => h.status === "cancelled")?.note : null;
   const steps = Object.fromEntries(
     Object.entries(o.steps).map(([k, v]) => [k, { ...v!, when: when(v!.done_at) }]),
   ) as Parameters<typeof ProductionChecklist>[0]["steps"];
   const stepsDone = STEPS.filter((s) => o.steps[s.id]).length;
   const showProduction = o.migrated && ["accepted", "in_progress", "ready", "completed"].includes(o.status);
   const showPhotos = o.migrated && ["in_progress", "ready", "completed"].includes(o.status);
+  // The payment rules: production waits for the down payment, pickup for the full amount (unless the owner made an exception).
+  const waitingDown = !!money && o.status === "accepted" && !money.downMet && !money.overrides.production;
+  const balanceDue = money && !money.overrides.pickup ? money.due : 0;
 
   return (
     <div className="mx-auto max-w-[80rem] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
@@ -120,7 +145,38 @@ export function OrderView({ order: o, now = new Date(), backView = "open" }: { o
           {o.status === "ready" && (
             <Section title="Hand over">
               <p className="mb-4 text-[0.9375rem] text-ink-2">Ready since {o.ready_at ? when(o.ready_at) : "today"}. The customer has been told it’s ready.</p>
-              <HandoverPanel id={o.id} />
+              {balanceDue > 0 && (
+                <div className="mb-4 rounded-xl bg-ground-2 px-4 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
+                  {money && money.waiting > 0 && money.waitingId ? (
+                    <p className="text-[0.9375rem] text-ink">
+                      <span className="font-semibold">Balance due: </span>
+                      <span className="tabular font-semibold">{formatPeso(balanceDue)}</span>.{" "}
+                      <Link href={`/admin/payments/${money.waitingId}`} className="font-semibold underline underline-offset-2">
+                        <span className="tabular">{formatPeso(money.waiting)}</span> sent by GCash is waiting for review
+                      </Link>
+                      {balanceDue > money.waiting ? (
+                        <>
+                          ; record the other <span className="tabular font-semibold">{formatPeso(Math.round((balanceDue - money.waiting) * 100) / 100)}</span> under Price and payments.
+                        </>
+                      ) : (
+                        <>; check it before pickup.</>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-[0.9375rem] text-ink">
+                      <span className="font-semibold">Balance due: </span>
+                      <span className="tabular font-semibold">{formatPeso(balanceDue)}</span>. Record it under Price and payments before pickup.
+                    </p>
+                  )}
+                  {isOwner && <div className="mt-1.5"><PaymentException orderId={o.id} kind="pickup" /></div>}
+                </div>
+              )}
+              {money?.overrides.pickup && (
+                <p className="mb-4 text-[0.875rem] text-ink-2">
+                  Owner allowed pickup before full payment: “{money.overrides.pickup.reason}”
+                </p>
+              )}
+              <HandoverPanel id={o.id} balanceDue={balanceDue} />
             </Section>
           )}
 
@@ -132,7 +188,30 @@ export function OrderView({ order: o, now = new Date(), backView = "open" }: { o
 
           {showProduction && (
             <Section title="Production" aside={<span className="tabular text-[0.875rem] text-ink-2">{stepsDone} of 5 done</span>}>
-              <ProductionChecklist id={o.id} status={o.status} steps={steps} />
+              {waitingDown && money && (
+                <div className="mb-4 rounded-xl bg-ground-2 px-4 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
+                  <p className="text-[0.9375rem] text-ink">
+                    <span className="font-semibold">Waiting for the down payment. </span>
+                    Production starts once <span className="tabular font-semibold">{formatPeso(money.downDue)}</span> is paid; so far{" "}
+                    <span className="tabular font-semibold">{formatPeso(money.paid)}</span>
+                    {money.waiting > 0 && money.waitingId && (
+                      <>
+                        {" "}(plus{" "}
+                        <Link href={`/admin/payments/${money.waitingId}`} className="font-semibold underline underline-offset-2">
+                          <span className="tabular">{formatPeso(money.waiting)}</span> to review
+                        </Link>
+                        )
+                      </>
+                    )}
+                    .
+                  </p>
+                  {isOwner && <div className="mt-1.5"><PaymentException orderId={o.id} kind="production" /></div>}
+                </div>
+              )}
+              {money?.overrides.production && o.status === "accepted" && (
+                <p className="mb-4 text-[0.875rem] text-ink-2">Owner let production start before the down payment: “{money.overrides.production.reason}”</p>
+              )}
+              <ProductionChecklist id={o.id} status={o.status} steps={steps} locked={waitingDown} />
             </Section>
           )}
 
@@ -213,7 +292,9 @@ export function OrderView({ order: o, now = new Date(), backView = "open" }: { o
                       </a>
                     </li>
                   )}
-                  {!o.customer.phone && !o.customer.email && <li className="text-ink-2">No phone or email on file. Reach them through chat.</li>}
+                  {!o.customer.phone && !o.customer.email && (
+                    <li className="text-ink-2">No phone or email on file. {isOwner ? "Reach them through chat." : "The owner can reach them through chat."}</li>
+                  )}
                 </ul>
               </>
             ) : (
@@ -221,21 +302,123 @@ export function OrderView({ order: o, now = new Date(), backView = "open" }: { o
             )}
           </Section>
 
-          <Section title="Price">
+          {isOwner && chat && o.customer && (
+            <Section
+              title="Messages"
+              aside={chat.total > chat.messages.length ? <span className="tabular text-[0.875rem] text-ink-2">Latest {chat.messages.length} of {chat.total}</span> : undefined}
+            >
+              {chat.error ? (
+                <p className="text-[0.9375rem] text-ink-2">We couldn’t load the messages just now. The conversation is still a tap away.</p>
+              ) : chat.messages.length === 0 ? (
+                <p className="text-[0.9375rem] text-ink-2">Nothing about this order yet.</p>
+              ) : (
+                <ol className="flex flex-col gap-2.5">
+                  {chat.messages.map((m) => (
+                    <li key={m.id} className={`flex flex-col ${m.fromCustomer ? "items-start" : "items-end"}`}>
+                      <p
+                        className={`line-clamp-4 max-w-[90%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[0.875rem] leading-relaxed ${
+                          m.fromCustomer ? "rounded-bl-md bg-ground-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]" : "rounded-br-md bg-ink text-ground"
+                        }`}
+                      >
+                        <span className="sr-only">{m.fromCustomer ? personName(o.customer) : "Shop"}: </span>
+                        {m.message}
+                      </p>
+                      <span className="tabular mt-0.5 px-1 text-[0.75rem] text-ink-2">
+                        {dayLabel(m.created_at, now)}, {clock(m.created_at)}
+                        {unreadFor(m, chat.ownerId) && <span className="font-semibold text-ink"> · New</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <Link
+                href={`/admin/chat/${o.customer.id}?order=${o.id}`}
+                className="press mt-4 inline-flex h-11 items-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2"
+              >
+                <MessageCircle aria-hidden="true" className="size-4" />
+                {chat.messages.length || chat.error ? "Open conversation" : `Message ${firstNameOf(o.customer)}`}
+              </Link>
+            </Section>
+          )}
+
+          <Section title="Price and payments">
             {o.total_price === null ? (
-              <p className="text-[0.9375rem] text-ink-2">Not priced yet.</p>
+              <p className="text-[0.9375rem] text-ink-2">Not priced yet. Payments start once the order is accepted.</p>
             ) : (
               <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-[0.9375rem]">
                 <dt className="text-ink-2">Total</dt>
                 <dd className="voice-board tabular text-right text-[1.5rem] leading-none text-ink">{formatPeso(o.total_price)}</dd>
                 <dt className="text-ink-2">Down payment (50%)</dt>
-                <dd className="tabular text-right font-semibold text-ink">{formatPeso(downPayment(o.total_price))}</dd>
-                <dt className="text-ink-2">Balance at pickup</dt>
-                <dd className="tabular text-right text-ink">{formatPeso(o.total_price - downPayment(o.total_price))}</dd>
+                <dd className="tabular text-right text-ink">
+                  {formatPeso(downPayment(o.total_price))}
+                  {money?.downMet && <span className="ml-1.5 text-[0.8125rem] font-semibold">· paid</span>}
+                </dd>
+                {money && (
+                  <>
+                    <dt className="text-ink-2">Paid so far</dt>
+                    <dd className="tabular text-right text-ink">{formatPeso(money.paid)}</dd>
+                    <dt className="font-semibold text-ink">{o.status === "cancelled" ? "Was still due" : "Still due"}</dt>
+                    <dd className="tabular text-right font-semibold text-ink">{formatPeso(money.due)}</dd>
+                    {money.waiting > 0 && (
+                      <>
+                        <dt className="text-ink-2">Waiting for review</dt>
+                        <dd className="tabular text-right text-ink-2">{formatPeso(money.waiting)}</dd>
+                      </>
+                    )}
+                  </>
+                )}
               </dl>
             )}
-            {o.total_price !== null && !closed && (
-              <p className="mt-3 text-[0.8125rem] text-ink-2">Payments aren’t recorded here yet; that comes with the Payments update.</p>
+
+            {money && money.payments.length > 0 && (
+              <ul className="mt-4 border-t border-line">
+                {money.payments.map((p) => (
+                  <li key={p.id} className="border-b border-line">
+                    <Link href={`/admin/payments/${p.id}`} className="press flex items-start justify-between gap-3 py-2.5 hover:bg-ground-2/60">
+                      <span className="min-w-0">
+                        <span className="tabular block text-[0.9375rem] font-semibold text-ink">{formatPeso(p.amount)}</span>
+                        <span className="block text-[0.8125rem] text-ink-2">
+                          {PAY_TYPE_LABEL[p.payment_type]} · {methodLine(p, true)} · {when(p.created_at)}
+                        </span>
+                      </span>
+                      <PayPill status={p.status} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {money?.migrated && ["accepted", "in_progress", "ready", "completed"].includes(o.status) && money.due > 0 && o.customer && (
+              <div className="mt-4">
+                <RecordPayment orderId={o.id} customerId={o.customer.id} due={money.due} downLeft={Math.max(0, money.downDue - money.paid)} waiting={money.waiting} waitingId={money.waitingId} />
+              </div>
+            )}
+            {money && !money.migrated && o.total_price !== null && !closed && (
+              <p className="mt-3 text-[0.8125rem] text-ink-2">Recording payments needs the latest database update ({PAYMENTS_MIGRATION}).</p>
+            )}
+
+            {o.status === "cancelled" && money && money.paid > 0 && (
+              <div className="mt-5 border-t border-line pt-4">
+                <p className="text-[0.9375rem] font-semibold text-ink">Refunds</p>
+                {money.refunds.length === 0 ? (
+                  <p className="mt-1 text-[0.875rem] text-ink-2">Nothing given back yet. {formatPeso(money.paid)} was paid.</p>
+                ) : (
+                  <ul className="mt-1.5 flex flex-col gap-1.5 text-[0.875rem]">
+                    {money.refunds.map((r) => (
+                      <li key={r.id}>
+                        <span className="tabular font-semibold text-ink">{formatPeso(r.amount)}</span>
+                        <span className="text-ink-2"> · {r.method === "cash" ? "Cash" : "GCash"} · {when(r.created_at)} · {r.by}</span>
+                        <span className="block text-ink-2">“{r.note}”</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {isOwner && money.migrated && money.paid - money.refunded > 0 && (
+                  <div className="mt-3">
+                    <RecordRefund orderId={o.id} left={Math.round((money.paid - money.refunded) * 100) / 100} />
+                  </div>
+                )}
+              </div>
             )}
             {o.status === "accepted" && (
               <div className="mt-5 border-t border-line pt-4">

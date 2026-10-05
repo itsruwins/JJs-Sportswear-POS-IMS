@@ -38,7 +38,7 @@ function printOn(paper: Paper) {
 const outline =
   "press inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 disabled:opacity-60";
 
-export function PrintButtons({ primary = false }: { primary?: boolean }) {
+export function PrintButtons({ primary = false, label = "Print receipt" }: { primary?: boolean; label?: string }) {
   // Ctrl+P / ⌘P on a receipt prints the receipt layout too, not the inventory report's page.
   useEffect(() => {
     const before = () => {
@@ -60,7 +60,7 @@ export function PrintButtons({ primary = false }: { primary?: boolean }) {
         }
       >
         <Printer aria-hidden="true" className="size-4" />
-        Print receipt
+        {label}
       </button>
       <button type="button" onClick={() => printOn("a4")} className={outline}>
         Print on A4

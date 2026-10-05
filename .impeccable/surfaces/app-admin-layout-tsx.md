@@ -79,3 +79,64 @@ Tables scroll sideways on phones inside labelled regions with the first column p
 - **Side column:** Customer (tel/mailto), Price (total, down payment 50%, balance at pickup, payments-later note, price editable while accepted), History (newest first, production notes inline), and "Cancel this order" → reason dialog.
 
 The order screens refresh live on order, step, photo, and history changes. Amber stays limited to New and the live lamp.
+
+## Phase 11 additions (Payment verification)
+
+/admin/payments (More → Payments):
+- **Queue:** status tabs with exact counts (To review with a live amber lamp when not selected, Verified, Rejected, All), scrolling sideways on phones. Rows show order number and age, customer, type · method · last 4 reference digits, amount, payment pill, and a chevron. They stack on phones. To review is oldest first.
+
+/admin/payments/[id]:
+- **Header:** the amount in display type, "Down payment / Balance for CO-… · customer", and the payment pill. Outcomes appear in the shared one-line flash strip.
+- **To review, "Check it":** the reference, the order total, what was paid before, and what's still due. A cancelled order says "Was still due".
+  - Amber alert panels when the payment can't be verified: above what's due, the order was never accepted or was declined, or there's no reference.
+  - A quiet note when the order was cancelled: verify only if the money reached the shop.
+  - Green Verify and outlined Reject (→ reason dialog).
+  - The screenshot on the photo backdrop, with "Open full size".
+- **Verified:** the payment slip (the receipt paper language) with Print slip and Print on A4. Slip rows say "Verified / Verified by" for customer GCash, "Date / Received by" for money recorded at the counter.
+- **Rejected:** a quiet panel with the reason the customer was told.
+- **Details aside:** for, paid by, sent/received, verified or rejected by and when, note, order link.
+- **Payment pills:** amber "To review" (the one state waiting on the shop), outlined ink Verified, and muted Rejected (no strikethrough).
+
+/admin/orders/[id], the "Price and payments" section replaces Price:
+- **Totals:** total (board numerals), down payment (50%) with "· paid", paid so far, still due, and waiting for review.
+- **Payments:** each payment is a row linked to its page, with its pill.
+- **Record a payment:** green, opens a dialog.
+  - Amount, with chips for the rest of the down payment and the balance, and an inline over-due line.
+  - Cash | GCash segmented control; GCash adds the 13-digit reference (with a counter) and an optional screenshot.
+  - Note.
+  - A quiet notice, linked to the payment, when a customer payment is waiting for review; quick amounts leave that money out.
+- **Refunds:** on cancelled orders. The owner records them in a dialog with amount, method, and a required note.
+- **Notices:** the accepted-order "waiting for the down payment" notice locks the checklist. The hand-over "Balance due" notice disables Picked up and links to any GCash payment waiting for review. Both carry an owner-only "make an exception" link → reason dialog.
+
+## Phase 12 additions (Chat, owner only)
+
+/admin/chat (More → Chat; owners only):
+- **Inbox:** the "Chat" display heading and a line saying how many messages are new.
+  - A search appears past five conversations.
+  - Rows: an initials avatar (board green when unread, otherwise ground-2), the name (semibold when unread), a two-line preview ("You:" when the shop wrote last), the order number, the time ("2:14 PM", "Yesterday", "Mon", "Sep 28"), and an amber unread count.
+  - On wide screens it's a sticky 21rem column beside the open conversation; the column scrolls inside itself.
+  - On phones the inbox and a conversation are separate screens.
+- **No conversation picked (wide screens):** a quiet ground-2 panel saying "Pick a conversation".
+
+/admin/chat/[customerId]:
+- **Header:** sticky under the top bar.
+  - A back arrow on phones, the avatar, the name in display type, and @username · phone · email (on phones the phone shrinks to an icon under 400px and email hides).
+  - The customer's open orders as outlined chips in one row that scrolls sideways.
+- **Messages:**
+  - Day separators in the label voice ("Today", "Yesterday", "Monday", "Sep 28").
+  - "About CO-…" links above a message when the order it's about changes.
+  - Bubbles: the customer's are ground-2 with a hairline on the left (bottom-left corner tightened); the shop's are ink on the right (bottom-right tightened).
+  - Times are small and tabular, with the sender's name only when more than one owner has replied.
+- **Reply box:** a surface card that sticks just above the dock and rests at the same spot.
+  - A text field that grows to about eight lines, with "About" and an order select ("Not about an order" or an order and its status) and a green Send.
+  - A character counter appears near 2,000.
+  - Focus shows as one amber ring on the card.
+- **Reading:** opening a conversation reads it, or reads it when the tab comes back into view. The unread count, the amber dot on More, and the bell alert all clear.
+
+Elsewhere:
+- **Dock:** More shows an amber dot while customer messages are unread, and the Chat row in More shows an amber count. Both are live.
+- **Bell:** every alert opens its page. Pop-ups carry a matching action ("View product", "Open order", "Check payment", "Reply").
+- **Order page (owner):** a "Messages" section under Customer.
+  - It shows the latest four messages about the order in the same bubble language, with day and time, and "Latest 4 of N" when there are more.
+  - An outlined "Message {name}" or "Open conversation" button.
+
