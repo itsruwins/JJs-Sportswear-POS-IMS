@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { CUSTOMER_HOME, isCustomerPath } from "@/lib/customer/paths";
 import { createClient } from "@/lib/supabase/client";
 import { AuthDialog, type AuthMode } from "./auth-dialog";
 
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [username, setUsername] = useState<string | null>(null);
   const [isStaff, setIsStaff] = useState(false);
   const [sheet, setSheet] = useState<SheetState>({ open: false, mode: "signup", prefill: "", nonce: 0 });
-  // Where to send staff after logging in, when the admin sent them here to log in.
+  // Where to go after logging in, when an admin or customer page sent the visitor here.
   const nextPath = useRef<string | null>(null);
 
   const openAuth = useCallback((mode: AuthMode, prefill = "") => {
@@ -56,14 +57,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }, 0);
     });
 
-    // /admin sends visitors without a session here with ?auth=login&next=/admin.
+    // /admin and the customer pages send visitors without a session here with ?auth=login&next=<page>.
     let openTimer: number | undefined;
     const params = new URLSearchParams(window.location.search);
     if (params.get("auth") === "login") {
       const next = params.get("next");
-      nextPath.current = next?.startsWith(ADMIN_PATH) ? next : null;
-      window.history.replaceState(null, "", window.location.pathname + window.location.hash);
-      openTimer = window.setTimeout(() => openAuth("login"), 0);
+      nextPath.current = next && (next.startsWith(ADMIN_PATH) || isCustomerPath(next)) ? next : null;
+      // Clean the URL only once the sheet opens: if this effect is torn down first (React's
+      // dev double-run), the next run still finds the request and opens it.
+      openTimer = window.setTimeout(() => {
+        window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+        openAuth("login");
+      }, 0);
     }
 
     return () => {
@@ -76,7 +81,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUsername(name);
     const staff = await fetchIsStaff(userId);
     setIsStaff(staff);
-    if (staff) window.location.assign(nextPath.current ?? ADMIN_PATH);
+    // Staff go to the admin; customers to the page they asked for, or the shop.
+    const next = nextPath.current;
+    if (staff) window.location.assign(next?.startsWith(ADMIN_PATH) ? next : ADMIN_PATH);
+    else window.location.assign(next && isCustomerPath(next) ? next : CUSTOMER_HOME);
   }, []);
 
   const signOut = useCallback(async () => {

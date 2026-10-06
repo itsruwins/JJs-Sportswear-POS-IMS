@@ -867,6 +867,43 @@ button.admin-dock-item[data-current="true"]:hover {
   }
 }
 
+/* ---------- Customer: tabs ---------- */
+
+/* The customer app reuses the admin's dock on phones and tablets; on desktop its tabs
+   move into the top bar as pills, with the same green pill for the current one. */
+@media (min-width: 1024px) {
+  .customer-dock {
+    display: none;
+  }
+}
+
+.customer-tab {
+  display: inline-flex;
+  align-items: center;
+  height: 2.25rem;
+  padding: 0 0.875rem;
+  border-radius: 999px;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition:
+    color 150ms var(--ease-out),
+    background-color 150ms var(--ease-out);
+}
+.customer-tab:hover {
+  color: var(--ink);
+  background: var(--ground-2);
+}
+.customer-tab[aria-current="page"] {
+  background: var(--board);
+  color: var(--board-ink);
+}
+
+/* On the Account page, the avatar button reads as the current tab. */
+.customer-avatar[data-current="true"] {
+  background: var(--ground-2);
+}
+
 /* ---------- Admin: popovers (More, account) ---------- */
 
 .admin-pop {
