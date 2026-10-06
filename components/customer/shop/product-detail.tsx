@@ -1,0 +1,298 @@
+"use client";
+
+import { useRef, useState } from "react";
+import { Store, X } from "lucide-react";
+import { formatPeso } from "@/lib/admin/catalog";
+import { garmentColor } from "@/lib/customer/colors";
+import type { ShopProduct } from "@/lib/customer/catalog";
+import { GarmentArt } from "./garment-art";
+
+export type ShopInfo = { name: string; address: string | null; city: string; phone: string | null; hours: string | null };
+
+function piecesLeft(n: number) {
+  return n === 1 ? "1 left" : `${n} left`;
+}
+
+/**
+ * The product page's working half: the garment, color swatches, a size grid with the
+ * pieces left in the chosen color, and the two ways forward (buy at the shop, or have a
+ * custom version made). Picking a color recolors the garment and updates every count.
+ */
+export function ProductDetail({ product: p, category, shop }: { product: ShopProduct; category: string | null; shop: ShopInfo }) {
+  const firstInStock = p.colors.find((c) => p.variants.some((v) => v.color === c && v.stock > 0)) ?? p.colors[0] ?? null;
+  const [color, setColor] = useState<string | null>(firstInStock);
+  const [size, setSize] = useState<string | null>(p.sizes.length === 1 ? p.sizes[0] : null);
+  const [needSize, setNeedSize] = useState(false);
+  const sizeGroup = useRef<HTMLFieldSetElement>(null);
+  const sheet = useRef<HTMLDialogElement>(null);
+
+  const forColor = p.variants.filter((v) => v.color === color);
+  const variantOf = (s: string) => forColor.find((v) => v.size === s) ?? null;
+  const chosen = size ? variantOf(size) : null;
+  const colorStock = forColor.reduce((sum, v) => sum + v.stock, 0);
+  const prices = forColor.map((v) => v.price);
+  const price = chosen
+    ? formatPeso(chosen.price)
+    : prices.length && Math.min(...prices) !== Math.max(...prices)
+      ? `${formatPeso(Math.min(...prices))}–${formatPeso(Math.max(...prices))}`
+      : formatPeso(prices[0] ?? p.priceMin);
+
+  const pickColor = (c: string) => {
+    setColor(c);
+    // Keep the size if it's still in stock in the new color.
+    if (size && !p.variants.some((v) => v.color === c && v.size === size && v.stock > 0) && p.sizes.length > 1) setSize(null);
+  };
+
+  const buy = () => {
+    if (!chosen) {
+      setNeedSize(true);
+      sizeGroup.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
+      return;
+    }
+    sheet.current?.showModal();
+  };
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-14">
+      {/* Sticky on a plain wrapper: the tile's own positioning would turn `top` into an offset. */}
+      <div className="lg:sticky lg:top-24 lg:self-start">
+        <div className="shop-tile aspect-square">
+          <GarmentArt art={p.art} image={p.image} color={color} name={p.name} className="shop-detail-art" sizes="(min-width: 1024px) 55vw, 100vw" />
+        </div>
+      </div>
+
+      <div className="min-w-0">
+        <h1 className="voice-display text-[clamp(2.25rem,4.5vw,3.5rem)]">{p.name}</h1>
+        {category && <p className="mt-2 text-[1rem] text-ink-2">{category}</p>}
+        <p className="tabular mt-4 text-[1.25rem] font-semibold text-ink">{price}</p>
+
+        {/* Color */}
+        {p.colors.length > 0 && (
+          <fieldset className="mt-8">
+            <legend className="text-[0.9375rem] text-ink-2">
+              Color: <span className="font-semibold text-ink">{color}</span>
+            </legend>
+            <div className="mt-3 flex flex-wrap gap-2.5">
+              {p.colors.map((c) => {
+                const hex = garmentColor(c).body;
+                const out = !p.variants.some((v) => v.color === c && v.stock > 0);
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-pressed={c === color}
+                    aria-label={`${c}${out ? ", sold out" : ""}`}
+                    title={c}
+                    onClick={() => pickColor(c)}
+                    className="shop-swatch press"
+                    data-out={out ? "true" : undefined}
+                    style={{ "--swatch": hex } as React.CSSProperties}
+                  />
+                );
+              })}
+            </div>
+          </fieldset>
+        )}
+
+        {/* Size */}
+        <fieldset ref={sizeGroup} className="mt-8" aria-describedby={needSize && !chosen ? "size-needed" : undefined}>
+          <legend className="flex w-full items-baseline justify-between gap-3 text-[0.9375rem]">
+            <span className="font-semibold text-ink">Size</span>
+            <span className="text-[0.875rem] text-ink-2">Pieces left at the shop</span>
+          </legend>
+          <div className="mt-3 grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-2">
+            {p.sizes.map((s) => {
+              const v = variantOf(s);
+              const stock = v?.stock ?? 0;
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  aria-pressed={s === size}
+                  disabled={stock <= 0}
+                  onClick={() => {
+                    setSize(s);
+                    setNeedSize(false);
+                  }}
+                  className="shop-size press"
+                  data-low={v?.low ? "true" : undefined}
+                >
+                  <span className="tabular text-[0.9375rem] font-semibold">{s}</span>
+                  <span className="shop-size-left tabular">
+                    {!v ? "Not in this color" : stock <= 0 ? "Sold out" : piecesLeft(stock)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {needSize && !chosen && (
+            <p id="size-needed" role="alert" className="mt-3 text-[0.9375rem] font-semibold text-ink">
+              Pick a size first, so you know it’s on the rack.
+            </p>
+          )}
+        </fieldset>
+
+        <p className="mt-4 flex items-center gap-2 text-[0.9375rem] text-ink-2" aria-live="polite">
+          {chosen ? (
+            <>
+              {chosen.low && <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-amber" />}
+              <span>
+                <span className="font-semibold text-ink">
+                  {chosen.low ? `Only ${piecesLeft(chosen.stock)}` : piecesLeft(chosen.stock)}
+                </span>{" "}
+                in {chosen.size} · {chosen.color}, as of now.
+              </span>
+            </>
+          ) : colorStock > 0 ? (
+            <span>
+              <span className="tabular font-semibold text-ink">{colorStock}</span> pieces in {color} across all sizes.
+            </span>
+          ) : (
+            <span className="font-semibold text-ink">{color} is sold out in every size.</span>
+          )}
+        </p>
+
+        <div className="mt-7 flex flex-col gap-2.5">
+          <button
+            type="button"
+            onClick={buy}
+            disabled={p.stock <= 0}
+            className="press inline-flex h-14 items-center justify-center gap-2 rounded-full bg-board px-6 text-[1rem] font-semibold text-board-ink hover:bg-board-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
+          >
+            <Store aria-hidden="true" className="size-[1.125rem]" />
+            {p.stock <= 0 ? "Sold out at the shop" : "Buy at the shop"}
+          </button>
+          <button
+            type="button"
+            aria-disabled="true"
+            aria-describedby="custom-soon"
+            className="inline-flex h-14 cursor-default items-center justify-center rounded-full px-6 text-[1rem] font-semibold text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]"
+          >
+            Make a custom version
+          </button>
+          <p id="custom-soon" className="text-center text-[0.8125rem] text-ink-2">
+            Custom orders open in a later update.
+          </p>
+        </div>
+
+        {p.description && (
+          <div className="mt-10 border-t border-line pt-6">
+            <h2 className="text-[1rem] font-semibold text-ink">About this item</h2>
+            <p className="mt-2 max-w-[60ch] text-[0.9375rem] leading-relaxed text-ink-2">{p.description}</p>
+          </div>
+        )}
+        <dl className="mt-6 grid gap-x-6 gap-y-2 border-t border-line pt-6 text-[0.9375rem] sm:grid-cols-[8rem_minmax(0,1fr)]">
+          <dt className="text-ink-2">Sizes</dt>
+          <dd className="text-ink">{p.sizes.join(", ")}</dd>
+          <dt className="text-ink-2">Colors</dt>
+          <dd className="text-ink">{p.colors.join(", ")}</dd>
+          <dt className="text-ink-2">How to buy</dt>
+          <dd className="text-ink">At the shop, cash or GCash</dd>
+        </dl>
+        {p.sample && (
+          <p className="mt-6 text-[0.8125rem] leading-relaxed text-ink-2">
+            Sample product: the price, stock, and illustration are demo data until the shop’s real catalog goes in.
+          </p>
+        )}
+      </div>
+
+      <BuySheet sheetRef={sheet} product={p} color={color} variant={chosen} shop={shop} />
+    </div>
+  );
+}
+
+function BuySheet({
+  sheetRef,
+  product: p,
+  color,
+  variant,
+  shop,
+}: {
+  sheetRef: React.RefObject<HTMLDialogElement | null>;
+  product: ShopProduct;
+  color: string | null;
+  variant: ShopProduct["variants"][number] | null;
+  shop: ShopInfo;
+}) {
+  const close = () => sheetRef.current?.close();
+  const placeholders = !shop.address || !shop.hours || !shop.phone;
+
+  return (
+    <dialog
+      ref={sheetRef}
+      className="auth-dialog"
+      aria-labelledby="buy-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) close();
+      }}
+    >
+      <div className="auth-sheet px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-7 sm:pb-7">
+        <div className="flex items-start justify-between gap-4">
+          <h2 id="buy-title" className="voice-display text-[1.875rem]">
+            Buy it at the shop
+          </h2>
+          <button type="button" onClick={close} className="press -mr-2 -mt-1 grid size-10 place-items-center rounded-full text-ink-2 hover:bg-ground-2 hover:text-ink">
+            <X aria-hidden="true" className="size-5" />
+            <span className="sr-only">Close</span>
+          </button>
+        </div>
+
+        {variant && (
+          <div className="mt-5 flex items-center gap-4 rounded-2xl bg-ground-2 p-3 shadow-[inset_0_0_0_1px_var(--line)]">
+            <div className="shop-tile size-20 shrink-0 rounded-xl">
+              <GarmentArt art={p.art} image={p.image} color={color} name={p.name} className="shop-thumb-art" sizes="5rem" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-[0.9375rem] font-semibold text-ink">{p.name}</p>
+              <p className="text-[0.875rem] text-ink-2">
+                {variant.color} · Size {variant.size}
+              </p>
+              <p className="tabular mt-1 text-[0.9375rem] text-ink">
+                <span className="font-semibold">{formatPeso(variant.price)}</span>
+                <span className="text-ink-2"> · {piecesLeft(variant.stock)} right now</span>
+              </p>
+            </div>
+          </div>
+        )}
+
+        <p className="mt-5 text-[0.9375rem] leading-relaxed text-ink-2">
+          Show this at the counter and staff will pull it from the rack. Stock can change before you get there.
+        </p>
+
+        <dl className="mt-5 divide-y divide-line border-y border-line text-[0.9375rem]">
+          <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-3">
+            <dt className="text-ink-2">Where</dt>
+            <dd className="text-ink">
+              {shop.name}
+              <br />
+              {shop.address ?? <span className="text-ink-2">Street address to follow</span>}, {shop.city}
+            </dd>
+          </div>
+          <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-3">
+            <dt className="text-ink-2">Hours</dt>
+            <dd className={shop.hours ? "text-ink" : "text-ink-2"}>{shop.hours ?? "Store hours to follow"}</dd>
+          </div>
+          <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-3">
+            <dt className="text-ink-2">Phone</dt>
+            <dd className={shop.phone ? "text-ink" : "text-ink-2"}>{shop.phone ?? "Contact number to follow"}</dd>
+          </div>
+          <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-3">
+            <dt className="text-ink-2">Pay with</dt>
+            <dd className="text-ink">Cash or GCash at the counter</dd>
+          </div>
+        </dl>
+        {placeholders && (
+          <p className="mt-4 text-[0.8125rem] text-ink-2">The shop’s address, hours, and phone go here once they’re confirmed.</p>
+        )}
+
+        <button
+          type="button"
+          onClick={close}
+          className="press mt-6 inline-flex h-12 w-full items-center justify-center rounded-xl bg-ink px-5 text-[1rem] font-semibold text-ground hover:opacity-90"
+        >
+          Got it
+        </button>
+      </div>
+    </dialog>
+  );
+}

@@ -60,6 +60,19 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
 - "Buy at the counter" guidance with the shop's pickup details (placeholders until real ones arrive).
 - "Ask about this" opens chat (wired up in C6).
 - **Done when:** a customer can tell in seconds whether their size and color is in stock.
+- **Decided 2026-10-07:**
+  - **Look:** Nike/Adidas-style layout in the J&J world.
+  - **Shop tab:** opens on a featured product, then a "Shop by sport" rail, then the full grid.
+  - **Cards:** photo first, with name, category and color count, and price. Stock appears on the product page, as exact pieces left.
+  - **Filters:** search, sport chips, size (products with that size in stock), in stock only, and sort, all kept in the URL.
+  - **Product page:** "Buy at the shop" opens a sheet with the chosen size and color and the shop details. The details are marked placeholders from `lib/admin/shop.ts`. "Make a custom version" is wired in C3.
+  - **Images:** sample illustrations are recolored to each variant's color.
+  - **Featured product:** the owner tags a product "featured" in the admin; otherwise the first jersey in stock leads.
+- **Built 2026-10-07:**
+  - Routes `/shop` and `/shop/[id]`, with views in `components/customer/shop/`.
+  - `lib/customer/catalog.ts` holds the client-safe filters and categories. `lib/customer/shop-data.ts` loads the catalog on the server.
+  - `lib/customer/sample-art.ts` turns the sample SVGs into recolorable art.
+  - Stock updates live through Realtime on products and variants.
 
 ### Phase C3: Request a custom order
 - Request form:

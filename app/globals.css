@@ -904,6 +904,302 @@ button.admin-dock-item[data-current="true"]:hover {
   background: var(--ground-2);
 }
 
+/* ---------- Customer: shop ---------- */
+
+/* Garments sit on the light photo backdrop in both themes, the way product shots are lit. */
+.shop-tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.125rem;
+  background: var(--photo-bg);
+}
+.shop-featured {
+  border-radius: 2rem;
+}
+
+.garment-art,
+.garment-photo {
+  width: 100%;
+  height: 100%;
+}
+.garment-photo {
+  object-fit: cover;
+}
+.garment-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* The jersey cross-fade: a new color washes over the same garment. */
+.garment-art svg * {
+  transition:
+    fill 480ms var(--ease-out),
+    stroke 480ms var(--ease-out);
+}
+.shop-tile-art {
+  padding: 12%;
+  transition: transform 420ms var(--ease-out);
+}
+.shop-featured-art {
+  padding: 8% 12%;
+}
+.shop-detail-art {
+  padding: 10%;
+}
+.shop-thumb-art {
+  padding: 10%;
+}
+.garment-art.shop-featured-art svg,
+.garment-art.shop-detail-art svg {
+  filter: drop-shadow(0 18px 22px oklch(0.2 0.02 158 / 0.16));
+}
+@media (hover: hover) {
+  .shop-card:hover .shop-tile-art {
+    transform: scale(1.04);
+  }
+}
+.shop-tile[data-current="true"] {
+  box-shadow: inset 0 0 0 2px var(--card-ink);
+}
+
+/* Search */
+.shop-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 3rem;
+  padding: 0 0.75rem 0 1rem;
+  border-radius: 999px;
+  background: var(--ground-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: box-shadow 200ms var(--ease-out);
+}
+.shop-search:focus-within {
+  box-shadow: 0 0 0 2px var(--amber);
+}
+.shop-search input:focus-visible {
+  outline: none;
+}
+.shop-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* Sport chips scroll sideways on phones without a visible bar. */
+.shop-chips,
+.shop-rail {
+  scrollbar-width: none;
+}
+.shop-chips::-webkit-scrollbar,
+.shop-rail::-webkit-scrollbar {
+  display: none;
+}
+.shop-chip {
+  flex-shrink: 0;
+  height: 2.5rem;
+  padding: 0 1.125rem;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition:
+    background-color 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out);
+}
+.shop-chip:hover {
+  box-shadow: inset 0 0 0 1px var(--ink-2);
+}
+.shop-chip[aria-pressed="true"] {
+  background: var(--board);
+  color: var(--board-ink);
+  box-shadow: none;
+}
+
+/* Size and sort: native selects dressed as pills. */
+.shop-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 2.5rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.shop-select:focus-within {
+  box-shadow: 0 0 0 2px var(--amber);
+}
+.shop-select select {
+  appearance: none;
+  height: 100%;
+  padding: 0 2.25rem 0 1rem;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.shop-select select:focus-visible {
+  outline: none;
+}
+.shop-select svg {
+  position: absolute;
+  right: 0.875rem;
+  pointer-events: none;
+}
+
+/* In stock only: a small switch inside a pill. */
+.shop-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  height: 2.5rem;
+  padding: 0 1rem 0 0.75rem;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.shop-toggle-track {
+  position: relative;
+  width: 2rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background-color 200ms var(--ease-out);
+}
+.shop-toggle-thumb {
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.25);
+  transition: transform 240ms var(--ease-out);
+}
+.shop-toggle[aria-pressed="true"] .shop-toggle-track {
+  background: var(--board);
+}
+.shop-toggle[aria-pressed="true"] .shop-toggle-thumb {
+  transform: translateX(0.75rem);
+}
+
+/* Color swatches: the chosen one wears an ink ring. */
+/* A hairline edge keeps black on dark ground and white on light ground visible. */
+.shop-swatch {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: var(--swatch);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--ink) 18%, transparent),
+    0 0 0 3px var(--ground),
+    0 0 0 4px transparent;
+  transition: box-shadow 180ms var(--ease-out);
+}
+.shop-swatch:hover {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--ink) 18%, transparent),
+    0 0 0 3px var(--ground),
+    0 0 0 4px var(--line);
+}
+.shop-swatch[aria-pressed="true"] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--ink) 18%, transparent),
+    0 0 0 3px var(--ground),
+    0 0 0 5px var(--ink);
+}
+/* A color sold out in every size: a diagonal rule across the swatch. */
+.shop-swatch[data-out="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 50% -2px auto;
+  height: 2px;
+  background: var(--ground);
+  transform: rotate(-45deg);
+  box-shadow: 0 0 0 1px var(--ink-2);
+}
+
+/* Size picker: each size shows the pieces left in the chosen color. */
+.shop-size {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  min-height: 3.75rem;
+  padding: 0.375rem 0.25rem;
+  border-radius: 0.875rem;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition:
+    background-color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out),
+    color 150ms var(--ease-out);
+}
+.shop-size:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 1px var(--ink-2);
+}
+.shop-size-left {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--ink-2);
+  text-align: center;
+}
+.shop-size[data-low="true"] .shop-size-left::before {
+  content: "";
+  display: inline-block;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  margin-right: 0.3125rem;
+  border-radius: 999px;
+  background: var(--amber);
+  vertical-align: 0.0625rem;
+}
+.shop-size[aria-pressed="true"] {
+  background: var(--board);
+  color: var(--board-ink);
+  box-shadow: none;
+}
+.shop-size[aria-pressed="true"] .shop-size-left {
+  color: var(--board-ink-2);
+}
+/* Sold out: a hollow slot that recedes. A dashed hairline and the sold-out swatch's
+   diagonal rule, never a ring stronger than the sizes you can buy. */
+.shop-size:disabled {
+  cursor: not-allowed;
+  color: var(--ink-2);
+  background:
+    linear-gradient(
+      to top right,
+      transparent calc(50% - 0.5px),
+      color-mix(in oklch, var(--ink-2) 35%, transparent) calc(50% - 0.5px),
+      color-mix(in oklch, var(--ink-2) 35%, transparent) calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)
+    );
+  box-shadow: none;
+  outline: 1px dashed color-mix(in oklch, var(--ink-2) 55%, transparent);
+  outline-offset: -1px;
+}
+.shop-size:disabled > span {
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .garment-art svg *,
+  .shop-tile-art,
+  .shop-toggle-thumb {
+    transition-duration: 1ms;
+  }
+  .shop-card:hover .shop-tile-art {
+    transform: none;
+  }
+}
+
 /* ---------- Admin: popovers (More, account) ---------- */
 
 .admin-pop {

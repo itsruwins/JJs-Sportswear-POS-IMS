@@ -37,25 +37,8 @@ export const requireCustomer = cache(async () => {
   return { supabase, profile: { id, username, full_name, phone, email, created_at } satisfies CustomerProfile };
 });
 
-export function firstName(profile: Pick<CustomerProfile, "full_name" | "username">) {
-  return profile.full_name?.trim().split(/\s+/)[0] || profile.username;
-}
-
 export function initials(fullName: string | null, username: string) {
   const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
   if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   return (parts[0]?.[0] ?? username[0] ?? "?").toUpperCase();
-}
-
-const TZ = "Asia/Manila";
-
-export function greeting(now: Date) {
-  const hour = Number(new Intl.DateTimeFormat("en-PH", { hour: "numeric", hourCycle: "h23", timeZone: TZ }).format(now));
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
-
-export function manilaDate(now: Date) {
-  return new Intl.DateTimeFormat("en-PH", { weekday: "long", month: "long", day: "numeric", timeZone: TZ }).format(now);
 }

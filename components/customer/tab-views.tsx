@@ -4,32 +4,6 @@ import { NotYetPanel, PageHeader, pageShell } from "./page-parts";
 /** The stages every custom order moves through, as the shop's admin tracks them. */
 const STAGES = ["Placed", "Accepted", "In production", "Ready", "Picked up"];
 
-export function ShopView({ greeting, name, dateLine, products }: { greeting: string; name: string; dateLine: string; products: number | null }) {
-  return (
-    <div className={pageShell}>
-      <header className="mb-8 sm:mb-10">
-        <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">
-          {greeting}, {name}.
-        </h1>
-        <p className="voice-label mt-3 text-[0.9375rem] text-ink-2">{dateLine}</p>
-      </header>
-
-      <NotYetPanel title="Every product, with what’s left on the rack." soon="Opens in the next update">
-        <p>
-          You’ll see every jersey, shirt, and pair of shorts with its sizes, colors, and the pieces left on the rack,
-          updated as the counter sells. Ready-made items are bought at the shop.
-        </p>
-        {products !== null && products > 0 && (
-          <p className="mt-4 flex items-baseline gap-2 text-ink">
-            <span className="voice-board tabular text-[1.75rem] leading-none">{products}</span>
-            <span>{products === 1 ? "product has" : "products have"} stock on the rack right now.</span>
-          </p>
-        )}
-      </NotYetPanel>
-    </div>
-  );
-}
-
 export function OrdersView() {
   return (
     <div className={pageShell}>
