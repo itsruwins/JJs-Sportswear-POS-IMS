@@ -46,7 +46,7 @@ const SIGNED_FOR = 6 * 60 * 60;
 // A table or relationship the production migration adds isn't there yet.
 const notMigrated = (e: { code?: string } | null) => e?.code === "PGRST205" || e?.code === "42P01" || e?.code === "PGRST200";
 
-type Person = { id: string; username: string; full_name: string | null; phone: string | null; email: string | null } | null;
+type Person = { id: string; username: string; full_name: string | null; phone: string | null; email: string | null; avatar_url?: string | null } | null;
 
 export type OrderSummary = {
   id: string;
@@ -171,7 +171,7 @@ export async function fetchOrder(supabase: SupabaseClient, id: string): Promise<
     .from("custom_orders")
     .select(
       `id, order_number, status, total_price, description, notes, decline_reason, created_at, accepted_at, ready_at, completed_at,
-       customer:profiles!custom_orders_customer_id_fkey (id, username, full_name, phone, email),
+       customer:profiles!custom_orders_customer_id_fkey (id, username, full_name, phone, email, avatar_url),
        custom_order_items (id, garment, color, size, quantity, notes, created_at),
        ai_design:ai_designs (prompt, generated_image_url),
        order_status_history (id, status, note, created_at, actor:profiles (username, full_name))`,

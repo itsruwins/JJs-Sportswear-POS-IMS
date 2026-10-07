@@ -40,6 +40,19 @@ const ACTION: Record<string, string> = {
 };
 const opens = (n: Notification) => !!n.reference_id && (n.type === "low_stock" || Object.hasOwn(DIRECT, n.type));
 
+/**
+ * The same bell in the customer app: orders, payments, and refunds (shop messages live in the
+ * chat bubble instead). Everything opens the customer's own order page; payment news opens it
+ * at "Price and payments".
+ */
+export type BellVariant = "admin" | "customer";
+const CUSTOMER_ACTION: Record<string, string> = { order_status: "View order", custom_order: "View order", payment: "View payment" };
+const isRefund = (n: Notification) => n.type === "custom_order" && /refund/i.test(n.title);
+const customerOpens = (n: Notification) => !!n.reference_id && Object.hasOwn(CUSTOMER_ACTION, n.type);
+const actionFor = (variant: BellVariant, n: Notification) =>
+  variant === "customer" ? (isRefund(n) ? "View payment" : (CUSTOMER_ACTION[n.type] ?? "Open")) : (ACTION[n.type] ?? "Open");
+const canOpen = (variant: BellVariant, n: Notification) => (variant === "customer" ? customerOpens(n) : opens(n));
+
 const PAGE = 20;
 const TOAST_MS = 6000;
 
@@ -56,8 +69,10 @@ function ago(iso: string) {
   return new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric", timeZone: "Asia/Manila" }).format(new Date(iso));
 }
 
-/** The admin's notifications: a bell with an unread count, a list, and brief pop-ups as alerts arrive. */
-export function NotificationBell({ userId }: { userId: string }) {
+/** Notifications: a bell with an unread count, a list, and brief pop-ups as alerts arrive. */
+export function NotificationBell({ userId, variant = "admin" }: { userId: string; variant?: BellVariant }) {
+  const customer = variant === "customer";
+  const panelId = customer ? "customer-notifications" : "admin-notifications";
   const router = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
   const open = usePopoverOpen(panelRef);
@@ -69,14 +84,13 @@ export function NotificationBell({ userId }: { userId: string }) {
 
   const load = useCallback(async () => {
     const supabase = createClient();
-    const [list, count] = await Promise.all([
-      supabase
-        .from("notifications")
-        .select("id, title, message, type, reference_id, is_read, created_at")
-        .order("created_at", { ascending: false })
-        .limit(PAGE),
-      supabase.from("notifications").select("id", { count: "exact", head: true }).eq("is_read", false),
-    ]);
+    let listQuery = supabase.from("notifications").select("id, title, message, type, reference_id, is_read, created_at");
+    let countQuery = supabase.from("notifications").select("id", { count: "exact", head: true }).eq("is_read", false);
+    if (customer) {
+      listQuery = listQuery.neq("type", "chat");
+      countQuery = countQuery.neq("type", "chat");
+    }
+    const [list, count] = await Promise.all([listQuery.order("created_at", { ascending: false }).limit(PAGE), countQuery]);
     if (list.error || count.error) {
       setFailed(true);
     } else {
@@ -85,7 +99,7 @@ export function NotificationBell({ userId }: { userId: string }) {
       setFailed(false);
     }
     setLoaded(true);
-  }, []);
+  }, [customer]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -103,6 +117,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
         (payload) => {
           const n = payload.new as Notification;
+          if (customer && n.type === "chat") return;
           setItems((prev) => [n, ...prev.filter((p) => p.id !== n.id)].slice(0, PAGE));
           setUnread((u) => u + 1);
           setToasts((t) => [n, ...t].slice(0, 3));
@@ -116,7 +131,7 @@ export function NotificationBell({ userId }: { userId: string }) {
       window.clearTimeout(reload);
       supabase.removeChannel(channel);
     };
-  }, [userId, load]);
+  }, [userId, load, customer]);
 
   // Refresh the list whenever it's opened, so it's right even if a live update was missed.
   useEffect(() => {
@@ -137,7 +152,10 @@ export function NotificationBell({ userId }: { userId: string }) {
   const markAllRead = async () => {
     setItems((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnread(0);
-    const { error } = await createClient().from("notifications").update({ is_read: true }).eq("is_read", false);
+    let q = createClient().from("notifications").update({ is_read: true }).eq("is_read", false);
+    // The customer's chat alerts belong to the chat bubble; opening the chat reads them.
+    if (customer) q = q.neq("type", "chat");
+    const { error } = await q;
     if (error) load();
   };
 
@@ -145,7 +163,14 @@ export function NotificationBell({ userId }: { userId: string }) {
   const openTarget = async (n: Notification) => {
     if (!n.reference_id) return;
     let href: string | null = null;
-    if (n.type === "low_stock") {
+    if (customer) {
+      if (n.type === "payment") {
+        const { data } = await createClient().from("payments").select("order_id").eq("id", n.reference_id).maybeSingle<{ order_id: string }>();
+        if (data?.order_id) href = `/orders/${data.order_id}#payments`;
+      } else if (n.type === "order_status" || n.type === "custom_order") {
+        href = `/orders/${n.reference_id}${isRefund(n) ? "#payments" : ""}`;
+      }
+    } else if (n.type === "low_stock") {
       const { data } = await createClient().from("product_variants").select("product_id").eq("id", n.reference_id).maybeSingle();
       if (data?.product_id) href = `/admin/products/${data.product_id}`;
     } else if (Object.hasOwn(DIRECT, n.type)) {
@@ -157,22 +182,24 @@ export function NotificationBell({ userId }: { userId: string }) {
     }
   };
 
+  const dismissToast = useCallback((id: string) => setToasts((t) => t.filter((x) => x.id !== id)), []);
+
   const activate = (n: Notification) => {
     // Check the list's copy: a toast may still hold the unread version of one already read there.
     const current = items.find((x) => x.id === n.id) ?? n;
     if (!current.is_read) markRead([n.id]);
+    // Opened from the list: its pop-up has done its job, and it would cover the page it opens.
+    dismissToast(n.id);
     openTarget(n);
   };
-
-  const dismissToast = useCallback((id: string) => setToasts((t) => t.filter((x) => x.id !== id)), []);
 
   return (
     <>
       <button
         type="button"
-        popoverTarget="admin-notifications"
+        popoverTarget={panelId}
         aria-expanded={open}
-        aria-controls="admin-notifications"
+        aria-controls={panelId}
         className="press relative grid size-10 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-ground-2 hover:text-ink"
       >
         <Bell aria-hidden="true" className="size-[1.2rem]" strokeWidth={1.9} />
@@ -187,7 +214,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         )}
       </button>
 
-      <div id="admin-notifications" ref={panelRef} popover="auto" role="dialog" className="admin-pop admin-notifications" aria-label="Notifications">
+      <div id={panelId} ref={panelRef} popover="auto" role="dialog" className="admin-pop admin-notifications" aria-label="Notifications">
         <div className="flex items-center justify-between gap-3 px-3 pb-2 pt-2">
           <p className="text-[1rem] font-semibold text-ink">Notifications</p>
           {unread > 0 && (
@@ -213,7 +240,9 @@ export function NotificationBell({ userId }: { userId: string }) {
             </p>
           ) : items.length === 0 ? (
             <p className="px-3 py-6 text-[0.875rem] leading-relaxed text-ink-2">
-              No notifications yet. Low stock, new orders, payments to check, and customer messages show up here.
+              {customer
+                ? "No notifications yet. When the shop accepts an order, checks a payment, or has your order ready, it shows up here."
+                : "No notifications yet. Low stock, new orders, payments to check, and customer messages show up here."}
             </p>
           ) : (
             <ul>
@@ -258,6 +287,7 @@ export function NotificationBell({ userId }: { userId: string }) {
           <Toast
             key={n.id}
             n={n}
+            action={canOpen(variant, n) ? actionFor(variant, n) : null}
             onDismiss={dismissToast}
             onOpen={() => {
               dismissToast(n.id);
@@ -270,7 +300,7 @@ export function NotificationBell({ userId }: { userId: string }) {
   );
 }
 
-function Toast({ n, onDismiss, onOpen }: { n: Notification; onDismiss: (id: string) => void; onOpen: () => void }) {
+function Toast({ n, action, onDismiss, onOpen }: { n: Notification; action: string | null; onDismiss: (id: string) => void; onOpen: () => void }) {
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const paused = hovered || focused;
@@ -299,9 +329,9 @@ function Toast({ n, onDismiss, onOpen }: { n: Notification; onDismiss: (id: stri
       <div className="min-w-0 flex-1">
         <p className="text-[0.9375rem] font-semibold leading-snug text-ink">{n.title}</p>
         {n.message && <p className="mt-0.5 text-[0.875rem] leading-snug text-ink-2">{n.message}</p>}
-        {opens(n) && (
+        {action && (
           <button type="button" onClick={onOpen} className="mt-1.5 text-[0.875rem] font-semibold text-ink underline">
-            {ACTION[n.type] ?? "Open"}
+            {action}
           </button>
         )}
       </div>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { AccountView } from "@/components/customer/tab-views";
-import { requireCustomer } from "@/lib/customer/session";
+import { AccountView } from "@/components/customer/account/account-view";
+import { initials, requireCustomer } from "@/lib/customer/session";
 
 export const metadata: Metadata = { title: "Account · J&J Sportswear" };
 
@@ -15,10 +15,13 @@ export default async function AccountPage() {
 
   return (
     <AccountView
-      fullName={profile.full_name}
+      uid={profile.id}
       username={profile.username}
+      initials={initials(profile.full_name, profile.username)}
+      fullName={profile.full_name}
       phone={profile.phone}
       email={profile.email}
+      avatarUrl={profile.avatar_url}
       joined={joined}
     />
   );

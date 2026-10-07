@@ -110,14 +110,19 @@ function Inbox({ rows, activeId, now, ownerId }: { rows: InboxRow[]; activeId: s
                   active ? "bg-ground-2 shadow-[inset_0_0_0_1px_var(--line)]" : "hover:bg-ground-2/60"
                 }`}
               >
-                <span
-                  aria-hidden="true"
-                  className={`grid size-10 place-items-center rounded-full text-[0.8125rem] font-bold ${
-                    r.unread > 0 ? "bg-board text-board-ink" : "bg-ground-2 text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]"
-                  }`}
-                >
-                  {initials(r)}
-                </span>
+                {r.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={r.avatar_url} alt="" aria-hidden="true" className="size-10 rounded-full object-cover shadow-[inset_0_0_0_1px_var(--line)]" />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className={`grid size-10 place-items-center rounded-full text-[0.8125rem] font-bold ${
+                      r.unread > 0 ? "bg-board text-board-ink" : "bg-ground-2 text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]"
+                    }`}
+                  >
+                    {initials(r)}
+                  </span>
+                )}
                 <span className="min-w-0">
                   <span className={`block truncate text-[0.9375rem] text-ink ${r.unread > 0 ? "font-semibold" : "font-medium"}`}>{name}</span>
                   <span className={`mt-0.5 line-clamp-2 text-[0.875rem] leading-snug ${r.unread > 0 ? "text-ink" : "text-ink-2"}`}>

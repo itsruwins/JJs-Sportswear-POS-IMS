@@ -9,6 +9,7 @@ export type CustomerProfile = {
   full_name: string | null;
   phone: string | null;
   email: string | null;
+  avatar_url: string | null;
   created_at: string;
 };
 
@@ -26,15 +27,15 @@ export const requireCustomer = cache(async () => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, full_name, phone, email, created_at, role")
+    .select("id, username, full_name, phone, email, avatar_url, created_at, role")
     .eq("id", userId)
     .single<CustomerProfile & { role: string }>();
 
   if (!profile) redirect(`/?auth=login&next=${CUSTOMER_HOME}`);
   if (profile.role !== "customer") redirect("/admin");
 
-  const { id, username, full_name, phone, email, created_at } = profile;
-  return { supabase, profile: { id, username, full_name, phone, email, created_at } satisfies CustomerProfile };
+  const { id, username, full_name, phone, email, avatar_url, created_at } = profile;
+  return { supabase, profile: { id, username, full_name, phone, email, avatar_url, created_at } satisfies CustomerProfile };
 });
 
 export function initials(fullName: string | null, username: string) {

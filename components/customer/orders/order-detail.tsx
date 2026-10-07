@@ -366,7 +366,7 @@ export function OrderDetailView({
           <aside className="flex min-w-0 flex-col gap-12">
             {/* Money */}
             {money && o.status !== "declined" && (
-              <section aria-labelledby="money-title">
+              <section id="payments" aria-labelledby="money-title" className="scroll-mt-24">
                 <SectionTitle id="money-title">Price and payments</SectionTitle>
                 <dl className="mt-1 text-[0.9375rem]">
                   <div className="flex items-baseline justify-between gap-3 py-2.5">

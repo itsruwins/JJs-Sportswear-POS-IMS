@@ -16,6 +16,8 @@ export type InboxRow = {
   last_sender_id: string;
   last_order_number: string | null;
   unread: number;
+  /** The customer's profile photo, when they've added one. */
+  avatar_url?: string | null;
 };
 
 export type ChatMessage = {
@@ -39,6 +41,7 @@ export type ChatCustomer = {
   full_name: string | null;
   phone: string | null;
   email: string | null;
+  avatar_url: string | null;
   created_at: string;
 };
 
@@ -49,7 +52,14 @@ export async function fetchInbox(supabase: SupabaseClient): Promise<{ rows: Inbo
   const { data, error } = await supabase.rpc("chat_inbox");
   if (error?.code === "PGRST202") return { rows: [], migrated: false, error: false };
   if (error) return { rows: [], migrated: true, error: true };
-  return { rows: (data ?? []) as InboxRow[], migrated: true, error: false };
+  const rows = (data ?? []) as InboxRow[];
+  // Profile photos aren't in the inbox query; one lookup for every conversation shown.
+  if (rows.length) {
+    const { data: faces } = await supabase.from("profiles").select("id, avatar_url").in("id", rows.map((r) => r.customer_id)).not("avatar_url", "is", null);
+    const photo = new Map((faces ?? []).map((f: { id: string; avatar_url: string | null }) => [f.id, f.avatar_url]));
+    for (const r of rows) r.avatar_url = photo.get(r.customer_id) ?? null;
+  }
+  return { rows, migrated: true, error: false };
 }
 
 /**
@@ -80,14 +90,14 @@ type Lookup =
 export async function findCustomer(supabase: SupabaseClient, id: string): Promise<Lookup> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, full_name, phone, email, role, created_at")
+    .select("id, username, full_name, phone, email, avatar_url, role, created_at")
     .eq("id", id)
     .maybeSingle<ChatCustomer & { role: string }>();
   if (error) return { kind: "error" };
   if (data) {
     if (data.role !== "customer") return { kind: "missing" };
-    const { id: cid, username, full_name, phone, email, created_at } = data;
-    return { kind: "customer", customer: { id: cid, username, full_name, phone, email, created_at } };
+    const { id: cid, username, full_name, phone, email, avatar_url, created_at } = data;
+    return { kind: "customer", customer: { id: cid, username, full_name, phone, email, avatar_url, created_at } };
   }
   const { data: order } = await supabase.from("custom_orders").select("customer_id").eq("id", id).maybeSingle<{ customer_id: string }>();
   return order ? { kind: "order", customerId: order.customer_id } : { kind: "missing" };

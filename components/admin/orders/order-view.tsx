@@ -325,8 +325,17 @@ export function OrderView({
           <Section title="Customer">
             {o.customer ? (
               <>
-                <p className="text-[1rem] font-semibold text-ink">{personName(o.customer)}</p>
-                <p className="text-[0.875rem] text-ink-2">@{o.customer.username}</p>
+                <div className="flex items-center gap-3">
+                  {o.customer.avatar_url && (
+                    // The customer's own profile photo (public avatars bucket).
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={o.customer.avatar_url} alt="" className="size-11 shrink-0 rounded-full object-cover shadow-[inset_0_0_0_1px_var(--line)]" />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-[1rem] font-semibold text-ink">{personName(o.customer)}</p>
+                    <p className="text-[0.875rem] text-ink-2">@{o.customer.username}</p>
+                  </div>
+                </div>
                 <ul className="mt-3 flex flex-col gap-1.5 text-[0.9375rem]">
                   {o.customer.phone && (
                     <li className="flex items-center gap-2">

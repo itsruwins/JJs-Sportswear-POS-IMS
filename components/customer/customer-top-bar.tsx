@@ -4,18 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, CircleUserRound, House, LogOut } from "lucide-react";
+import { NotificationBell } from "@/components/admin/notification-bell";
 import { usePopoverOpen } from "@/components/admin/use-popover-open";
 import { Wordmark } from "@/components/landing/wordmark";
 import { ThemeButton } from "@/components/theme-button";
 import { CUSTOMER_HOME, CUSTOMER_TABS, isActiveTab } from "./nav";
+import { Avatar } from "./avatar";
 import { useLogOut } from "./log-out-button";
 
-type Props = { username: string; fullName: string | null; initials: string; activeHref?: string };
+type Props = { userId: string; username: string; fullName: string | null; initials: string; avatarUrl: string | null; activeHref?: string };
 
 const menuItem =
   "press flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[0.9375rem] font-medium text-ink hover:bg-ground-2";
 
-export function CustomerTopBar({ username, fullName, initials, activeHref }: Props) {
+export function CustomerTopBar({ userId, username, fullName, initials, avatarUrl, activeHref }: Props) {
   const current = usePathname();
   const pathname = activeHref ?? current;
   const [scrolled, setScrolled] = useState(false);
@@ -54,7 +56,10 @@ export function CustomerTopBar({ username, fullName, initials, activeHref }: Pro
           </ul>
         </nav>
 
-        <ThemeButton className="ml-auto" />
+        <div className="ml-auto flex items-center gap-1">
+          <NotificationBell userId={userId} variant="customer" />
+          <ThemeButton />
+        </div>
 
         <button
           type="button"
@@ -64,9 +69,7 @@ export function CustomerTopBar({ username, fullName, initials, activeHref }: Pro
           data-current={isActiveTab("/account", pathname) ? "true" : undefined}
           className="customer-avatar press hidden items-center gap-2.5 rounded-full py-1 pl-1 pr-2.5 hover:bg-ground-2 lg:flex"
         >
-          <span aria-hidden="true" className="voice-label grid size-9 place-items-center rounded-full bg-ground-2 text-[0.875rem] text-ink shadow-[inset_0_0_0_1px_var(--line)]">
-            {initials}
-          </span>
+          <Avatar url={avatarUrl} initials={initials} />
           <span className="text-left leading-tight">
             <span className="block max-w-[12rem] truncate text-[0.9375rem] font-semibold text-ink">{fullName ?? `@${username}`}</span>
             <span className="block max-w-[12rem] truncate text-[0.8125rem] text-ink-2">@{username}</span>

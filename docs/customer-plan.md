@@ -184,6 +184,19 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
   - Log out.
 - **Done when:** every automatic notification reaches the customer and opens the right screen.
 
+- **Decided 2026-10-07:**
+  - **Bell:** in the top bar on every size, with an amber unread count. It opens a list (a sheet on phones) with "Mark all read", and new notifications pop up briefly in the corner as they arrive, like the admin's bell.
+  - **Chat:** shop messages stay in the chat bubble only; the bell covers orders, payments, and refunds.
+  - **Opens to:** a status notification opens its order page; a payment or refund notification opens it scrolled to "Price and payments". Tapping marks it read.
+  - **Account:** customers can edit name, phone, and email (the username stays fixed), add or remove a profile photo (cropped square), and change their password (current password first).
+  - **Photo for the shop:** the customer's photo also shows in the owner's chat inbox and order pages.
+- **Built 2026-10-07:**
+  - Bell: `components/admin/notification-bell.tsx` gained `variant="customer"` (no chat alerts; status → `/orders/<id>`, payment and refund → `/orders/<id>#payments`), mounted in the customer top bar.
+  - Account page: `components/customer/account/account-view.tsx`, with server actions `saveDetails`, `changePassword`, `setPhoto`, and `removePhoto` in `app/(customer)/account/actions.ts` and the rules in `lib/customer/account.ts`. The current password is checked on a separate client that keeps no session.
+  - Profile photos: cropped to 512px square WebP in the public `avatars` bucket (older ones are cleared). They show in the top bar, on Account, and in the owner's chat inbox, conversation header, and order page.
+  - No migration needed.
+  - Sample notifications for trying the bell: `supabase/seed/sample-customer-notifications.sql` (remove with `remove-sample-customer-notifications.sql`).
+
 ## Left open for the phase where it matters
 
 - **C2:** what a product card shows first (photo vs. stock), and the placeholder shop details.

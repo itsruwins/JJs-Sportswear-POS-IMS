@@ -25,6 +25,8 @@ export default async function CustomerLayout({ children }: { children: React.Rea
         Skip to content
       </a>
       <CustomerTopBar
+        userId={profile.id}
+        avatarUrl={profile.avatar_url}
         username={profile.username}
         fullName={profile.full_name}
         initials={initials(profile.full_name, profile.username)}

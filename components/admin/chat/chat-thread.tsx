@@ -41,9 +41,14 @@ export function ChatThread({ customer, messages, more, orders, ownerId, preselec
         >
           <ArrowLeft aria-hidden="true" className="size-5" />
         </Link>
-        <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-ground-2 text-[0.8125rem] font-bold text-ink-2 shadow-[inset_0_0_0_1px_var(--line)] sm:size-10 lg:size-12 lg:text-[0.9375rem]">
-          {initials(customer)}
-        </span>
+        {customer.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={customer.avatar_url} alt="" aria-hidden="true" className="size-9 shrink-0 rounded-full object-cover shadow-[inset_0_0_0_1px_var(--line)] sm:size-10 lg:size-12" />
+        ) : (
+          <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-full bg-ground-2 text-[0.8125rem] font-bold text-ink-2 shadow-[inset_0_0_0_1px_var(--line)] sm:size-10 lg:size-12 lg:text-[0.9375rem]">
+            {initials(customer)}
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <h2 className="voice-display truncate text-[clamp(1.375rem,3.5vw,2rem)] leading-tight">{name}</h2>
           <p className="mt-0.5 flex min-w-0 items-center gap-x-3 text-[0.875rem] text-ink-2 sm:flex-wrap sm:gap-y-1">
