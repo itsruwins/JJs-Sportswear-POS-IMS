@@ -1,40 +1,6 @@
 import { LogOutButton } from "./log-out-button";
 import { NotYetPanel, PageHeader, pageShell } from "./page-parts";
 
-/** The stages every custom order moves through, as the shop's admin tracks them. */
-const STAGES = ["Placed", "Accepted", "In production", "Ready", "Picked up"];
-
-export function OrdersView() {
-  return (
-    <div className={pageShell}>
-      <PageHeader title="Orders" sub="Custom kits you’ve asked the shop to make, and where each one is." />
-
-      {/* The order board, idle: nothing placed yet, so no lamp is lit. */}
-      <div className="board mb-6 max-w-[46rem] rounded-[1.25rem] px-4 py-3.5 text-board-ink sm:px-5">
-        <ol aria-label="How an order moves" className="grid grid-cols-5 gap-2">
-          {STAGES.map((label) => (
-            // Phones: lamp centered over a two-line label box in every cell, so a wrapped label keeps the run even.
-            <li key={label} className="flex min-w-0 flex-col items-center gap-2 sm:flex-row sm:items-center">
-              <span aria-hidden="true" className="lamp shrink-0" />
-              <span className="flex min-h-[2lh] items-start text-center text-[0.75rem] leading-tight text-board-ink-2 sm:min-h-0 sm:text-left sm:text-[0.8125rem]">
-                {label}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      <NotYetPanel title="No custom orders yet." soon="Opens in a later update">
-        <p>
-          When you send a request, it shows up here and moves along this board: the shop accepts it with a price, you pay
-          at least half as a down payment, then it goes through printing, cutting, sewing, and inspection until it’s ready
-          for pickup.
-        </p>
-      </NotYetPanel>
-    </div>
-  );
-}
-
 export function DesignView() {
   return (
     <div className={pageShell}>

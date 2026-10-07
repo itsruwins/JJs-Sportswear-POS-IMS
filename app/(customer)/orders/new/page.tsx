@@ -1,0 +1,57 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
+import { RequestForm } from "@/components/customer/orders/request-form";
+import { pageShell } from "@/components/customer/page-parts";
+import { requestsReady } from "@/lib/customer/order-data";
+import { blankGarment, garmentForProduct, type RequestDraft } from "@/lib/customer/orders";
+import { requireCustomer } from "@/lib/customer/session";
+
+export const metadata: Metadata = { title: "Request a custom order · J&J Sportswear" };
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default async function NewRequestPage({ searchParams }: PageProps<"/orders/new">) {
+  const { supabase, profile } = await requireCustomer();
+  const params = await searchParams;
+  const one = (v: string | string[] | undefined) => ((Array.isArray(v) ? v[0] : v) ?? "").trim();
+
+  // "Make a custom version" on a shop product starts with that garment and color.
+  let first = blankGarment();
+  let basedOn: string | null = null;
+  const productId = one(params.product);
+  if (UUID.test(productId)) {
+    const { data } = await supabase
+      .from("products")
+      .select("name, product_tags (tag)")
+      .eq("id", productId)
+      .maybeSingle<{ name: string; product_tags: { tag: string }[] | null }>();
+    if (data) {
+      basedOn = data.name;
+      first = blankGarment(garmentForProduct(data.name, (data.product_tags ?? []).map((t) => t.tag)), one(params.color).slice(0, 40));
+    }
+  }
+
+  const initial: RequestDraft = { team: "", description: "", neededBy: "", notes: "", references: [], garments: [first] };
+  const migrated = await requestsReady(supabase);
+
+  return (
+    <div className={pageShell}>
+      <div className="mx-auto max-w-[46rem]">
+        <Link href={basedOn ? `/shop/${productId}` : "/orders"} className="press -ml-2 mb-5 inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-[0.9375rem] font-medium text-ink-2 hover:text-ink">
+          <ChevronLeft aria-hidden="true" className="size-4" />
+          {basedOn ? basedOn : "Orders"}
+        </Link>
+        <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">Request a custom order</h1>
+        <p className="mt-3 max-w-[48ch] text-[1.0625rem] leading-relaxed text-ink-2">
+          {basedOn
+            ? `Starting from the ${basedOn}. Change anything you like; the shop prices it after you send it.`
+            : "Tell the shop what to make. There’s no price yet: the shop sends one after it reviews your request."}
+        </p>
+      </div>
+      <div className="mt-8">
+        <RequestForm uid={profile.id} initial={initial} migrated={migrated} />
+      </div>
+    </div>
+  );
+}

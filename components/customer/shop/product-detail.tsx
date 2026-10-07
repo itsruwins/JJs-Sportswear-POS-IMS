@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { Store, X } from "lucide-react";
 import { formatPeso } from "@/lib/admin/catalog";
 import { garmentColor } from "@/lib/customer/colors";
@@ -162,17 +163,13 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
             <Store aria-hidden="true" className="size-[1.125rem]" />
             {p.stock <= 0 ? "Sold out at the shop" : "Buy at the shop"}
           </button>
-          <button
-            type="button"
-            aria-disabled="true"
-            aria-describedby="custom-soon"
-            className="inline-flex h-14 cursor-default items-center justify-center rounded-full px-6 text-[1rem] font-semibold text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]"
+          <Link
+            href={`/orders/new?product=${p.id}${color ? `&color=${encodeURIComponent(color)}` : ""}`}
+            className="press inline-flex h-14 items-center justify-center rounded-full px-6 text-[1rem] font-semibold text-ink shadow-[inset_0_0_0_1.5px_var(--ink)] hover:bg-ground-2"
           >
             Make a custom version
-          </button>
-          <p id="custom-soon" className="text-center text-[0.8125rem] text-ink-2">
-            Custom orders open in a later update.
-          </p>
+          </Link>
+          <p className="text-center text-[0.8125rem] text-ink-2">Your own colors, names, and numbers. The shop prices it after you send it.</p>
         </div>
 
         {p.description && (

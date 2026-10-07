@@ -226,6 +226,26 @@ export function OrderView({
           )}
 
           <Section title="What they ordered" aside={<span className="tabular text-[0.875rem] text-ink-2">{pieces} {pieces === 1 ? "piece" : "pieces"}</span>}>
+            {(o.team_name || o.needed_by) && (
+              <dl className="mb-4 grid gap-4 sm:grid-cols-2">
+                {o.team_name && (
+                  <div>
+                    <dt className="voice-label text-[0.75rem] text-ink-2">Team</dt>
+                    <dd className="mt-1 text-[0.9375rem] font-semibold text-ink">{o.team_name}</dd>
+                  </div>
+                )}
+                {o.needed_by && (
+                  <div>
+                    <dt className="voice-label text-[0.75rem] text-ink-2">Needed by</dt>
+                    <dd className="tabular mt-1 text-[0.9375rem] font-semibold text-ink">
+                      {new Intl.DateTimeFormat("en-PH", { weekday: "short", month: "long", day: "numeric", year: "numeric" }).format(
+                        new Date(`${o.needed_by}T00:00:00+08:00`),
+                      )}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            )}
             {o.items.length === 0 ? (
               <p className="text-[0.9375rem] text-ink-2">No items listed. Ask the customer for sizes and quantities.</p>
             ) : (
@@ -235,7 +255,7 @@ export function OrderView({
                     <div className="min-w-0">
                       <p className="text-[0.9375rem] font-semibold text-ink">{i.garment}</p>
                       <p className="text-[0.875rem] text-ink-2">{[i.color, i.size].filter(Boolean).join(" · ") || "No color or size given"}</p>
-                      {i.notes && <p className="mt-0.5 text-[0.875rem] text-ink">{i.notes}</p>}
+                      {i.notes && <p className="mt-0.5 whitespace-pre-line text-[0.875rem] text-ink">{i.notes}</p>}
                     </div>
                     <span className="voice-board tabular shrink-0 text-[1.375rem] leading-none text-ink">×{i.quantity}</span>
                   </li>
@@ -253,9 +273,31 @@ export function OrderView({
                 {o.notes && (
                   <div>
                     <p className="voice-label text-[0.75rem] text-ink-2">Notes</p>
-                    <p className="mt-1 text-[0.9375rem] leading-relaxed text-ink">{o.notes}</p>
+                    <p className="mt-1 whitespace-pre-line text-[0.9375rem] leading-relaxed text-ink">{o.notes}</p>
                   </div>
                 )}
+              </div>
+            )}
+            {o.references.length > 0 && (
+              <div className="mt-5">
+                <p className="voice-label text-[0.75rem] text-ink-2">Reference pictures</p>
+                <ul className="mt-2 flex flex-wrap gap-3">
+                  {o.references.map((r, i) => (
+                    <li key={r.path}>
+                      {r.url ? (
+                        <a href={r.url} target="_blank" rel="noreferrer" className="press block size-28 overflow-hidden rounded-2xl bg-[var(--photo-bg)] shadow-[inset_0_0_0_1px_var(--line)]">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={r.url} alt={`Customer reference picture ${i + 1}`} className="size-full object-contain p-1.5" />
+                          <span className="sr-only"> (opens full size)</span>
+                        </a>
+                      ) : (
+                        <span className="grid size-28 place-items-center rounded-2xl bg-ground-2 text-[0.8125rem] text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]">
+                          Unavailable
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
             {o.design && (

@@ -84,6 +84,18 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
 - Edit or cancel while the order is still pending.
 - Seed: sample custom orders for a sample customer account.
 - **Done when:** a customer sends a multi-item request and sees it as pending.
+- **Decided 2026-10-07:**
+  - **Garments:** a fixed list plus "Other", typed in.
+  - **Sizes:** a size run per garment under a fit switch (Adult / Women's / Kids / One size), saved as one line per size.
+  - **Extra fields:** needed-by date, team name, names and numbers (per-garment notes), and up to 3 reference pictures. The owner sees them on the admin order page.
+  - **Form:** three steps, Details → Garments → Review.
+  - **Editing:** edit everything or cancel until the shop accepts.
+  - **"Make a custom version":** pre-fills the garment and color.
+- **Built 2026-10-07:**
+  - **Migration:** `20261013000000_customer_order_requests.sql` adds the team name, needed-by and reference-image columns; the private `order-references` bucket; and `rpc submit_custom_order` / `update_custom_order`, which save the order and its lines in one transaction. The user has applied it.
+  - **Customer routes:** `/orders`, `/orders/new`, `/orders/[id]`, `/orders/[id]/edit`.
+  - **Admin:** the order page and the orders list show the team, the needed-by date, and the pictures.
+  - **Tested end to end** with test customer `c3.test`, approved by the user. Its two test orders (CO-20261007-00010 and -00011) are cancelled; delete the account in Supabase Auth if you want it gone.
 
 ### Phase C4: My orders + tracking + payments
 - Orders list with status tabs (Pending, In progress, Ready, Done, Closed).
