@@ -171,6 +171,7 @@ export function RequestForm({
       neededBy: draft.neededBy,
       notes: draft.notes,
       references: draft.references.map((r) => r.path),
+      aiDesignId: draft.design?.id ?? null,
       lines: toLines(draft.garments),
     };
     const result = orderId ? await updateRequest(orderId, payload) : await submitRequest(payload);
@@ -207,6 +208,31 @@ export function RequestForm({
           <p className="mt-2 text-[1rem] leading-relaxed text-ink-2">Tell the shop who it’s for and when you need it. You’ll add the garments next.</p>
 
           <div className="mt-8 flex flex-col gap-7">
+            {draft.design && (
+              <div>
+                <p className={label}>Design from the studio</p>
+                <div className="mt-2 flex items-center gap-4 rounded-2xl bg-ground-2 p-3 shadow-[inset_0_0_0_1px_var(--line)]">
+                  <div className="shop-tile aspect-[3/2] w-32 shrink-0 rounded-xl">
+                    {draft.design.url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={draft.design.url} alt="Your attached design" className="size-full object-contain" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="break-words text-[0.9375rem] font-semibold text-ink">{draft.design.label}</p>
+                    <p className="text-[0.8125rem] text-ink-2">The shop sees this design with your request.</p>
+                    <button
+                      type="button"
+                      onClick={() => patch({ design: null })}
+                      className="press -ml-1 mt-1.5 inline-flex h-9 items-center rounded-full px-3 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div>
               <label htmlFor={ids.description} className={label}>
                 What’s the order for?
@@ -394,6 +420,19 @@ export function RequestForm({
               <ReviewRow term="For">{draft.description.trim()}</ReviewRow>
               <ReviewRow term="Team">{draft.team.trim() || <span className="text-ink-2">Not given</span>}</ReviewRow>
               <ReviewRow term="Needed by">{draft.neededBy ? niceDate(draft.neededBy) : <span className="text-ink-2">No deadline</span>}</ReviewRow>
+              {draft.design && (
+                <ReviewRow term="Design">
+                  <span className="flex items-center gap-3">
+                    <span className="shop-tile block aspect-[3/2] w-24 shrink-0 rounded-lg">
+                      {draft.design.url && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={draft.design.url} alt="Your attached design" className="size-full object-contain" />
+                      )}
+                    </span>
+                    <span className="min-w-0">{draft.design.label}</span>
+                  </span>
+                </ReviewRow>
+              )}
               <ReviewRow term="Pictures">
                 {draft.references.length ? (
                   <span className="flex gap-2">

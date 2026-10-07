@@ -293,6 +293,19 @@ export function OrderDetailView({
                     <Row term="Needed by">{o.needed_by ? dayDate(o.needed_by) : <span className="text-ink-2">No deadline</span>}</Row>
                   </>
                 )}
+                {o.design && (
+                  <Row term="Design">
+                    {o.design.url ? (
+                      <a href={o.design.url} target="_blank" rel="noreferrer" className="shop-tile block aspect-[3/2] w-56 max-w-full rounded-xl">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={o.design.url} alt="Your design from the studio" className="size-full object-contain" />
+                        <span className="sr-only"> (opens full size)</span>
+                      </a>
+                    ) : (
+                      <span className="text-ink-2">Design from the studio</span>
+                    )}
+                  </Row>
+                )}
                 {o.references.length > 0 && (
                   <Row term="Pictures">
                     <span className="flex flex-wrap gap-2.5">

@@ -150,7 +150,11 @@ export type RequestDraft = {
   notes: string;
   references: ReferenceImage[];
   garments: GarmentDraft[];
+  /** A design from the AI studio, attached for the shop to work from. */
+  design: AttachedDesign | null;
 };
+
+export type AttachedDesign = { id: string; url: string | null; label: string };
 
 export type OrderLine = { garment: string; color: string | null; size: string; quantity: number; notes: string | null };
 

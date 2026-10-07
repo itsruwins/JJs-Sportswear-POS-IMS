@@ -154,6 +154,13 @@ body {
   outline-offset: 3px;
   border-radius: 6px;
 }
+/* Headings that take focus from code (so screen readers announce a new step) aren't
+   controls; they never draw the keyboard ring. */
+h1[tabindex="-1"]:focus-visible,
+h2[tabindex="-1"]:focus-visible,
+h3[tabindex="-1"]:focus-visible {
+  outline: none;
+}
 
 a {
   text-underline-offset: 0.22em;
@@ -1262,6 +1269,42 @@ button.admin-dock-item[data-current="true"]:hover {
   box-shadow: inset 0 0 0 1.5px oklch(0.82 0.165 78 / 0.75);
 }
 
+/* ---------- Customer: AI design studio ---------- */
+
+/* Color picks: the shop's swatches, numbered in the order they were picked. */
+.studio-swatch {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+.studio-swatch-rank {
+  display: grid;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 999px;
+  background: var(--ground);
+  color: var(--ink);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.25);
+}
+/* The design on the stage wears an ink ring in the gallery, outside the tile so the
+   picture can't cover it. */
+.studio-thumb .shop-tile {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color 160ms var(--ease-out);
+}
+.studio-thumb[aria-pressed="true"] .shop-tile {
+  outline-color: var(--ink);
+}
+@media (hover: hover) {
+  .studio-thumb:not([aria-pressed="true"]):hover .shop-tile {
+    outline-color: var(--line);
+  }
+}
 /* ---------- Admin: popovers (More, account) ---------- */
 
 .admin-pop {

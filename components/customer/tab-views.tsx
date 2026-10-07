@@ -1,20 +1,6 @@
 import { LogOutButton } from "./log-out-button";
 import { NotYetPanel, PageHeader, pageShell } from "./page-parts";
 
-export function DesignView() {
-  return (
-    <div className={pageShell}>
-      <PageHeader title="Design" sub="Describe a jersey in your own words and see it drawn." />
-      <NotYetPanel title="The design studio is still being built." soon="Opens in a later update">
-        <p>
-          Every try is saved to your account. Pick the one you like and attach it to a custom order, so the shop sees
-          exactly what you mean.
-        </p>
-      </NotYetPanel>
-    </div>
-  );
-}
-
 export function ChatView() {
   return (
     <div className={pageShell}>

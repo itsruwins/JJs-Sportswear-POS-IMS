@@ -28,6 +28,7 @@ export default async function EditRequestPage({ params }: PageProps<"/orders/[id
     notes: order.notes ?? "",
     references: order.references,
     garments: fromLines(order.lines),
+    design: order.design,
   };
 
   return (

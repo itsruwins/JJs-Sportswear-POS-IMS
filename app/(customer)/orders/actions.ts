@@ -16,6 +16,7 @@ export type RequestPayload = {
   notes: string;
   references: string[];
   lines: OrderLine[];
+  aiDesignId: string | null;
 };
 
 export type RequestResult = { ok: true; id: string } | { ok: false; message: string };
@@ -53,7 +54,8 @@ function args(uid: string, p: RequestPayload) {
     p_needed_by: neededBy,
     p_notes: textOf(p?.notes, 1000) || null,
     p_reference_images: references,
-    p_ai_design_id: null,
+    // The database checks the design is the customer's own.
+    p_ai_design_id: typeof p?.aiDesignId === "string" && UUID.test(p.aiDesignId) ? p.aiDesignId : null,
   };
 }
 

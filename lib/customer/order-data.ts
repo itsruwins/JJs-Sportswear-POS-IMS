@@ -93,11 +93,13 @@ export type MyOrder = {
   history: { id: string; status: OrderStatus; note: string | null; created_at: string; byCustomer: boolean }[];
   payments: MyPayment[];
   refunded: number;
+  design: { id: string; url: string | null; label: string } | null;
 };
 
 export async function fetchMyOrder(supabase: SupabaseClient, id: string): Promise<{ order: MyOrder | null; error: boolean }> {
   const base = `id, order_number, status, description, notes, total_price, decline_reason, created_at, accepted_at, ready_at, completed_at, customer_id,
     custom_order_items (garment, color, size, quantity, notes, created_at),
+    ai_design:ai_designs (id, prompt, generated_image_url),
     order_status_history (id, status, note, created_at, changed_by),
     payments (id, payment_type, amount, method, status, gcash_reference, rejection_reason, created_at, verified_at)`;
   const run = (full: boolean) =>
@@ -131,6 +133,7 @@ export async function fetchMyOrder(supabase: SupabaseClient, id: string): Promis
     custom_order_items: (OrderLine & { created_at: string })[] | null;
     order_status_history: { id: string; status: OrderStatus; note: string | null; created_at: string; changed_by: string }[] | null;
     payments: (Omit<MyPayment, "amount" | "last4"> & { amount: number | string; gcash_reference: string | null })[] | null;
+    ai_design: { id: string; prompt: string; generated_image_url: string | null } | null;
   };
   const r = res.data as unknown as Row;
 
@@ -149,6 +152,13 @@ export async function fetchMyOrder(supabase: SupabaseClient, id: string): Promis
   ]);
   const urlFor = new Map((signed?.data ?? []).map((s) => [s.path, s.signedUrl]));
   const photoUrl = new Map((signedPhotos?.data ?? []).map((s) => [s.path, s.signedUrl]));
+
+  // The attached studio design lives in the private ai-designs bucket.
+  let designUrl: string | null = r.ai_design?.generated_image_url ?? null;
+  if (designUrl && !/^https?:\/\//.test(designUrl)) {
+    const { data: d } = await supabase.storage.from("ai-designs").createSignedUrl(designUrl, SIGNED_FOR);
+    designUrl = d?.signedUrl ?? null;
+  }
 
   const steps: MyOrder["steps"] = {};
   for (const s of (stepsRes.data ?? []) as { step: Step; done_at: string }[]) steps[s.step] = s.done_at;
@@ -182,6 +192,7 @@ export async function fetchMyOrder(supabase: SupabaseClient, id: string): Promis
         .map(({ gcash_reference, amount, ...p }) => ({ ...p, amount: Number(amount), last4: gcash_reference ? gcash_reference.slice(-4) : null }))
         .sort((a, b) => b.created_at.localeCompare(a.created_at)),
       refunded: ((refundsRes.data ?? []) as { amount: number | string }[]).reduce((sum, f) => sum + Number(f.amount), 0),
+      design: r.ai_design ? { id: r.ai_design.id, url: designUrl, label: "Design from the studio" } : null,
     },
     error: false,
   };

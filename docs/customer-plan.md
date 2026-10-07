@@ -130,6 +130,32 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
 - Sample design images ship in `public/`, marked for replacement by a real provider.
 - **Done when:** a design goes from prompt to an attached custom order request.
 
+- **Decided 2026-10-07:**
+  - **AI:** FLUX.2 [pro] from Black Forest Labs (research: `docs/ai-design-studio-model-research.pdf`).
+  - **Limit:** 3 designs per customer per day; refines count, failed generations don't.
+  - **Input:** guided picks plus free text, and an optional logo as a FLUX reference.
+  - **Image:** front and back side by side.
+  - **Refine:** allowed, and it counts toward the limit.
+  - **"Use this design":** starts a request with the design attached.
+  - **Until the key exists:** a labelled preview mode using the shop's sample art.
+- **Built 2026-10-07:**
+  - `/design` studio, at `components/customer/design/studio.tsx`.
+  - Server actions `generateDesign` and `refineDesign`.
+  - FLUX client in `lib/customer/flux.ts`; it polls the result and copies it into the private `ai-designs` bucket.
+  - Preview renderer in `lib/customer/preview-art.ts` (sharp, SVG to WebP).
+    - Lettering is drawn as Archivo outlines from `lib/customer/fonts/` (SIL OFL, via the `opentype.js` package), so previews look the same on any server.
+  - Preview mode has no Refine: previews can't redraw from words, and the server refuses a refine until the FLUX key is set, so no try is spent.
+  - Before the first design, the stage shows the sample garment in the picked colors, and it recolors as you pick.
+  - The picks, including the logo, come back from the last design.
+  - Migrations:
+    - `20261014000000_ai_design_studio.sql`: details, parent_id, is_preview, and the 3/day trigger. The user has applied it.
+    - `20261014120000_ai_designs_keep.sql`: no deletes, so tries can't be refunded. Not applied yet; run it in Supabase.
+  - Requests carry `ai_design_id`, and the order page shows the design.
+- **Turning FLUX on:**
+  - Add `BFL_API_KEY=...` to `.env.local` (and to the hosting environment), then restart the server.
+  - Optional: `BFL_MODEL` picks the endpoint (default `flux-2-pro`).
+  - Preview designs made earlier stay marked "Preview".
+
 ### Phase C6: Chat
 - One general conversation with the shop, plus order-tagged messages, which can also be started from an order page or a product's "Ask about this".
 - Live messages, unread counts on the dock, and read receipts handled by the database.
