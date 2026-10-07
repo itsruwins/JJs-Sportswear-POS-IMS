@@ -1,4 +1,4 @@
-import { CircleUserRound, ClipboardList, MessageCircle, Palette, Shirt, type LucideIcon } from "lucide-react";
+import { CircleUserRound, ClipboardList, Palette, Shirt, type LucideIcon } from "lucide-react";
 
 export { CUSTOMER_HOME } from "@/lib/customer/paths";
 
@@ -14,7 +14,6 @@ export const CUSTOMER_TABS: CustomerTab[] = [
   { label: "Shop", href: "/shop", icon: Shirt, desktop: true },
   { label: "Orders", href: "/orders", icon: ClipboardList, desktop: true },
   { label: "Design", href: "/design", icon: Palette, desktop: true },
-  { label: "Chat", href: "/chat", icon: MessageCircle, desktop: true },
   { label: "Account", href: "/account", icon: CircleUserRound, desktop: false },
 ];
 

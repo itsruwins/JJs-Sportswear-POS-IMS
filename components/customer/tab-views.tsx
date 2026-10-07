@@ -1,19 +1,5 @@
 import { LogOutButton } from "./log-out-button";
-import { NotYetPanel, PageHeader, pageShell } from "./page-parts";
-
-export function ChatView() {
-  return (
-    <div className={pageShell}>
-      <PageHeader title="Chat" sub="Ask the shop about sizes, stock, or your order." />
-      <NotYetPanel title="Messaging is still being built." soon="Opens in a later update">
-        <p>
-          You’ll have one conversation with the shop. Messages about a specific order stay linked to it, so nobody has to
-          ask which one you mean.
-        </p>
-      </NotYetPanel>
-    </div>
-  );
-}
+import { PageHeader, pageShell } from "./page-parts";
 
 function Row({ label, value }: { label: string; value: string | null }) {
   return (

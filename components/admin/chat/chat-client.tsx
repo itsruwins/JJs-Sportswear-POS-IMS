@@ -2,10 +2,12 @@
 
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LoaderCircle, SendHorizontal } from "lucide-react";
+import { ImagePlus, LoaderCircle, SendHorizontal, X } from "lucide-react";
 import { markThreadRead, sendMessage } from "@/app/admin/chat/actions";
 import { MESSAGE_MAX, type CustomerOrder } from "@/lib/admin/chat";
 import { STATUS_LABEL } from "@/lib/admin/orders";
+import { createClient } from "@/lib/supabase/client";
+import { prepareForUpload } from "@/components/admin/products/photo-picker";
 
 /** Opening a conversation reads it; runs again when a new message lands while it's open. */
 export function MarkRead({ customerId, unread, latest }: { customerId: string; unread: number; latest: string }) {
@@ -58,17 +60,24 @@ export function ScrollToEnd({ latest, mine }: { latest: string; mine: boolean })
   return null;
 }
 
-/** The owner's reply box: sticks above the dock, grows with the message, and can tag one of the customer's orders. */
+type Photo = { blob: Blob; ext: string; type: string; url: string };
+
+/** The owner's reply box: sticks above the dock, grows with the message, can tag one of the customer's orders, and can carry a photo. */
 export function Composer({
   customerId,
+  ownerId,
   firstName,
   orders,
   preselectOrder,
+  photos,
 }: {
   customerId: string;
+  ownerId: string;
   firstName: string;
   orders: CustomerOrder[];
   preselectOrder: string | null;
+  /** False until the chat photos migration has run. */
+  photos: boolean;
 }) {
   const router = useRouter();
   const ids = { text: useId(), order: useId(), error: useId(), hint: useId(), count: useId() };
@@ -77,6 +86,8 @@ export function Composer({
   const [orderId, setOrderId] = useState(orders.some((o) => o.id === preselectOrder) ? preselectOrder! : "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [photo, setPhoto] = useState<Photo | null>(null);
+  const [preparing, setPreparing] = useState(false);
   const trimmed = text.trim();
   const over = text.length > MESSAGE_MAX;
 
@@ -88,18 +99,52 @@ export function Composer({
     el.style.height = `${Math.min(el.scrollHeight, 220)}px`;
   }, [text]);
 
-  const send = async () => {
-    if (!trimmed || over || busy) return;
-    setBusy(true);
+  const pickPhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setPreparing(true);
     setError("");
     try {
-      const r = await sendMessage(customerId, trimmed, orderId || null);
+      const { blob, ext, type } = await prepareForUpload(file);
+      setPhoto((old) => {
+        if (old) URL.revokeObjectURL(old.url);
+        return { blob, ext, type, url: URL.createObjectURL(blob) };
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "We couldn’t use that photo. Try another one.");
+    } finally {
+      setPreparing(false);
+    }
+  };
+
+  const send = async () => {
+    if ((!trimmed && !photo) || over || busy) return;
+    setBusy(true);
+    setError("");
+    const storage = createClient().storage.from("chat-photos");
+    let path: string | null = null;
+    try {
+      if (photo) {
+        path = `${ownerId}/${crypto.randomUUID()}.${photo.ext}`;
+        const up = await storage.upload(path, photo.blob, { contentType: photo.type });
+        if (up.error) {
+          path = null;
+          setError("The photo didn’t upload. Check your connection and try again.");
+          return;
+        }
+      }
+      const r = await sendMessage(customerId, trimmed, orderId || null, path);
       if (r.ok) {
         setText("");
+        if (photo) URL.revokeObjectURL(photo.url);
+        setPhoto(null);
         router.refresh();
         area.current?.focus();
-      } else setError(r.message);
+      } else {
+        if (path) await storage.remove([path]);
+        setError(r.message);
+      }
     } catch {
+      if (path) await storage.remove([path]);
       setError("We couldn’t reach the server. Check your connection and try again.");
     } finally {
       setBusy(false);
@@ -118,6 +163,23 @@ export function Composer({
         <p id={ids.error} role="alert" className="auth-alert mb-2 rounded-xl px-3.5 py-2.5 text-[0.875rem]">
           {error}
         </p>
+      )}
+      {photo && (
+        <span className="relative mb-1.5 ml-1 mt-1 inline-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photo.url} alt="Photo to send" className="size-20 rounded-xl object-cover shadow-[inset_0_0_0_1px_var(--line)]" />
+          <button
+            type="button"
+            onClick={() => {
+              URL.revokeObjectURL(photo.url);
+              setPhoto(null);
+            }}
+            className="press absolute -right-2 -top-2 grid size-7 place-items-center rounded-full bg-ink text-ground"
+          >
+            <X aria-hidden="true" className="size-3.5" />
+            <span className="sr-only">Remove photo</span>
+          </button>
+        </span>
       )}
       <label htmlFor={ids.text} className="sr-only">
         Message to {firstName}
@@ -176,9 +238,25 @@ export function Composer({
               {text.length.toLocaleString("en-PH")}/{MESSAGE_MAX.toLocaleString("en-PH")}
             </span>
           )}
+          {photos && (
+            <label className="press grid size-10 cursor-pointer place-items-center rounded-xl text-ink-2 hover:bg-ground-2 hover:text-ink focus-within:text-ink focus-within:shadow-[0_0_0_2px_var(--amber)]">
+              {preparing ? <LoaderCircle aria-hidden="true" className="size-5 animate-spin" /> : <ImagePlus aria-hidden="true" className="size-5" />}
+              <span className="sr-only">Add a photo</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                disabled={preparing || busy}
+                onChange={(e) => {
+                  pickPhoto(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          )}
           <button
             type="submit"
-            disabled={!trimmed || over}
+            disabled={(!trimmed && !photo) || over}
             aria-disabled={busy || undefined}
             className="press inline-flex h-10 items-center gap-2 rounded-xl bg-board px-4 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-45"
           >

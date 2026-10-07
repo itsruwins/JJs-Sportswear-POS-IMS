@@ -13,12 +13,14 @@ type Props = {
   orders: CustomerOrder[];
   ownerId: string;
   preselectOrder: string | null;
+  /** False until the chat photos migration has run. */
+  photos: boolean;
   error: boolean;
   now: Date;
 };
 
 /** One customer's conversation with the shop, newest at the bottom, with the reply box under it. */
-export function ChatThread({ customer, messages, more, orders, ownerId, preselectOrder, error, now }: Props) {
+export function ChatThread({ customer, messages, more, orders, ownerId, preselectOrder, photos, error, now }: Props) {
   const name = personName(customer);
   const unread = messages.filter((m) => unreadFor(m, ownerId)).length;
   const last = messages.at(-1);
@@ -112,14 +114,23 @@ export function ChatThread({ customer, messages, more, orders, ownerId, preselec
                     About {m.order.order_number}
                   </Link>
                 )}
-                <div
-                  className={`max-w-[min(34rem,85%)] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-[0.9375rem] leading-relaxed ${
-                    mine ? "rounded-br-md bg-ink text-ground" : "rounded-bl-md bg-ground-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]"
-                  }`}
-                >
-                  <span className="sr-only">{who}: </span>
-                  {m.message}
-                </div>
+                <span className="sr-only">{who}: </span>
+                {m.photoUrl && (
+                  <a href={m.photoUrl} target="_blank" rel="noreferrer" className="chat-photo press max-w-[min(20rem,70%)]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={m.photoUrl} alt={mine ? "Photo you sent" : `Photo from ${name}`} />
+                  </a>
+                )}
+                {m.photoPath && !m.photoUrl && <p className="rounded-2xl bg-ground-2 px-4 py-2.5 text-[0.9375rem] text-ink-2">Photo unavailable</p>}
+                {m.message.trim() && (
+                  <div
+                    className={`max-w-[min(34rem,85%)] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-[0.9375rem] leading-relaxed ${
+                      mine ? "rounded-br-md bg-ink text-ground" : "rounded-bl-md bg-ground-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]"
+                    } ${m.photoUrl ? "mt-1" : ""}`}
+                  >
+                    {m.message}
+                  </div>
+                )}
                 <p className="tabular mt-1 px-1 text-[0.75rem] text-ink-2">
                   {mine && shopSenders.size > 1 && <>{who} · </>}
                   {clock(m.created_at)}
@@ -131,7 +142,7 @@ export function ChatThread({ customer, messages, more, orders, ownerId, preselec
         </ol>
       )}
       <ScrollToEnd latest={latest} mine={!!last && !last.fromCustomer && last.sender?.id === ownerId} />
-      <Composer customerId={customer.id} firstName={firstNameOf(customer)} orders={orders} preselectOrder={preselectOrder} />
+      <Composer customerId={customer.id} ownerId={ownerId} firstName={firstNameOf(customer)} orders={orders} preselectOrder={preselectOrder} photos={photos} />
     </div>
   );
 }

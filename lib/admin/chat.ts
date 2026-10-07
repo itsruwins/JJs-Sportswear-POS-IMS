@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { OrderStatus } from "./orders";
 
 export const CHAT_MIGRATION = "supabase/migrations/20261011000000_owner_chat.sql";
+export const CHAT_PHOTOS_MIGRATION = "supabase/migrations/20261015000000_chat_photos.sql";
 export const MESSAGE_MAX = 2000;
 const THREAD_LIMIT = 200;
 
@@ -27,6 +28,9 @@ export type ChatMessage = {
   receiverId: string | null;
   sender: { id: string; username: string; full_name: string | null } | null;
   order: { id: string; order_number: string } | null;
+  /** A photo in the private chat-photos bucket, with a signed link to show it. */
+  photoPath: string | null;
+  photoUrl: string | null;
 };
 
 export type ChatCustomer = {
@@ -98,61 +102,21 @@ type MessageRow = {
   is_read: boolean;
   sender: ChatMessage["sender"];
   order: ChatMessage["order"];
+  image_path?: string | null;
 };
 
-/** One customer's conversation, oldest first (the latest 200 messages), plus their orders for the composer. */
-export async function fetchThread(supabase: SupabaseClient, customerId: string) {
-  const [msgs, orders] = await Promise.all([
-    supabase
-      .from("chat_messages")
-      .select(
-        "id, sender_id, receiver_id, message, created_at, is_read, sender:profiles!chat_messages_sender_id_fkey (id, username, full_name), order:custom_orders (id, order_number)",
-      )
-      .or(`sender_id.eq.${customerId},receiver_id.eq.${customerId}`)
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: false })
-      .limit(THREAD_LIMIT + 1),
-    supabase
-      .from("custom_orders")
-      .select("id, order_number, status")
-      .eq("customer_id", customerId)
-      .order("created_at", { ascending: false })
-      .limit(50),
-  ]);
-  const rows = (msgs.data ?? []) as unknown as MessageRow[];
-  const messages: ChatMessage[] = rows
-    .slice(0, THREAD_LIMIT)
-    .reverse()
-    .map((r) => ({
-      id: r.id,
-      message: r.message,
-      created_at: r.created_at,
-      is_read: r.is_read,
-      fromCustomer: r.sender_id === customerId,
-      receiverId: r.receiver_id,
-      sender: r.sender,
-      order: r.order,
-    }));
-  return {
-    messages,
-    more: rows.length > THREAD_LIMIT,
-    orders: (orders.data ?? []) as CustomerOrder[],
-    error: !!msgs.error,
-  };
-}
+const MESSAGE_FIELDS =
+  "id, sender_id, receiver_id, message, created_at, is_read, sender:profiles!chat_messages_sender_id_fkey (id, username, full_name), order:custom_orders (id, order_number)";
+const missingColumn = (e: { code?: string } | null) => e?.code === "42703" || e?.code === "PGRST204";
+/** Photo links last a working day, so an open conversation keeps showing them. */
+const PHOTO_LINK_FOR = 6 * 60 * 60;
 
-/** The latest messages about one order, for its page. */
-export async function fetchOrderMessages(supabase: SupabaseClient, orderId: string, customerId: string, limit = 4) {
-  const { data, count, error } = await supabase
-    .from("chat_messages")
-    .select("id, sender_id, receiver_id, message, created_at, is_read, sender:profiles!chat_messages_sender_id_fkey (id, username, full_name), order:custom_orders (id, order_number)", {
-      count: "exact",
-    })
-    .eq("order_id", orderId)
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(limit);
-  const messages: ChatMessage[] = ((data ?? []) as unknown as MessageRow[]).reverse().map((r) => ({
+/** Message rows to ChatMessages, with signed links for their photos (one call for all of them). */
+async function toMessages(supabase: SupabaseClient, rows: MessageRow[], customerId: string): Promise<ChatMessage[]> {
+  const paths = rows.map((r) => r.image_path).filter((p): p is string => Boolean(p));
+  const signed = paths.length ? await supabase.storage.from("chat-photos").createSignedUrls(paths, PHOTO_LINK_FOR) : null;
+  const urlFor = new Map((signed?.data ?? []).map((x) => [x.path, x.signedUrl]));
+  return rows.map((r) => ({
     id: r.id,
     message: r.message,
     created_at: r.created_at,
@@ -161,6 +125,55 @@ export async function fetchOrderMessages(supabase: SupabaseClient, orderId: stri
     receiverId: r.receiver_id,
     sender: r.sender,
     order: r.order,
+    photoPath: r.image_path ?? null,
+    photoUrl: r.image_path ? (urlFor.get(r.image_path) ?? null) : null,
   }));
-  return { messages, total: count ?? messages.length, error: !!error };
+}
+
+/** One customer's conversation, oldest first (the latest 200 messages), plus their orders for the composer. */
+export async function fetchThread(supabase: SupabaseClient, customerId: string) {
+  const run = (withPhotos: boolean) =>
+    supabase
+      .from("chat_messages")
+      .select(`${MESSAGE_FIELDS}${withPhotos ? ", image_path" : ""}`)
+      .or(`sender_id.eq.${customerId},receiver_id.eq.${customerId}`)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(THREAD_LIMIT + 1);
+  const [first, orders] = await Promise.all([
+    run(true),
+    supabase
+      .from("custom_orders")
+      .select("id, order_number, status")
+      .eq("customer_id", customerId)
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
+  const photos = !missingColumn(first.error);
+  const msgs = photos ? first : await run(false);
+  const rows = (msgs.data ?? []) as unknown as MessageRow[];
+  return {
+    messages: await toMessages(supabase, rows.slice(0, THREAD_LIMIT).reverse(), customerId),
+    more: rows.length > THREAD_LIMIT,
+    orders: (orders.data ?? []) as CustomerOrder[],
+    /** False until the chat photos migration has run. */
+    photos,
+    error: !!msgs.error,
+  };
+}
+
+/** The latest messages about one order, for its page. */
+export async function fetchOrderMessages(supabase: SupabaseClient, orderId: string, customerId: string, limit = 4) {
+  const run = (withPhotos: boolean) =>
+    supabase
+      .from("chat_messages")
+      .select(`${MESSAGE_FIELDS}${withPhotos ? ", image_path" : ""}`, { count: "exact" })
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .limit(limit);
+  let res = await run(true);
+  if (missingColumn(res.error)) res = await run(false);
+  const messages = await toMessages(supabase, ((res.data ?? []) as unknown as MessageRow[]).reverse(), customerId);
+  return { messages, total: res.count ?? messages.length, error: !!res.error };
 }

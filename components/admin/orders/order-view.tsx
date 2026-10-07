@@ -373,7 +373,7 @@ export function OrderView({
                         }`}
                       >
                         <span className="sr-only">{m.fromCustomer ? personName(o.customer) : "Shop"}: </span>
-                        {m.message}
+                        {m.message.trim() || "Sent a photo"}
                       </p>
                       <span className="tabular mt-0.5 px-1 text-[0.75rem] text-ink-2">
                         {dayLabel(m.created_at, now)}, {clock(m.created_at)}

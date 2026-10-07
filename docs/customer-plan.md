@@ -161,6 +161,20 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
 - Live messages, unread counts on the dock, and read receipts handled by the database.
 - **Done when:** a customer message shows in the admin chat inbox and the owner's reply appears live for the customer.
 
+- **Decided 2026-10-07:**
+  - **Placement:** a chat bubble floating bottom-right on every customer page (above the dock on phones), opening a chatbot-style panel. A person always answers. The Chat tab leaves the dock and top nav, so the dock is Shop, Orders, Design, Account.
+  - **Chatbot feel:** a greeting from J&J Sportswear with the shop's hours (placeholder 8am–6pm), and quick-reply chips ("Ask about my order", "Sizes and prices", "Custom order help") that send real messages to the shop.
+  - **Orders:** one conversation. "Ask about this order" (and the product page's "Ask about this") opens the panel with a removable tag on the next message; tagged messages show the order code.
+  - **Photos:** customers can send photo messages. This needs a migration (an attachment column and a private bucket) and photo support in the owner's admin inbox.
+- **Built 2026-10-07:**
+  - Chat widget at `components/customer/chat/chat-widget.tsx`, mounted in the customer layout. `/chat` now redirects to `/shop?chat=open`, which opens the panel.
+  - Server actions `sendChatMessage` and `markChatRead` in `app/(customer)/chat/actions.ts`; data helpers in `lib/customer/chat.ts`. Live updates come from Realtime on `chat_messages`, with a check on tab focus and every minute as a fallback.
+  - "Ask about this order" on order pages and "Ask the shop about this" on product pages (`components/customer/chat/ask-shop.tsx`).
+  - The admin inbox shows and sends photos; a photo-only message reads "Sent a photo" in alerts and the inbox list.
+  - Migration `20261015000000_chat_photos.sql`: `chat_messages.image_path`, the private `chat-photos` bucket, and its policies. Not applied yet; run it in Supabase.
+  - The greeting uses `SHOP.hours` once it's filled in (`lib/admin/shop.ts`); until then it says "usually the same day".
+  - Test cleanup: `supabase/seed/remove-c6-test-messages.sql` removes the messages the C6 checks sent as c3.test.
+
 ### Phase C7: Notifications + account
 - Bell with the customer's notifications: order status, payment verified or rejected, and new messages. Each one opens what it's about.
 - Account page:

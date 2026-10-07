@@ -16,6 +16,7 @@ import {
   type Money,
   type MyPayment,
 } from "@/lib/customer/orders";
+import { AskShop } from "../chat/ask-shop";
 import { pageShell } from "../page-parts";
 import { CancelRequest } from "./cancel-request";
 import { dayDate, shortDate, StageStrip, StatusPill } from "./order-parts";
@@ -169,7 +170,14 @@ export function OrderDetailView({
               {o.team_name ? `${o.team_name} · ` : ""}Sent {shortDate(o.created_at)}
             </p>
           </div>
-          <StatusPill status={o.status} />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <AskShop
+              label="Ask about this order"
+              detail={{ order: { id: o.id, number: o.order_number } }}
+              className="h-10 rounded-full px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2"
+            />
+            <StatusPill status={o.status} />
+          </div>
         </header>
 
         <div className="mt-6">

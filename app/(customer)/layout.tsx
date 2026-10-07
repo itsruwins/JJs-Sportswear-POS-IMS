@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { ChatWidget } from "@/components/customer/chat/chat-widget";
 import { CustomerDock } from "@/components/customer/customer-dock";
 import { CustomerTopBar } from "@/components/customer/customer-top-bar";
+import { SHOP } from "@/lib/admin/shop";
+import { fetchChatUnread } from "@/lib/customer/chat";
 import { initials, requireCustomer } from "@/lib/customer/session";
 
 export const metadata: Metadata = {
@@ -9,7 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
-  const { profile } = await requireCustomer();
+  const { supabase, profile } = await requireCustomer();
+  const unread = (await fetchChatUnread(supabase, profile.id)) ?? 0;
+  const firstName = profile.full_name?.replace(/\(.*?\)/g, "").trim().split(/\s+/)[0] || profile.username;
 
   return (
     <>
@@ -25,10 +30,13 @@ export default async function CustomerLayout({ children }: { children: React.Rea
         initials={initials(profile.full_name, profile.username)}
       />
       {/* Room for the dock on phones and tablets; desktop has no dock. */}
-      <main id="main" className="flex-1 pb-36 sm:pb-40 lg:pb-20">
+      {/* Phones keep room for the chat bubble too, above the home indicator. */}
+      <main id="main" className="flex-1 pb-[calc(9.5rem+env(safe-area-inset-bottom))] sm:pb-40 lg:pb-20">
         {children}
       </main>
       <CustomerDock />
+      {/* Chat with the shop: a bubble over every page instead of a tab. */}
+      <ChatWidget uid={profile.id} firstName={firstName} initialUnread={unread} hours={SHOP.hours} />
     </>
   );
 }

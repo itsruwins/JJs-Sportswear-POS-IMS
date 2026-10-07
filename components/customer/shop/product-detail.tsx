@@ -6,6 +6,7 @@ import { Store, X } from "lucide-react";
 import { formatPeso } from "@/lib/admin/catalog";
 import { garmentColor } from "@/lib/customer/colors";
 import type { ShopProduct } from "@/lib/customer/catalog";
+import { AskShop } from "../chat/ask-shop";
 import { GarmentArt } from "./garment-art";
 
 export type ShopInfo = { name: string; address: string | null; city: string; phone: string | null; hours: string | null };
@@ -170,6 +171,11 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
             Make a custom version
           </Link>
           <p className="text-center text-[0.8125rem] text-ink-2">Your own colors, names, and numbers. The shop prices it after you send it.</p>
+          <AskShop
+            label="Ask the shop about this"
+            detail={{ draft: `About the ${p.name}${color ? ` in ${color}` : ""}: ` }}
+            className="mt-2 h-11 self-center rounded-full px-4 text-[0.9375rem] font-semibold text-ink-2 hover:bg-ground-2 hover:text-ink"
+          />
         </div>
 
         {p.description && (

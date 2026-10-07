@@ -24,7 +24,7 @@ export default async function ChatThreadPage({ params, searchParams }: PageProps
     );
   }
 
-  const { messages, more, orders, error } = await fetchThread(supabase, customerId);
+  const { messages, more, orders, photos, error } = await fetchThread(supabase, customerId);
   const order = (await searchParams).order;
   return (
     <ChatThread
@@ -34,6 +34,7 @@ export default async function ChatThreadPage({ params, searchParams }: PageProps
       orders={orders}
       ownerId={profile.id}
       preselectOrder={typeof order === "string" ? order : null}
+      photos={photos}
       error={error}
       now={new Date()}
     />

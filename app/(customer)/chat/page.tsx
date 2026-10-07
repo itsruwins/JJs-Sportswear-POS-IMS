@@ -1,10 +1,6 @@
-import type { Metadata } from "next";
-import { ChatView } from "@/components/customer/tab-views";
-import { requireCustomer } from "@/lib/customer/session";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Chat · J&J Sportswear" };
-
-export default async function ChatPage() {
-  await requireCustomer();
-  return <ChatView />;
+/** Chat lives in the bubble on every page now; old links open it over the shop. */
+export default function ChatPage() {
+  redirect("/shop?chat=open");
 }
