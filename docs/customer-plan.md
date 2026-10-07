@@ -111,6 +111,18 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
 - Live updates as the shop moves the order.
 - **Done when:** a customer follows a sample order from quote to pickup and submits a GCash down payment that the owner can verify in the admin.
 
+- **Decided 2026-10-07:**
+  - **GCash details:** marked placeholders in `lib/admin/shop.ts`: name, number, and an optional QR image.
+  - **Paying:** a modal (bottom sheet on phones) with amount chips, an amount up to what's due, a 13-digit reference, and a required screenshot.
+  - **Tracking:** production steps, status history, finished photos, and a payment summary.
+  - **Amber:** only for "action needed" (the down payment after acceptance, the balance when ready).
+  - **Reprints:** shown plainly.
+- **Built 2026-10-07:**
+  - `/orders/[id]` gets an action notice, Production (with reprint events), Finished photos, Price and payments (with pay button), Pickup, and History. It updates live from the order tables.
+  - The `/orders` list splits into "In progress" and "Past orders", with amber pay pills.
+  - Customers send GCash payments through `submitPayment` (server action, re-checks what's due), saved as "submitted" for the shop to verify.
+  - **Seed:** `supabase/seed/sample-customer-orders.sql` (username at the top), removed with `remove-sample-customer-orders.sql`. It was run for `c3.test`, and one test GCash payment was submitted on its "Mayon Blazers (sample)" order.
+
 ### Phase C5: AI design studio (simulated)
 - Write a prompt, generate, and see the result. Every attempt is saved to `ai_designs` with its attempt number for the day.
 - A gallery of past designs.

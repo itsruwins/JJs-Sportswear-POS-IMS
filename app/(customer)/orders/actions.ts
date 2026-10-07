@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { REQUESTS_MIGRATION } from "@/lib/customer/order-data";
-import { MAX_REFERENCES, type OrderLine } from "@/lib/customer/orders";
+import { formatPeso } from "@/lib/admin/catalog";
+import { MAX_REFERENCES, moneyOf, canPay, type MyPayment, type OrderLine, type OrderStatus } from "@/lib/customer/orders";
 import { requireCustomer } from "@/lib/customer/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -82,4 +83,63 @@ export async function cancelRequest(orderId: string, reason: string): Promise<Re
   revalidatePath("/orders");
   revalidatePath(`/orders/${orderId}`);
   return { ok: true, id: orderId };
+}
+
+export type PayResult = { ok: true } | { ok: false; message: string; field?: "amount" | "reference" | "proof" };
+
+/**
+ * The customer's GCash payment: amount (up to what's still owed), the 13-digit reference,
+ * and the screenshot already uploaded to payment-proofs/{customer}/{order}/. It's saved as
+ * "submitted" for the shop to verify; RLS allows only that, and only on accepted orders.
+ */
+export async function submitPayment(orderId: string, amount: number, reference: string, proofPath: string): Promise<PayResult> {
+  if (typeof orderId !== "string" || !UUID.test(orderId)) return { ok: false, message: "That order doesn’t exist anymore." };
+  const { supabase, profile } = await requireCustomer();
+
+  const ref = typeof reference === "string" ? reference.replace(/\D/g, "") : "";
+  if (ref.length !== 13) return { ok: false, field: "reference", message: "Enter the 13-digit reference number from your GCash receipt." };
+  const ownProof = new RegExp(`^${profile.id}/${orderId}/[0-9a-f-]{36}\\.(webp|jpe?g|png)$`, "i");
+  if (typeof proofPath !== "string" || !ownProof.test(proofPath)) {
+    return { ok: false, field: "proof", message: "Add a screenshot of your GCash receipt." };
+  }
+  const value = typeof amount === "number" && Number.isFinite(amount) ? Math.round(amount * 100) / 100 : 0;
+  if (value <= 0) return { ok: false, field: "amount", message: "Enter how much you sent." };
+
+  // Check against the order as it is now, not as the page last showed it.
+  const { data: order } = await supabase
+    .from("custom_orders")
+    .select("status, total_price, payments (amount, status)")
+    .eq("id", orderId)
+    .maybeSingle<{ status: OrderStatus; total_price: number | string | null; payments: { amount: number | string; status: MyPayment["status"] }[] | null }>();
+  if (!order) return { ok: false, message: "That order doesn’t exist anymore." };
+  const money = moneyOf(
+    order.total_price === null ? null : Number(order.total_price),
+    (order.payments ?? []).map((p) => ({ amount: Number(p.amount), status: p.status })),
+  );
+  if (!canPay(order.status, money) || !money) {
+    return { ok: false, message: "This order isn’t taking payments right now. Refresh the page to see where it is." };
+  }
+  if (value > money.left) {
+    return { ok: false, field: "amount", message: `That’s more than the ${formatPeso(money.left)} still to pay.` };
+  }
+
+  const { error } = await supabase.from("payments").insert({
+    order_id: orderId,
+    payment_type: money.paid + money.waiting < money.down ? "down_payment" : "balance",
+    amount: value,
+    method: "gcash",
+    status: "submitted",
+    gcash_reference: ref,
+    gcash_screenshot_url: proofPath,
+  });
+  if (error) {
+    if (error.code === "23505") {
+      return { ok: false, field: "reference", message: "That reference number is already on another payment. Check the number on your receipt." };
+    }
+    if (error.code === "42501") return { ok: false, message: "This order isn’t taking payments right now. Refresh the page to see where it is." };
+    return { ok: false, message: "We couldn’t send that just now. Check your connection and try again." };
+  }
+  revalidatePath("/orders");
+  revalidatePath(`/orders/${orderId}`);
+  return { ok: true };
 }

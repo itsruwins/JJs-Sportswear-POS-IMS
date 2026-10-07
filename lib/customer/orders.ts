@@ -18,6 +18,72 @@ export const STATUS_TEXT: Record<OrderStatus, string> = {
   cancelled: "Cancelled",
 };
 
+export type Step = "printing" | "cutting" | "sewing" | "inspection" | "packing";
+
+/** The shop's production steps, in order (as the admin ticks them off). */
+export const STEPS: { id: Step; label: string }[] = [
+  { id: "printing", label: "Printing" },
+  { id: "cutting", label: "Cutting" },
+  { id: "sewing", label: "Sewing" },
+  { id: "inspection", label: "Inspection" },
+  { id: "packing", label: "Folding and packing" },
+];
+
+export type MyPayment = {
+  id: string;
+  payment_type: "down_payment" | "balance";
+  amount: number;
+  method: "cash" | "gcash";
+  status: "pending" | "submitted" | "verified" | "rejected";
+  last4: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  verified_at: string | null;
+};
+
+/** The shop asks for at least half before production, rounded up to the peso (as the admin does). */
+export const downPaymentOf = (total: number) => Math.ceil(total / 2);
+
+export type Money = {
+  total: number;
+  down: number;
+  /** Verified by the shop. */
+  paid: number;
+  /** Sent by the customer, not checked yet. */
+  waiting: number;
+  /** Still owed once waiting payments are counted: what the customer could pay now. */
+  left: number;
+  /** What's still missing from the down payment, waiting payments counted. */
+  downLeft: number;
+};
+
+export function moneyOf(total: number | null, payments: Pick<MyPayment, "amount" | "status">[]): Money | null {
+  if (total === null) return null;
+  const paid = payments.filter((p) => p.status === "verified").reduce((sum, p) => sum + p.amount, 0);
+  const waiting = payments.filter((p) => p.status === "submitted").reduce((sum, p) => sum + p.amount, 0);
+  const down = downPaymentOf(total);
+  return {
+    total,
+    down,
+    paid,
+    waiting,
+    left: Math.max(0, total - paid - waiting),
+    downLeft: Math.max(0, down - paid - waiting),
+  };
+}
+
+/** What the customer has to do about money now, if anything (the only amber in the app). */
+export function payAction(status: OrderStatus, money: Money | null): { kind: "down" | "balance"; amount: number } | null {
+  if (!money) return null;
+  if (status === "accepted" && money.downLeft > 0) return { kind: "down", amount: money.downLeft };
+  if ((status === "ready" || status === "completed") && money.left > 0) return { kind: "balance", amount: money.left };
+  return null;
+}
+
+/** Whether the order can take a GCash payment from the customer now (the database's rule). */
+export const canPay = (status: OrderStatus, money: Money | null) =>
+  Boolean(money && money.left > 0 && ["accepted", "in_progress", "ready", "completed"].includes(status));
+
 export type Fit = "adult" | "women" | "kids" | "one";
 
 const groupSizes = (id: string) => SIZE_GROUPS.find((g) => g.id === id)?.sizes ?? [];

@@ -1253,6 +1253,15 @@ button.admin-dock-item[data-current="true"]:hover {
   color: color-mix(in oklch, var(--ink-2) 55%, transparent);
 }
 
+/* ---------- Customer: order tracking ---------- */
+
+/* What the customer has to pay now: a raised neutral panel, edged in amber, with the live
+   lamp. Amber marks it as "now" without filling it, so it reads the same in light and dark. */
+.pay-notice {
+  background: var(--ground-2);
+  box-shadow: inset 0 0 0 1.5px oklch(0.82 0.165 78 / 0.75);
+}
+
 /* ---------- Admin: popovers (More, account) ---------- */
 
 .admin-pop {

@@ -6,7 +6,7 @@ import { requireCustomer } from "@/lib/customer/session";
 
 export const metadata: Metadata = { title: "Orders · J&J Sportswear" };
 
-const LIVE_TABLES = ["custom_orders"] as const;
+const LIVE_TABLES = ["custom_orders", "payments"] as const;
 
 export default async function OrdersPage() {
   const { supabase } = await requireCustomer();
