@@ -75,7 +75,16 @@ export function OrdersList({ orders, ages, emptyNote, view }: { orders: OrderSum
                 <span className="col-start-2 row-start-1 justify-self-end lg:order-4 lg:col-start-auto lg:row-start-auto">
                   <StatusPill status={o.status} progress={o.stepsDone} />
                 </span>
-                <span className="min-w-0 truncate text-[0.9375rem] text-ink lg:order-2">{personName(o.customer)}</span>
+                <span className="min-w-0 lg:order-2">
+                  <span className="block truncate text-[0.9375rem] text-ink">{personName(o.customer)}</span>
+                  {(o.team_name || o.needed_by) && (
+                    <span className="block truncate text-[0.8125rem] text-ink-2">
+                      {[o.team_name, o.needed_by && `Needed ${new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric" }).format(new Date(`${o.needed_by}T00:00:00+08:00`))}`]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  )}
+                </span>
                 <span className="col-span-2 min-w-0 text-[0.875rem] text-ink-2 lg:order-3 lg:col-span-1">
                   <span className="block truncate">{o.garments.join(", ") || "No items listed"}</span>
                   <span className="tabular">
