@@ -60,11 +60,14 @@ export function ProductsBrowser({
   initialQuery,
   initialFilter,
   initialSort,
+  canEdit = true,
 }: {
   products: CatalogProduct[];
   initialQuery: string;
   initialFilter: Filter;
   initialSort: Sort;
+  /** Staff look up stock; only the owner adds products. */
+  canEdit?: boolean;
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [filter, setFilter] = useState<Filter>(initialFilter);
@@ -120,7 +123,11 @@ export function ProductsBrowser({
     return (
       <EmptyState
         title="No products yet"
-        body="Add your first product with the button above. It shows up here with its sizes, colors, and stock."
+        body={
+          canEdit
+            ? "Add your first product with the button above. It shows up here with its sizes, colors, and stock."
+            : "Products show up here with their sizes, colors, and stock once the owner adds them."
+        }
       />
     );
   }

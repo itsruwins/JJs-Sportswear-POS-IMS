@@ -37,7 +37,8 @@ export const VIEWS: { id: OrderView; label: string; statuses: OrderStatus[] }[] 
 /** The shop asks for at least half before production; rounded up to the peso. */
 export const downPayment = (total: number) => Math.ceil(total / 2);
 
-const MIGRATION = "supabase/migrations/20261009000000_custom_order_production.sql";
+// The reviewed version arrived as a follow-up (the first file was applied before its fixes).
+const MIGRATION = "supabase/migrations/20261009120000_custom_order_production_fixes.sql";
 /** The list shows the newest 300 orders in a tab; the page says so when there are more. */
 const LIST_LIMIT = 300;
 /** Photo links last a working day, so a page left open (and refreshed live) keeps showing the same images. */
@@ -58,6 +59,9 @@ export type OrderSummary = {
   pieces: number;
   garments: string[];
   stepsDone: number;
+  /** From the customer request form (customer_order_requests migration); null before it runs. */
+  team_name: string | null;
+  needed_by: string | null;
 };
 
 /** Orders for a view, newest first (new orders first in Open), with a text search over number, customer, and request. */
@@ -104,10 +108,19 @@ export async function fetchOrders(supabase: SupabaseClient, view: OrderView, q: 
     pieces: (r.custom_order_items ?? []).reduce((s, i) => s + i.quantity, 0),
     garments: [...new Set((r.custom_order_items ?? []).map((i) => i.garment))],
     stepsDone: (r.custom_order_steps ?? []).length,
+    team_name: null,
+    needed_by: null,
   }));
+  // Team and needed-by come with the customer request migration; read them on their own,
+  // so the list still loads before it runs.
+  if (orders.length) {
+    const extra = await supabase.from("custom_orders").select("id, team_name, needed_by").in("id", orders.map((o) => o.id));
+    const byId = new Map(((extra.data ?? []) as { id: string; team_name: string | null; needed_by: string | null }[]).map((e) => [e.id, e]));
+    orders = orders.map((o) => ({ ...o, team_name: byId.get(o.id)?.team_name ?? null, needed_by: byId.get(o.id)?.needed_by ?? null }));
+  }
   if (needle) {
     orders = orders.filter((o) =>
-      [o.order_number, o.customer?.username, o.customer?.full_name, o.description, ...o.garments]
+      [o.order_number, o.customer?.username, o.customer?.full_name, o.description, o.team_name, ...o.garments]
         .filter(Boolean)
         .some((t) => t!.toLowerCase().includes(needle)),
     );
@@ -144,6 +157,10 @@ export type OrderDetail = {
   history: { id: string; status: OrderStatus; note: string | null; created_at: string; by: string }[];
   /** False until the production migration has run: steps and photos aren't available yet. */
   migrated: boolean;
+  /** From the customer request form; empty before the customer_order_requests migration runs. */
+  team_name: string | null;
+  needed_by: string | null;
+  references: { path: string; url: string | null }[];
 };
 
 const nameOf = (p: { username: string; full_name: string | null } | null) => p?.full_name?.trim() || (p ? `@${p.username}` : "Someone");
@@ -164,10 +181,16 @@ export async function fetchOrder(supabase: SupabaseClient, id: string): Promise<
   if (error) return { order: null, error: "We couldn’t load this order just now. Refresh the page to try again." };
   if (!data) return { order: null, error: null };
 
-  const [stepsRes, photosRes] = await Promise.all([
+  const [stepsRes, photosRes, requestRes] = await Promise.all([
     supabase.from("custom_order_steps").select("step, done_at, actor:profiles (username, full_name)").eq("order_id", id),
     supabase.from("custom_order_photos").select("id, path, created_at").eq("order_id", id).order("created_at"),
+    // Read on its own: these columns only exist once the customer request migration has run.
+    supabase.from("custom_orders").select("team_name, needed_by, reference_images").eq("id", id).maybeSingle(),
   ]);
+  const request = (requestRes.data ?? null) as { team_name: string | null; needed_by: string | null; reference_images: string[] | null } | null;
+  const refPaths = request?.reference_images ?? [];
+  const refSigned = refPaths.length ? await supabase.storage.from("order-references").createSignedUrls(refPaths, SIGNED_FOR) : null;
+  const refUrl = new Map((refSigned?.data ?? []).map((s) => [s.path, s.signedUrl]));
   const migrated = !notMigrated(stepsRes.error) && !notMigrated(photosRes.error);
 
   type Row = {
@@ -227,6 +250,9 @@ export async function fetchOrder(supabase: SupabaseClient, id: string): Promise<
         .map((h) => ({ id: h.id, status: h.status, note: h.note, created_at: h.created_at, by: nameOf(h.actor) }))
         .sort((a, b) => b.created_at.localeCompare(a.created_at)),
       migrated,
+      team_name: request?.team_name ?? null,
+      needed_by: request?.needed_by ?? null,
+      references: refPaths.map((path) => ({ path, url: refUrl.get(path) ?? null })),
     },
     error: null,
   };
@@ -235,4 +261,12 @@ export async function fetchOrder(supabase: SupabaseClient, id: string): Promise<
 export { MIGRATION as PRODUCTION_MIGRATION };
 
 /** What the order screens watch for live updates (added to the realtime publication by the production migration). */
-export const ORDER_TABLES = ["custom_orders", "custom_order_steps", "custom_order_photos", "order_status_history"] as const;
+export const ORDER_TABLES = [
+  "custom_orders",
+  "custom_order_steps",
+  "custom_order_photos",
+  "order_status_history",
+  "payments",
+  "custom_order_refunds",
+  "custom_order_overrides",
+] as const;

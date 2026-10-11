@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
+import { CUSTOMER_HOME } from "@/lib/customer/paths";
 import { ThemeButton } from "@/components/theme-button";
 import { Wordmark } from "./wordmark";
 
@@ -15,7 +16,7 @@ const LINKS = [
 
 export function SiteNav() {
   const [scrolled, setScrolled] = useState(false);
-  const { openAuth, username, isStaff, signOut } = useAuth();
+  const { openAuth, username, isStaff } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -56,22 +57,13 @@ export function SiteNav() {
               >
                 @{username}
               </button>
-              {isStaff ? (
-                <a
-                  href="/admin"
-                  className="press whitespace-nowrap rounded-full bg-board px-4 py-2 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
-                >
-                  Open admin
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  onClick={signOut}
-                  className="press whitespace-nowrap rounded-full px-3 py-2 text-[0.9375rem] font-medium text-ink-2 shadow-[inset_0_0_0_1px_var(--line)] hover:text-ink"
-                >
-                  Log out
-                </button>
-              )}
+              {/* Log out lives in the account sheet behind the username. */}
+              <a
+                href={isStaff ? "/admin" : CUSTOMER_HOME}
+                className="press whitespace-nowrap rounded-full bg-board px-4 py-2 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+              >
+                {isStaff ? "Open admin" : "Open shop"}
+              </a>
             </>
           ) : (
             <>

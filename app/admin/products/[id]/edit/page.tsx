@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductForm } from "@/components/admin/products/product-form";
 import { fetchCatalog, fetchProductImages, formContext } from "@/lib/admin/catalog";
-import { requireStaff } from "@/lib/admin/session";
+import { requireOwner } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "Edit product · J&J Sportswear Admin" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function EditProductPage({ params }: PageProps<"/admin/products/[id]/edit">) {
-  const { supabase } = await requireStaff();
+  const { supabase } = await requireOwner();
   const { id } = await params;
   if (!UUID.test(id)) notFound();
 

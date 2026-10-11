@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { ChevronDown, Eye, EyeOff, LoaderCircle, X } from "lucide-react";
+import { CUSTOMER_HOME } from "@/lib/customer/paths";
 import { createClient } from "@/lib/supabase/client";
 import {
   PASSWORD_MIN,
@@ -274,24 +275,13 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, isStaff, onSigne
               : "Your custom orders, payments, and messages with the shop will all be under this account."}
           </p>
           <div className="mt-6 flex flex-col gap-2.5 sm:flex-row-reverse">
-            {isStaff ? (
-              <a
-                href="/admin"
-                data-autofocus
-                className="press inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-board px-5 text-[1rem] font-semibold text-board-ink hover:bg-board-deep"
-              >
-                Open admin
-              </a>
-            ) : (
-              <button
-                type="button"
-                data-autofocus
-                onClick={onDone}
-                className="press inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-board px-5 text-[1rem] font-semibold text-board-ink hover:bg-board-deep"
-              >
-                Done
-              </button>
-            )}
+            <a
+              href={isStaff ? "/admin" : CUSTOMER_HOME}
+              data-autofocus
+              className="press inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-board px-5 text-[1rem] font-semibold text-board-ink hover:bg-board-deep"
+            >
+              {isStaff ? "Open admin" : "Open the shop"}
+            </a>
             <button
               type="button"
               onClick={async () => {

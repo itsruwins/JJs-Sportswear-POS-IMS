@@ -1,6 +1,6 @@
 "use server";
 
-import { requireStaff } from "@/lib/admin/session";
+import { ownerSession, requireStaff } from "@/lib/admin/session";
 import { hasStockHistory } from "@/lib/admin/stock";
 import {
   normalizeTags,
@@ -87,7 +87,9 @@ type SavedImage = { id: string; image_url: string; is_primary: boolean };
  * from the shop until every step has succeeded.
  */
 export async function saveProduct(raw: ProductInput, mode: "create" | "update"): Promise<ActionResult> {
-  const { supabase } = await requireStaff();
+  const session = await ownerSession();
+  if (!session) return fail("Only the owner can add or change products.");
+  const { supabase } = session;
   const input = clean(raw);
   if (!UUID.test(input.id)) return fail("This form is out of date. Reload the page and try again.");
 
@@ -263,7 +265,9 @@ export async function saveProduct(raw: ProductInput, mode: "create" | "update"):
 }
 
 export async function setProductArchived(id: string, archived: boolean): Promise<ActionResult> {
-  const { supabase } = await requireStaff();
+  const session = await ownerSession();
+  if (!session) return fail("Only the owner can archive or restore products.");
+  const { supabase } = session;
   if (!UUID.test(id)) return fail("That product doesn’t exist.");
   const { data, error } = await supabase.from("products").update({ is_active: !archived }).eq("id", id).select("id");
   if (error) return fail(dbMessage(error, archived ? "We couldn’t archive it. Try again." : "We couldn’t restore it. Try again."));

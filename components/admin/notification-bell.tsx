@@ -24,6 +24,22 @@ const ICONS: Record<string, LucideIcon> = {
   chat: MessageCircle,
 };
 
+/** Where each kind of notification opens. Low stock goes through its product (looked up on tap). */
+const DIRECT: Record<string, (ref: string) => string> = {
+  custom_order: (ref) => `/admin/orders/${ref}`,
+  order_status: (ref) => `/admin/orders/${ref}`,
+  payment: (ref) => `/admin/payments/${ref}`,
+  chat: (ref) => `/admin/chat/${ref}`,
+};
+const ACTION: Record<string, string> = {
+  low_stock: "View product",
+  custom_order: "Open order",
+  order_status: "Open order",
+  payment: "Check payment",
+  chat: "Reply",
+};
+const opens = (n: Notification) => !!n.reference_id && (n.type === "low_stock" || Object.hasOwn(DIRECT, n.type));
+
 const PAGE = 20;
 const TOAST_MS = 6000;
 
@@ -74,6 +90,12 @@ export function NotificationBell({ userId }: { userId: string }) {
   useEffect(() => {
     const supabase = createClient();
     const first = window.setTimeout(load, 0);
+    let reload: number | undefined;
+    // "Mark all as read" updates many rows at once; reload once for the burst.
+    const reloadSoon = () => {
+      window.clearTimeout(reload);
+      reload = window.setTimeout(load, 400);
+    };
     const channel = supabase
       .channel(`notifications-${userId}-${Math.random().toString(36).slice(2)}`)
       .on(
@@ -86,9 +108,12 @@ export function NotificationBell({ userId }: { userId: string }) {
           setToasts((t) => [n, ...t].slice(0, 3));
         },
       )
+      // Read somewhere else (opening a conversation clears its alert): catch the list and count up.
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, reloadSoon)
       .subscribe();
     return () => {
       window.clearTimeout(first);
+      window.clearTimeout(reload);
       supabase.removeChannel(channel);
     };
   }, [userId, load]);
@@ -116,14 +141,19 @@ export function NotificationBell({ userId }: { userId: string }) {
     if (error) load();
   };
 
-  /** Where a notification leads. Low stock opens the product; other kinds get destinations as their sections arrive. */
+  /** Where a notification leads: the product, order, payment, or conversation it's about. */
   const openTarget = async (n: Notification) => {
-    if (n.type === "low_stock" && n.reference_id) {
+    if (!n.reference_id) return;
+    let href: string | null = null;
+    if (n.type === "low_stock") {
       const { data } = await createClient().from("product_variants").select("product_id").eq("id", n.reference_id).maybeSingle();
-      if (data?.product_id) {
-        panelRef.current?.hidePopover();
-        router.push(`/admin/products/${data.product_id}`);
-      }
+      if (data?.product_id) href = `/admin/products/${data.product_id}`;
+    } else if (Object.hasOwn(DIRECT, n.type)) {
+      href = DIRECT[n.type](n.reference_id);
+    }
+    if (href) {
+      panelRef.current?.hidePopover();
+      router.push(href);
     }
   };
 
@@ -183,7 +213,7 @@ export function NotificationBell({ userId }: { userId: string }) {
             </p>
           ) : items.length === 0 ? (
             <p className="px-3 py-6 text-[0.875rem] leading-relaxed text-ink-2">
-              No notifications yet. Low-stock alerts show up here, and orders and payments will too as those sections open.
+              No notifications yet. Low stock, new orders, payments to check, and customer messages show up here.
             </p>
           ) : (
             <ul>
@@ -269,9 +299,9 @@ function Toast({ n, onDismiss, onOpen }: { n: Notification; onDismiss: (id: stri
       <div className="min-w-0 flex-1">
         <p className="text-[0.9375rem] font-semibold leading-snug text-ink">{n.title}</p>
         {n.message && <p className="mt-0.5 text-[0.875rem] leading-snug text-ink-2">{n.message}</p>}
-        {n.type === "low_stock" && n.reference_id && (
+        {opens(n) && (
           <button type="button" onClick={onOpen} className="mt-1.5 text-[0.875rem] font-semibold text-ink underline">
-            View product
+            {ACTION[n.type] ?? "Open"}
           </button>
         )}
       </div>

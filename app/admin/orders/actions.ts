@@ -1,7 +1,7 @@
 "use server";
 
 import { PRODUCTION_MIGRATION, STEPS, type OrderStatus, type Step } from "@/lib/admin/orders";
-import { requireStaff } from "@/lib/admin/session";
+import { ownerSession } from "@/lib/admin/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const STEP_IDS = STEPS.map((s) => s.id);
@@ -17,6 +17,15 @@ function explain(error: DbError, fallback: string): OrderResult {
     return { ok: false, message: `This needs the latest database update (${PRODUCTION_MIGRATION}).` };
   }
   if (/Finish every production step/i.test(text)) return { ok: false, message: "Tick off every production step before marking it ready." };
+  const down = text.match(/Record the down payment \(₱([\d.]+)\)/);
+  if (down) return { ok: false, message: `Production starts once the down payment (₱${Number(down[1]).toLocaleString("en-PH")}) is paid. Record it under Price and payments.`, stale: true };
+  const balance = text.match(/Collect the balance \(₱([\d.]+)\)/);
+  if (balance) return { ok: false, message: `Collect the balance (₱${Number(balance[1]).toLocaleString("en-PH")}) before pickup. Record it under Price and payments.`, stale: true };
+  const floor = text.match(/less than the ₱([\d.]+) already paid/);
+  if (floor) return { ok: false, message: `The price can’t be less than the ₱${Number(floor[1]).toLocaleString("en-PH")} already paid.` };
+  if (/can't change once production has started/i.test(text)) {
+    return { ok: false, message: "The price is fixed once production starts. The page now shows the latest.", stale: true };
+  }
   if (/Set the total price/i.test(text)) return { ok: false, message: "Set the total price before accepting the order." };
   if (/can't go from|can no longer change/i.test(text)) return { ok: false, message: "The order moved on since this page loaded. The page now shows the latest.", stale: true };
   if (/up to 4 finished photos/i.test(text)) return { ok: false, message: "An order can have up to 4 photos. Remove one first." };
@@ -32,6 +41,9 @@ function explain(error: DbError, fallback: string): OrderResult {
 }
 
 const validId = (id: unknown): id is string => typeof id === "string" && UUID.test(id);
+
+/** Staff see custom orders but don't change them; the owner runs every order. */
+const OWNER_ONLY: OrderResult = { ok: false, message: "Only the owner can update custom orders." };
 const price = (n: unknown) => (typeof n === "number" && Number.isFinite(n) && n >= 0 && n < 10_000_000 ? Math.round(n * 100) / 100 : null);
 
 /**
@@ -39,7 +51,9 @@ const price = (n: unknown) => (typeof n === "number" && Number.isFinite(n) && n 
  * means a change made elsewhere in the meantime is caught rather than overwritten.
  */
 async function move(id: string, from: OrderStatus, patch: Record<string, unknown>, fallback: string): Promise<OrderResult> {
-  const { supabase } = await requireStaff();
+  const session = await ownerSession();
+  if (!session) return OWNER_ONLY;
+  const { supabase } = session;
   if (!validId(id)) return { ok: false, message: "That order doesn’t exist." };
   const { data, error } = await supabase.from("custom_orders").update(patch).eq("id", id).eq("status", from).select("id");
   if (error) return explain(error, fallback);
@@ -77,7 +91,9 @@ export async function markReady(id: string): Promise<OrderResult> {
 
 /** A ready order goes back to production, with what needs fixing written into its history. */
 export async function backToProduction(id: string, reason: string): Promise<OrderResult> {
-  const { supabase } = await requireStaff();
+  const session = await ownerSession();
+  if (!session) return OWNER_ONLY;
+  const { supabase } = session;
   if (!validId(id)) return { ok: false, message: "That order doesn’t exist." };
   const why = typeof reason === "string" ? reason.trim().slice(0, 300) : "";
   if (why.length < 3) return { ok: false, message: "Say what needs fixing." };
@@ -92,7 +108,9 @@ export async function completeOrder(id: string): Promise<OrderResult> {
 }
 
 export async function cancelOrder(id: string, reason: string): Promise<OrderResult> {
-  const { supabase } = await requireStaff();
+  const session = await ownerSession();
+  if (!session) return OWNER_ONLY;
+  const { supabase } = session;
   if (!validId(id)) return { ok: false, message: "That order doesn’t exist." };
   const why = typeof reason === "string" ? reason.trim().slice(0, 500) : "";
   if (why.length < 3) return { ok: false, message: "Say why the order is cancelled." };
@@ -102,7 +120,9 @@ export async function cancelOrder(id: string, reason: string): Promise<OrderResu
 }
 
 export async function setStep(id: string, step: Step, done: boolean): Promise<OrderResult> {
-  const { supabase } = await requireStaff();
+  const session = await ownerSession();
+  if (!session) return OWNER_ONLY;
+  const { supabase } = session;
   if (!validId(id) || !STEP_IDS.includes(step) || typeof done !== "boolean") return { ok: false, message: "That step doesn’t exist." };
   const { error } = await supabase.rpc("set_production_step", { p_order_id: id, p_step: step, p_done: done });
   if (error) return explain(error, "We couldn’t update the step. Try again.");
@@ -110,7 +130,9 @@ export async function setStep(id: string, step: Step, done: boolean): Promise<Or
 }
 
 export async function reprintOrder(id: string, reason: string): Promise<OrderResult> {
-  const { supabase } = await requireStaff();
+  const session = await ownerSession();
+  if (!session) return OWNER_ONLY;
+  const { supabase } = session;
   if (!validId(id)) return { ok: false, message: "That order doesn’t exist." };
   const why = typeof reason === "string" ? reason.trim().slice(0, 300) : "";
   if (why.length < 3) return { ok: false, message: "Say what failed inspection." };
@@ -123,7 +145,9 @@ const PHOTO_FILE = /^[0-9a-f-]{36}\/[A-Za-z0-9-]+\.(webp|jpe?g|png)$/;
 
 /** Records a photo already uploaded to order-photos/{order id}/… by the browser. */
 export async function addPhoto(id: string, path: string): Promise<OrderResult> {
-  const { supabase, profile } = await requireStaff();
+  const session = await ownerSession();
+  if (!session) return OWNER_ONLY;
+  const { supabase, profile } = session;
   if (!validId(id) || typeof path !== "string" || !PHOTO_FILE.test(path) || !path.startsWith(`${id}/`)) {
     return { ok: false, message: "That photo didn’t upload properly. Try again." };
   }
@@ -139,7 +163,9 @@ export async function addPhoto(id: string, path: string): Promise<OrderResult> {
 }
 
 export async function removePhoto(id: string, photoId: string): Promise<OrderResult> {
-  const { supabase } = await requireStaff();
+  const session = await ownerSession();
+  if (!session) return OWNER_ONLY;
+  const { supabase } = session;
   if (!validId(id) || !validId(photoId)) return { ok: false, message: "That photo doesn’t exist." };
   const { data, error } = await supabase.from("custom_order_photos").delete().eq("id", photoId).eq("order_id", id).select("path");
   if (error) return explain(error, "We couldn’t remove the photo. Try again.");
