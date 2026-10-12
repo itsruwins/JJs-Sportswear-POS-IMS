@@ -5,6 +5,7 @@ import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { PosScreen, type PosProduct } from "@/features/admin/pos/components/pos-screen";
 import { fetchCatalog, sortColors, sortSizes } from "@/features/shared/catalog/catalog";
 import { fetchProviders } from "@/features/shared/payments/data";
+import { geminiConfigured } from "@/features/admin/pos/gemini";
 import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Point of sale · J&J Sportswear Admin" };
@@ -71,7 +72,7 @@ export default async function PosPage() {
           </p>
         </>
       ) : (
-        <PosScreen products={forSale} providers={providers.filter((p) => p.isActive)} header={header} />
+        <PosScreen products={forSale} providers={providers.filter((p) => p.isActive)} reader={geminiConfigured()} header={header} />
       )}
     </div>
   );

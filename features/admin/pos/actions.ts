@@ -1,7 +1,10 @@
 "use server";
 
 import { requireStaff } from "@/features/admin/shell/session";
+import { fetchProviders } from "@/features/shared/payments/data";
 import { cleanReference, GCASH } from "@/features/shared/payments/model";
+import { geminiConfigured, GeminiError, readReceiptImage } from "@/features/admin/pos/gemini";
+import { checkReading, type ScanFailure, type ScanResult } from "@/features/admin/pos/scan";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // The sale function with payment parts arrives with this update (after 20261016000000_e_payment_methods.sql).
@@ -154,4 +157,103 @@ export async function voidSale(saleId: string, reason: string): Promise<VoidResu
     return { ok: false, message: "We couldn’t void the sale. Nothing changed; try again." };
   }
   return { ok: true };
+}
+
+const SCAN_TYPES: Record<string, (b: Uint8Array) => boolean> = {
+  "image/jpeg": (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
+  "image/png": (b) => b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47,
+  "image/webp": (b) => String.fromCharCode(...b.slice(0, 4)) === "RIFF" && String.fromCharCode(...b.slice(8, 12)) === "WEBP",
+};
+const SCAN_MAX_BYTES = 4 * 1024 * 1024;
+const PHOTO_DAYS = 90;
+
+/**
+ * Reads a payment receipt photo for the counter: keeps the photo (private, 90 days), asks the
+ * reader, checks every field it returns, and logs the scan. Nothing is charged here.
+ */
+export async function scanReceipt(form: FormData): Promise<ScanResult> {
+  const { supabase, profile } = await requireStaff();
+  const fail = (kind: ScanFailure, message: string): ScanResult => ({ ok: false, kind, message, demo: false });
+
+  const photo = form.get("photo");
+  const picked = form.get("provider");
+  if (!(photo instanceof File) || typeof picked !== "string") return fail("file", "That photo didn’t come through. Try again.");
+  if (photo.size === 0 || photo.size > SCAN_MAX_BYTES) return fail("file", "That photo is too large. Take it again.");
+  // The file's own first bytes decide its type, not the name or the label the browser gave it.
+  const bytes = Buffer.from(await photo.arrayBuffer());
+  const type = Object.keys(SCAN_TYPES).find((t) => SCAN_TYPES[t](bytes));
+  if (!type) return fail("file", "That file isn’t a JPG, PNG, or WebP photo.");
+
+  const { providers } = await fetchProviders(supabase);
+  const active = providers.filter((p) => p.isActive);
+  const chosen = active.find((p) => p.code === picked);
+  if (!chosen) return fail("file", "That bank or e-wallet isn’t accepted anymore.");
+  if (!geminiConfigured()) return fail("unavailable", "Receipt reading isn’t connected yet.");
+
+  // Keep the photo first, so even a scan that fails to read leaves a record of what was shown.
+  const ext = type === "image/jpeg" ? "jpg" : type.split("/")[1];
+  const path = `${profile.id}/${crypto.randomUUID()}.${ext}`;
+  const stored = await supabase.storage.from("pos-receipts").upload(path, bytes, { contentType: type });
+  const photoPath = stored.error ? null : path;
+
+  const started = Date.now();
+  let model: string | null = null;
+  let result: ScanResult;
+  let outcome: "read" | "not_receipt" | "unreadable" | "quota" | "failed";
+  let reading: Record<string, unknown> | null = null;
+  try {
+    const answer = await readReceiptImage({ bytes, type }, { picked: chosen.name, providers: active });
+    model = answer.model;
+    const checked = checkReading(answer.raw, active);
+    if (checked.ok) {
+      outcome = "read";
+      reading = { fields: checked.fields, unsure: checked.unsure, problems: checked.problems, confidence: checked.confidence };
+      result = { ok: true, fields: checked.fields, unsure: checked.unsure, duplicateOf: null, concerns: checked.concerns, scanId: null, demo: false };
+    } else {
+      outcome = checked.kind;
+      reading = { problems: checked.problems };
+      result = fail(checked.kind, checked.kind === "not_receipt" ? "This doesn’t look like a payment receipt." : "We couldn’t read this receipt.");
+    }
+  } catch (e) {
+    const kind = e instanceof GeminiError ? e.kind : "failed";
+    outcome = kind === "quota" ? "quota" : "failed";
+    // The kind only: never the photo, the reply, or the key.
+    console.error(`scanReceipt: reader ${kind}`);
+    result = kind === "quota" ? fail("quota", "Receipt reading has reached its limit for now.") : fail("unavailable", "Receipt reading isn’t available right now.");
+  }
+
+  const { data: logged, error: logError } = await supabase
+    .from("receipt_scans")
+    .insert({ provider: chosen.code, photo_path: photoPath, outcome, model, reading, duration_ms: Date.now() - started })
+    .select("id")
+    .single();
+  if (logError) console.error(`scanReceipt: log failed (${logError.code})`);
+  if (result.ok) result.scanId = logged?.id ?? null;
+
+  await deleteExpiredPhotos(supabase);
+  return result;
+}
+
+/** Each scan clears a few photos past their 90 days; the scan rows themselves stay. */
+async function deleteExpiredPhotos(supabase: Awaited<ReturnType<typeof requireStaff>>["supabase"]) {
+  const cutoff = new Date(Date.now() - PHOTO_DAYS * 86_400_000).toISOString();
+  const { data } = await supabase
+    .from("receipt_scans")
+    .select("id, photo_path")
+    .not("photo_path", "is", null)
+    .is("photo_deleted_at", null)
+    .lt("created_at", cutoff)
+    .order("created_at")
+    .limit(5);
+  const old = (data ?? []) as { id: string; photo_path: string }[];
+  if (!old.length) return;
+  const { error } = await supabase.storage.from("pos-receipts").remove(old.map((s) => s.photo_path));
+  if (error) return;
+  await supabase
+    .from("receipt_scans")
+    .update({ photo_deleted_at: new Date().toISOString() })
+    .in(
+      "id",
+      old.map((s) => s.id),
+    );
 }

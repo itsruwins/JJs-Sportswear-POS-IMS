@@ -69,6 +69,33 @@ Goal: the counter takes cash and e-payments from GCash, Maya, MariBank, UnionBan
 - A timeout, at most one retry, and clear quota and outage messages. A failed scan keeps the cart and payment.
 - Receipt photos go to a private bucket with a 90-day cleanup.
 - A scan log: who, when, outcome, the fields read, and the model.
+- **Decisions (2026-10-12):** `gemini-3.8-flash` first, then `gemini-3.5-flash-lite` when it's busy, slow, or over its limit. Every scanned photo is kept 90 days, and expired photos are cleared during scans.
+- **Built 2026-10-12:**
+  - **Migration** `20261017000000_receipt_scans.sql`:
+    - `receipt_scans` logs every scan: who, the provider picked, the photo path, the outcome (read, not_receipt, unreadable, quota, failed), the model, the checked reading, and how long it took. Retakes and abandoned scans are logged too. `sale_id` waits for E4.
+    - The private `pos-receipts` bucket holds the photos at `{scanned_by}/{random}.{ext}`. Staff and the owner read them, staff upload only into their own folder, and anyone on staff may delete a photo once it's 90 days old.
+  - **`gemini.ts`:**
+    - A plain `fetch` to `generateContent` (v1beta), with `responseMimeType` and `responseJsonSchema`. The newer `responseFormat.text` shape was refused for `application/json`.
+    - Short instructions that treat text in the image as data.
+    - The first model gets 12 s. Any failure hands over to the fallback (20 s) once, and nothing is retried beyond that.
+    - Settings: `GEMINI_API_KEY`, `GEMINI_MODEL`, and `GEMINI_FALLBACK_MODEL` (set to `none` to turn the fallback off).
+  - **`scanReceipt` action (`actions.ts`):**
+    - Behind `requireStaff`.
+    - The file's own first bytes must say JPG, PNG, or WebP, and it must be 4 MB or less (the action body limit is 5 MB in `next.config.ts`).
+    - The provider must be on the active list.
+    - The photo is stored before reading, so a failed read still leaves a record.
+    - Every field is checked again in `checkReading` (`scan.ts`). Logs record only the kind of failure, never the photo, the reply, or the key.
+    - Each scan clears up to 5 expired photos.
+  - **Review:**
+    - A "Sent to" row.
+    - New notes: a photo that may be edited, or text in it giving instructions (needs a tick: "It matches the payment in the customer's app"); a blurry, glared, or cropped photo; more than one receipt in the photo.
+    - "Not a receipt" is its own failure.
+    - In development the result picker defaults to reading the photo with Gemini, and samples are still a pick away.
+  - **Check this rule:** a field is marked "Check this" when the model's confidence is below 0.8, when the photo is blurry, glared, or cropped or has competing numbers (reference and amount), when the reference breaks its provider's rule, or when the status is unknown. The 0.8 is provisional until E6.
+  - **Tested:**
+    - 18 PGlite checks of the scan log and photo policies.
+    - 27 unit checks of `checkReading` and the review rules.
+    - Live reads of 8 synthetic receipts: clear GCash with leading zeros; BPI with a larger balance; Maya pending; UnionBank failed; injected instructions; a non-receipt; blur and glare; BDO amount with a fee. All 8 came back right, with the injection flagged suspicious and the blurry photo's fields marked "Check this". These are synthetic receipts, not real ones, and every read came from `gemini-3.5-flash-lite`: on 2026-10-12, `gemini-3.8-flash` either returned 503 (high demand) or ran past the wait. Reads took 5–15 s, mostly time spent waiting on 3.8 Flash before the fallback.
 
 ### Phase E4: Review rules and owner checks
 - Extracted amount vs. the part's amount, with the owner override and its reason.

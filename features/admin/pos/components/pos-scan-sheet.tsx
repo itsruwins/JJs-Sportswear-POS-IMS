@@ -6,6 +6,7 @@ import { formatPeso } from "@/features/shared/catalog/catalog";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { cleanReference, digitsOnly, formatReference, referenceFits, referenceLength, type PaymentProvider } from "@/features/shared/payments/model";
 import { parseAmount, roundPeso } from "@/features/admin/pos/amounts";
+import { scanReceipt } from "@/features/admin/pos/actions";
 import {
   blocks,
   formatReceiptDate,
@@ -16,6 +17,7 @@ import {
   type ReceiptField,
   type ReceiptFields,
   type ReviewNotice,
+  type ScanConcern,
   type ScanFailure,
   type ScanResult,
 } from "@/features/admin/pos/scan";
@@ -38,8 +40,9 @@ const quiet = "press inline-flex h-11 items-center justify-center gap-1.5 rounde
 
 const FAILURE: Record<ScanFailure, { title: string; next: string; retake: boolean }> = {
   unreadable: { title: "We couldn’t read this receipt.", next: "Retake it closer and straight on, with less glare, or type the details.", retake: true },
+  not_receipt: { title: "This doesn’t look like a payment receipt.", next: "Photograph the confirmation screen the customer’s app shows after paying.", retake: true },
   file: { title: "That file isn’t a photo we can use.", next: "Take a photo, or upload a JPG, PNG, or WebP screenshot.", retake: true },
-  quota: { title: "Receipt reading has reached today’s limit.", next: "Type the details from the receipt instead. Nothing in the sale has changed.", retake: false },
+  quota: { title: "Receipt reading has reached its limit for now.", next: "Type the details from the receipt instead. Nothing in the sale has changed.", retake: false },
   unavailable: { title: "Receipt reading isn’t available right now.", next: "Type the details from the receipt instead. Nothing in the sale has changed.", retake: false },
 };
 
@@ -50,6 +53,7 @@ const FAILURE: Record<ScanFailure, { title: string; next: string; retake: boolea
  */
 export function PosScanSheet({
   session,
+  reader,
   providers,
   due,
   others,
@@ -60,6 +64,8 @@ export function PosScanSheet({
   onClose,
 }: {
   session: ScanSession | null;
+  /** Whether the receipt reader (Gemini) is connected on the server. */
+  reader: boolean;
   providers: PaymentProvider[];
   /** Still owed without this payment. */
   due: number;
@@ -88,12 +94,15 @@ export function PosScanSheet({
   const [read, setRead] = useState<ReceiptFields | null>(null);
   const [unsure, setUnsure] = useState<ReceiptField[]>([]);
   const [duplicateOf, setDuplicateOf] = useState<string | null>(null);
+  const [concerns, setConcerns] = useState<ScanConcern[]>([]);
+  const [scanId, setScanId] = useState<string | null>(null);
   const [demo, setDemo] = useState(false);
   const [failure, setFailure] = useState<{ kind: ScanFailure; detail?: string } | null>(null);
   const [reference, setReference] = useState("");
   const [amount, setAmount] = useState("");
   const [confirmed, setConfirmed] = useState<ReviewNotice["kind"][]>([]);
-  const [demoKind, setDemoKind] = useState<DemoKind>("good");
+  // In development the photo is read for real when the reader is connected; samples stay a pick away.
+  const [demoKind, setDemoKind] = useState<DemoKind>(reader ? "real" : "good");
   const [touch, setTouch] = useState(true);
 
   // A new session starts fresh: a new payment at the first step, a reopened one at its review.
@@ -106,6 +115,8 @@ export function PosScanSheet({
     setRead(e?.read ?? null);
     setUnsure([]);
     setDuplicateOf(null);
+    setConcerns([]);
+    setScanId(e?.scanId ?? null);
     setDemo(false);
     setFailure(null);
     setReference(e?.reference ?? "");
@@ -168,6 +179,8 @@ export function PosScanSheet({
     setRead(result.fields);
     setUnsure(result.unsure);
     setDuplicateOf(result.duplicateOf);
+    setConcerns(result.concerns);
+    setScanId(result.scanId);
     setReference(result.fields.reference ?? "");
     // An amount the receipt doesn't show is left for the cashier to type, never guessed from the total.
     setAmount(result.fields.amount !== null ? String(result.fields.amount) : "");
@@ -179,12 +192,21 @@ export function PosScanSheet({
     const token = ++readToken.current;
     setStep("reading");
     let result: ScanResult;
-    if (demoScans) {
+    if (demoScans && demoKind !== "real") {
       await new Promise((r) => setTimeout(r, 1200));
       result = demoScan(demoKind, provider, providers, due);
-    } else {
-      // The reader arrives in Phase E3; until then the details are typed.
+    } else if (!reader || !photo) {
       result = { ok: false, kind: "unavailable", message: "", demo: false };
+    } else {
+      const form = new FormData();
+      form.set("photo", photo.blob, "receipt");
+      form.set("provider", provider.code);
+      try {
+        result = await scanReceipt(form);
+      } catch {
+        // The connection dropped: nothing in the sale changed, and the details can be typed.
+        result = { ok: false, kind: "unavailable", message: "", demo: false };
+      }
     }
     if (token !== readToken.current) return; // cancelled
     apply(result);
@@ -206,6 +228,8 @@ export function PosScanSheet({
     setRead(null);
     setUnsure([]);
     setDuplicateOf(null);
+    setConcerns([]);
+    setScanId(null);
     setDemo(false);
     setFailure(null);
     setReference("");
@@ -225,6 +249,7 @@ export function PosScanSheet({
     due,
     read,
     duplicateOf,
+    concerns,
     others: others.filter((o) => o.id !== editing?.id),
   });
   const waiting = notices.filter((n) => needsConfirm(n) && !confirmed.includes(n.kind));
@@ -261,6 +286,7 @@ export function PosScanSheet({
         amount: roundPeso(value),
         source: read ? "scan" : (editing?.source ?? "manual"),
         read: read ?? editing?.read ?? null,
+        scanId: read ? scanId : (editing?.scanId ?? null),
       },
       photo,
     );
@@ -421,7 +447,7 @@ export function PosScanSheet({
                   <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-ground-2 px-3.5 py-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
                     <DemoPill />
                     <label htmlFor={ids.demo} className="text-[0.8125rem] font-semibold text-ink">
-                      Sample result
+                      Result
                     </label>
                     <select
                       id={ids.demo}
@@ -435,7 +461,9 @@ export function PosScanSheet({
                         </option>
                       ))}
                     </select>
-                    <p className="w-full text-[0.75rem] text-ink-2">Development only. The photo isn’t read until the receipt reader is connected.</p>
+                    <p className="w-full text-[0.75rem] text-ink-2">
+                      Development only. Pick a sample to see a state without a receipt that shows it{reader ? "" : "; the reader isn’t connected"}.
+                    </p>
                   </div>
                 )}
                 <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
@@ -582,6 +610,11 @@ export function PosScanSheet({
                 <dd>
                   <FieldMark mark={fieldState("status", null)} />
                 </dd>
+                <dt className="text-ink-2">Sent to</dt>
+                <dd className="min-w-0 break-words text-ink">{read.recipient ?? "—"}</dd>
+                <dd>
+                  <FieldMark mark={fieldState("recipient", null)} />
+                </dd>
               </dl>
             )}
 
@@ -714,6 +747,13 @@ function Notices({
               <b>The receipt says the payment failed.</b> Ask the customer to send it again, then scan the new receipt.
             </>
           )}
+          {n.kind === "suspicious" && (
+            <Confirm checked={confirmed.includes("suspicious")} onChange={(on) => onConfirm("suspicious", on)} label="It matches the payment in the customer’s app">
+              <b>This receipt may have been edited.</b> Ask to see the payment in the customer’s app history before taking it.
+            </Confirm>
+          )}
+          {n.kind === "photo_quality" && <>The photo is blurry, glared, or cut off. Check the marked fields against the customer’s screen.</>}
+          {n.kind === "several_receipts" && <>There’s more than one receipt in the photo. Make sure these details are from the right one.</>}
           {n.kind === "pending" && (
             <Confirm checked={confirmed.includes("pending")} onChange={(on) => onConfirm("pending", on)} label="The customer’s app now shows it completed">
               <b>The receipt says Pending.</b> Take it only once the payment shows as completed.

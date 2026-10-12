@@ -52,7 +52,18 @@ function matches(p: PosProduct, tokens: string[]) {
 }
 
 /** The counter screen: search and pick on the left, the sale on the right (a second step on phones). */
-export function PosScreen({ products, providers, header }: { products: PosProduct[]; providers: PaymentProvider[]; header?: React.ReactNode }) {
+export function PosScreen({
+  products,
+  providers,
+  reader,
+  header,
+}: {
+  products: PosProduct[];
+  providers: PaymentProvider[];
+  /** Whether receipt photos can be read (the Gemini key is set on the server). */
+  reader: boolean;
+  header?: React.ReactNode;
+}) {
   const router = useRouter();
   const searchId = useId();
   const searchRef = useRef<HTMLInputElement>(null);
@@ -451,6 +462,7 @@ export function PosScreen({ products, providers, header }: { products: PosProduc
 
       <PosScanSheet
         session={session}
+        reader={reader}
         providers={providers}
         due={dueFor(session?.editing?.id ?? null)}
         others={ePayments}
