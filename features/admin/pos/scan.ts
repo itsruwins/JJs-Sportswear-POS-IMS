@@ -244,10 +244,14 @@ export function checkReading(raw: unknown, providers: PaymentProvider[], today =
   if (fields.reference && ruleProvider && !referenceFits(ruleProvider, fields.reference)) unsure.add("reference");
   if (fields.status === "unknown") unsure.add("status");
 
-  const concerns: ScanConcern[] = [];
-  if (problems.includes("looks_edited") || problems.includes("instructions_in_image")) concerns.push("suspicious");
-  if (problems.includes("several_receipts")) concerns.push("several_receipts");
-  if (problems.some((p) => p === "blurry" || p === "glare" || p === "cropped")) concerns.push("photo_quality");
+  return { ok: true, fields, unsure: [...unsure], concerns: concernsOf(problems), problems, confidence };
+}
 
-  return { ok: true, fields, unsure: [...unsure], concerns, problems, confidence };
+/** What the cashier (or staff) is told about the image, from what the reader noticed. */
+export function concernsOf(problems: readonly string[]): ScanConcern[] {
+  const out: ScanConcern[] = [];
+  if (problems.includes("looks_edited") || problems.includes("instructions_in_image")) out.push("suspicious");
+  if (problems.includes("several_receipts")) out.push("several_receipts");
+  if (problems.some((p) => p === "blurry" || p === "glare" || p === "cropped")) out.push("photo_quality");
+  return out;
 }

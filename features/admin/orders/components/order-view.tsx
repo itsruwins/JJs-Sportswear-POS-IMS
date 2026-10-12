@@ -7,6 +7,7 @@ import { downPayment, PRODUCTION_MIGRATION, STATUS_LABEL, STEPS, VIEWS, type Ord
 import { CancelOrderButton, HandoverPanel, OrderFlash, PhotoManager, ProductionChecklist, ReviewPanel } from "./order-actions";
 import { PaymentException, RecordPayment, RecordRefund } from "@/features/admin/payments/components/payment-actions";
 import { PayPill } from "@/features/admin/payments/components/payment-parts";
+import type { PaymentProvider } from "@/features/shared/payments/model";
 import { methodLine, PAY_TYPE_LABEL, PAYMENTS_MIGRATION, type OrderMoney } from "@/features/admin/payments/data";
 import { ago, personName, StatusPill, when } from "./order-parts";
 
@@ -39,6 +40,7 @@ export function OrderView({
   now = new Date(),
   backView = "open",
   chat,
+  providers = [],
 }: {
   order: OrderDetail;
   /** Payments, refunds, and exceptions (absent before the payments phase data is loaded). */
@@ -48,6 +50,8 @@ export function OrderView({
   backView?: OrderView;
   /** The owner's view: the latest messages about this order. */
   chat?: { messages: ChatMessage[]; total: number; error?: boolean; ownerId: string };
+  /** Active providers, for recording e-payments. */
+  providers?: PaymentProvider[];
 }) {
   const closed = o.status === "declined" || o.status === "cancelled";
   const pieces = o.items.reduce((s, i) => s + i.quantity, 0);
@@ -451,7 +455,7 @@ export function OrderView({
 
             {money?.migrated && ["accepted", "in_progress", "ready", "completed"].includes(o.status) && money.due > 0 && o.customer && (
               <div className="mt-4">
-                <RecordPayment orderId={o.id} customerId={o.customer.id} due={money.due} downLeft={Math.max(0, money.downDue - money.paid)} waiting={money.waiting} waitingId={money.waitingId} />
+                <RecordPayment orderId={o.id} customerId={o.customer.id} providers={providers} due={money.due} downLeft={Math.max(0, money.downDue - money.paid)} waiting={money.waiting} waitingId={money.waitingId} />
               </div>
             )}
             {money && !money.migrated && o.total_price !== null && !closed && (

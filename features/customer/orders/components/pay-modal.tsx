@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation";
 import { Check, Copy, ImagePlus, LoaderCircle, X } from "lucide-react";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { formatPeso } from "@/features/shared/catalog/catalog";
+import { cleanReference, digitsOnly, formatReference, referenceFits, referenceLength, type PaymentProvider } from "@/features/shared/payments/model";
 import type { Money } from "@/features/customer/orders/model";
 import { createClient } from "@/lib/supabase/client";
 import { submitPayment } from "@/features/customer/orders/actions";
-
-export type GcashInfo = { name: string | null; number: string | null; qr: string | null };
 
 const label = "text-[0.9375rem] font-semibold text-ink";
 const errorText = "mt-2 text-[0.875rem] font-semibold text-ink";
@@ -17,21 +16,18 @@ const errorText = "mt-2 text-[0.875rem] font-semibold text-ink";
 /** Pesos with thousands grouped, as the chips and button show them ("4,875"). */
 const groupAmount = (n: number) => n.toLocaleString("en-PH", { maximumFractionDigits: 2 });
 
-/** "0917 123 4567"-style grouping for a GCash reference: 4-3-6, like the receipt. */
-const groupRef = (digits: string) => [digits.slice(0, 4), digits.slice(4, 7), digits.slice(7, 13)].filter(Boolean).join(" ");
-
 /**
- * Pay with GCash, in a modal (bottom sheet on phones): the shop's GCash details, how much
- * (chips for the rest of the down payment or the whole balance), the 13-digit reference,
- * and a screenshot of the receipt. The draft stays while the modal is closed, and it
- * can't close mid-upload or mid-send.
+ * Pay online, in a modal (bottom sheet on phones): which e-wallet or bank (the ones the shop
+ * takes online), the shop's account there, how much (chips for the rest of the down payment or
+ * the whole balance), the reference in that provider's form, and a screenshot of the receipt.
+ * The draft stays while the modal is closed, and it can't close mid-upload or mid-send.
  */
 export function PayModal({
   orderId,
   orderNumber,
   uid,
   money,
-  gcash,
+  providers,
   trigger,
   tone = "board",
 }: {
@@ -39,7 +35,8 @@ export function PayModal({
   orderNumber: string;
   uid: string;
   money: Money;
-  gcash: GcashInfo;
+  /** The providers the shop takes online, in the shop's order. */
+  providers: PaymentProvider[];
   trigger: string;
   tone?: "board" | "outline";
 }) {
@@ -48,6 +45,7 @@ export function PayModal({
   const ids = { title: useId(), amount: useId(), ref: useId(), proof: useId() };
   const suggested = money.downLeft > 0 ? money.downLeft : money.left;
   const [amount, setAmount] = useState(groupAmount(suggested));
+  const [code, setCode] = useState(providers[0]?.code ?? "");
   const [reference, setReference] = useState("");
   const [proof, setProof] = useState<{ path: string; url: string } | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -69,7 +67,10 @@ export function PayModal({
       el?.focus();
     });
   };
-  const digits = reference.replace(/\D/g, "").slice(0, 13);
+  const provider = providers.find((p) => p.code === code) ?? providers[0] ?? null;
+  const length = provider ? referenceLength(provider) : null;
+  const numeric = provider ? digitsOnly(provider) : true;
+  const typed = cleanReference(reference).length;
 
   const open = () => {
     setErrors({});
@@ -107,13 +108,15 @@ export function PayModal({
     const found: typeof errors = {};
     if (value <= 0) found.amount = "Enter how much you sent.";
     else if (value > money.left) found.amount = `That’s more than the ${formatPeso(money.left)} still to pay.`;
-    if (digits.length !== 13) found.reference = "Enter the 13-digit reference number from your GCash receipt.";
-    if (!proof) found.proof = "Add a screenshot of your GCash receipt, so the shop can match it.";
+    if (!provider) found.form = "Online payment isn’t available for this order right now. Pay at the counter.";
+    else if (!referenceFits(provider, reference))
+      found.reference = length ? `Enter the ${length}-digit reference number from your ${provider.name} receipt.` : `Enter the reference number from your ${provider.name} receipt.`;
+    if (!proof) found.proof = "Add a screenshot of your receipt, so the shop can match it.";
     setErrors(found);
     if (Object.keys(found).length) return focusFirst(found);
 
     setSending(true);
-    const result = await submitPayment(orderId, value, digits, proof!.path);
+    const result = await submitPayment(orderId, value, provider!.code, cleanReference(reference), proof!.path);
     setSending(false);
     if (!result.ok) {
       const found = { [result.field ?? "form"]: result.message };
@@ -126,9 +129,9 @@ export function PayModal({
   };
 
   const copyNumber = async () => {
-    if (!gcash.number) return;
+    if (!provider?.accountNumber) return;
     try {
-      await navigator.clipboard.writeText(gcash.number.replace(/\s/g, ""));
+      await navigator.clipboard.writeText(provider.accountNumber.replace(/\s/g, ""));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
@@ -168,7 +171,7 @@ export function PayModal({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 id={ids.title} className="voice-display text-[1.875rem]">
-                {sent !== null ? "Payment sent" : "Pay with GCash"}
+                {sent !== null ? "Payment sent" : providers.length === 1 && provider ? `Pay with ${provider.name}` : "Pay online"}
               </h2>
               <p className="tabular mt-1 text-[0.875rem] text-ink-2">{orderNumber}</p>
             </div>
@@ -181,7 +184,7 @@ export function PayModal({
           {sent !== null ? (
             <div className="mt-5">
               <p className="text-[1rem] leading-relaxed text-ink">
-                The shop will check your <span className="tabular font-semibold">{formatPeso(sent)}</span> GCash payment against its
+                The shop will check your <span className="tabular font-semibold">{formatPeso(sent)}</span> {provider?.name ?? ""} payment against its
                 account and mark it verified. You’ll see it on this order.
               </p>
               <button
@@ -195,28 +198,54 @@ export function PayModal({
             </div>
           ) : (
             <>
-              {/* 1. Where to send it */}
-              <div className="mt-5 flex items-center gap-4 rounded-2xl bg-ground-2 p-4 shadow-[inset_0_0_0_1px_var(--line)]">
-                {gcash.qr && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={gcash.qr} alt="The shop’s GCash QR code" className="size-24 shrink-0 rounded-xl bg-white object-contain p-1" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-[0.8125rem] text-ink-2">Send to J&amp;J Sportswear’s GCash</p>
-                  <p className={`mt-0.5 text-[1rem] font-semibold ${gcash.name ? "text-ink" : "text-ink-2"}`}>{gcash.name ?? "Account name to follow"}</p>
-                  <div className="mt-0.5 flex items-center gap-2">
-                    <p className={`tabular text-[1.125rem] font-semibold ${gcash.number ? "text-ink" : "text-ink-2"}`}>{gcash.number ?? "Number to follow"}</p>
-                    {gcash.number && (
-                      <button type="button" onClick={copyNumber} className="press inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[0.8125rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground">
-                        {copied ? <Check aria-hidden="true" className="size-3.5" /> : <Copy aria-hidden="true" className="size-3.5" />}
-                        {copied ? "Copied" : "Copy"}
+              {/* 1. Which provider, and where to send it */}
+              {providers.length > 1 && (
+                <div className="mt-5">
+                  <p className={label}>Pay with</p>
+                  <div role="group" aria-label="Pay with" className="mt-2 flex flex-wrap gap-2">
+                    {providers.map((p) => (
+                      <button
+                        key={p.code}
+                        type="button"
+                        aria-pressed={p.code === provider?.code}
+                        onClick={() => {
+                          if (p.code !== code) setReference("");
+                          setCode(p.code);
+                          setErrors((e) => ({ ...e, reference: undefined }));
+                        }}
+                        className="shop-chip press h-10 text-[0.9375rem]"
+                      >
+                        {p.name}
                       </button>
-                    )}
+                    ))}
                   </div>
                 </div>
-              </div>
-              {(!gcash.name || !gcash.number) && (
-                <p className="mt-2 text-[0.8125rem] text-ink-2">The shop’s GCash details go here once they’re confirmed.</p>
+              )}
+              {provider && (
+                <div className="mt-4 flex items-center gap-4 rounded-2xl bg-ground-2 p-4 shadow-[inset_0_0_0_1px_var(--line)]">
+                  {provider.qrUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={provider.qrUrl} alt={`The shop’s ${provider.name} QR code`} className="size-24 shrink-0 rounded-xl bg-white object-contain p-1" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[0.8125rem] text-ink-2">Send to J&amp;J Sportswear’s {provider.name}</p>
+                    <p className={`mt-0.5 text-[1rem] font-semibold ${provider.accountName ? "text-ink" : "text-ink-2"}`}>{provider.accountName ?? "Account name to follow"}</p>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      <p className={`tabular text-[1.125rem] font-semibold ${provider.accountNumber ? "text-ink" : "text-ink-2"}`}>
+                        {provider.accountNumber ?? "Number to follow"}
+                      </p>
+                      {provider.accountNumber && (
+                        <button type="button" onClick={copyNumber} className="press inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-[0.8125rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground">
+                          {copied ? <Check aria-hidden="true" className="size-3.5" /> : <Copy aria-hidden="true" className="size-3.5" />}
+                          {copied ? "Copied" : "Copy"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {provider && (!provider.accountName || !provider.accountNumber) && (
+                <p className="mt-2 text-[0.8125rem] text-ink-2">The shop’s {provider.name} details go here once they’re confirmed.</p>
               )}
 
               {/* 2. How much */}
@@ -272,21 +301,25 @@ export function PayModal({
               {/* 3. Proof */}
               <div className="mt-6">
                 <label htmlFor={ids.ref} className={label}>
-                  GCash reference number
+                  {provider?.name ?? "E-payment"} reference number
                 </label>
                 <input
                   id={ids.ref}
                   ref={(el) => {
                     fields.current.reference = el;
                   }}
-                  inputMode="numeric"
+                  inputMode={numeric ? "numeric" : "text"}
                   autoComplete="off"
-                  value={groupRef(digits)}
+                  autoCapitalize="characters"
+                  spellCheck={false}
+                  value={numeric ? formatReference(provider?.code ?? null, reference) : reference}
                   onChange={(e) => {
-                    setReference(e.target.value.replace(/\D/g, "").slice(0, 13));
+                    setReference(
+                      numeric ? e.target.value.replace(/\D/g, "").slice(0, length ?? 40) : e.target.value.toUpperCase().replace(/[^A-Z0-9 -]/g, "").slice(0, 60),
+                    );
                     setErrors((x) => ({ ...x, reference: undefined }));
                   }}
-                  placeholder="0000 000 000000"
+                  placeholder={numeric && length === 13 ? "0000 000 000000" : undefined}
                   aria-invalid={Boolean(errors.reference)}
                   aria-describedby={`${ids.ref}-hint`}
                   className={`auth-input tabular mt-2 px-4 tracking-[0.04em] ${errors.reference ? "is-error" : ""}`}
@@ -294,8 +327,8 @@ export function PayModal({
                 <p id={`${ids.ref}-hint`} className={errors.reference ? errorText : "mt-1.5 flex justify-between text-[0.8125rem] text-ink-2"}>
                   {errors.reference ?? (
                     <>
-                      <span>On your GCash receipt, under “Ref No.”</span>
-                      <span className="tabular">{digits.length}/13</span>
+                      <span>{provider?.hint ?? "On your receipt."}</span>
+                      {length && <span className="tabular">{typed}/{length}</span>}
                     </>
                   )}
                 </p>
@@ -308,7 +341,7 @@ export function PayModal({
                 {proof ? (
                   <div className="mt-2 flex items-center gap-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={proof.url} alt="Your GCash receipt" className="h-24 w-auto max-w-[8rem] rounded-xl bg-[var(--photo-bg)] object-contain p-1 shadow-[inset_0_0_0_1px_var(--line)]" />
+                    <img src={proof.url} alt="Your receipt" className="h-24 w-auto max-w-[8rem] rounded-xl bg-[var(--photo-bg)] object-contain p-1 shadow-[inset_0_0_0_1px_var(--line)]" />
                     <button
                       type="button"
                       onClick={() => {

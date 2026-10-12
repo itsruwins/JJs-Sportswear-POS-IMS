@@ -24,7 +24,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/admin/p
       <p className="mt-2 max-w-[60ch] text-[0.9375rem] text-ink-2">
         {counter
           ? "Match each e-payment taken at the counter against the shop’s bank or e-wallet. A receipt on a phone isn’t proof the money arrived."
-          : "Check the GCash payments customers send for custom orders. Money received at the counter is recorded on the order itself."}
+          : "Check the e-payments customers send for custom orders. Money received at the counter is recorded on the order itself."}
       </p>
     </header>
   );
@@ -72,9 +72,14 @@ function KindSwitch({ counter, orders, counterCount }: { counter: boolean; order
     </Link>
   );
   return (
-    <nav aria-label="Payments" className="mb-5 flex rounded-xl bg-ground-2 p-1 shadow-[inset_0_0_0_1px_var(--line)] sm:inline-flex">
-      {item(!counter, "/admin/payments", "Custom orders", orders)}
-      {item(counter, "/admin/payments?kind=counter", "Counter e-payments", counterCount)}
-    </nav>
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <nav aria-label="Payments" className="flex w-full rounded-xl bg-ground-2 p-1 shadow-[inset_0_0_0_1px_var(--line)] sm:inline-flex sm:w-auto">
+        {item(!counter, "/admin/payments", "Custom orders", orders)}
+        {item(counter, "/admin/payments?kind=counter", "Counter e-payments", counterCount)}
+      </nav>
+      <Link href="/admin/payments/accounts" className="press inline-flex h-10 items-center rounded-full px-3.5 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2">
+        Shop accounts
+      </Link>
+    </div>
   );
 }

@@ -776,7 +776,7 @@ function Notices({
           )}
           {n.kind === "duplicate" && (
             <>
-              <b>This reference is already {n.sale ? `on sale ${n.sale}` : "in this sale"}.</b> The same payment can’t be counted twice; check the number on the customer’s
+              <b>This reference is already {n.sale ? `used (${n.sale})` : "in this sale"}.</b> The same payment can’t be counted twice; check the number on the customer’s
               screen.
             </>
           )}

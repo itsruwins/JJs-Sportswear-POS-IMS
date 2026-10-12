@@ -124,6 +124,26 @@ Goal: the counter takes cash and e-payments from GCash, Maya, MariBank, UnionBan
 
 ### Phase E5: Custom-order payments
 - The customer pay flow and the owner's payment queue take the same providers and reference rules.
+- **Decisions (2026-10-12):** the owner switches each provider on for online payment, and GCash starts on. The shop's accounts are kept in the database, with an owner screen to edit them. Gemini reads customers' screenshots for staff only.
+- **Built 2026-10-12:**
+  - **Migrations** `20261019000000_custom_order_e_payments.sql` and the follow-up `20261019120000_record_payment_type_fix.sql`.
+  - **Providers:** `accepts_online`, account name and number, and a QR in the public `shop-accounts` bucket (the owner uploads it).
+  - **Payments:** `provider` and `reference` on each payment. Old GCash payments become e_payment · GCash, and `gcash_reference` stays for history.
+  - **Before a payment is written** (security definer): the reference is cleaned and checked against its provider's rule, and a reference on a standing counter sale is refused. Counter sales get the mirror trigger. A shared advisory lock per provider and reference keeps the two from racing.
+  - **Database rules:**
+    - Customers may send only an e-payment, through a provider that's online.
+    - `record_custom_order_payment` now takes a provider and reference.
+    - `verify_payment` takes e-payments with a reference.
+    - `receipt_scans.payment_id` holds the reader's look at a screenshot, which can never pay for a counter sale.
+    - Refunds are unchanged (cash or GCash).
+  - **Customer pay sheet:** Pay with (the online providers), the shop's account for that provider (name, number with Copy, and QR, or "to follow"), the amount chips, the reference in that provider's form, and the screenshot. Payment rows read "Maya · ref …9B04". Without any online provider, customers are told to pay at the counter.
+  - **Staff:**
+    - Record a payment: Cash | E-payment, provider chips, the reference in its form, and an optional screenshot.
+    - The review page names the provider and its reference.
+    - **What the reader saw**: read once when the page opens and kept, with Read again. It shows amount, reference, and provider, each matching or differing from what the customer typed, plus status, date, who it was sent to, and any concerns.
+    - The owner's **Shop accounts** page is linked from Payments (switch, name, number, QR, Save).
+  - **Bug found and fixed:** the existing `record_custom_order_payment` inserted the payment type as text without a cast, so staff "Record a payment" could fail on the live database. The new function and the follow-up migration fix it.
+  - **Tested:** 24 PGlite checks covering the backfill; GCash staying off when the migration is re-run; customer and staff e-payments; online-only providers; reference rules; duplicates in both directions between counter and orders; verify and reject; and screenshot readings. Screenshots of the pay sheet (phone), Record a payment (tablet), and Shop accounts (desktop and phone), with no console errors.
 
 ### Phase E6: Testing, security, docs
 - Field-by-field accuracy on redacted sample receipts. None are available yet: the user provides them, and nothing is reported as tested until they've been run.

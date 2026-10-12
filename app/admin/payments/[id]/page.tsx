@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { PaymentView } from "@/features/admin/payments/components/payment-view";
 import { fetchPayment } from "@/features/admin/payments/data";
+import { fetchProviders } from "@/features/shared/payments/data";
 import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Payment · J&J Sportswear Admin" };
@@ -13,7 +14,7 @@ export default async function PaymentPage({ params }: PageProps<"/admin/payments
   const { supabase } = await requireStaff();
   const { id } = await params;
   if (!UUID.test(id)) notFound();
-  const { payment, error } = await fetchPayment(supabase, id);
+  const [{ payment, error }, { providers }] = await Promise.all([fetchPayment(supabase, id), fetchProviders(supabase)]);
   if (error) {
     return (
       <div className="mx-auto max-w-[80rem] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
@@ -27,7 +28,7 @@ export default async function PaymentPage({ params }: PageProps<"/admin/payments
   return (
     <>
       <LiveRefresh tables={["payments", "custom_orders"]} />
-      <PaymentView payment={payment} />
+      <PaymentView payment={payment} providers={providers.map((p) => ({ code: p.code, name: p.name }))} />
     </>
   );
 }

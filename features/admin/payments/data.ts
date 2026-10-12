@@ -1,8 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { downPayment, type OrderStatus } from "@/features/admin/orders/data";
+import { formatReference, GCASH } from "@/features/shared/payments/model";
 
 export type PayStatus = "pending" | "submitted" | "verified" | "rejected";
-export type PayMethod = "cash" | "gcash";
+/** How a custom-order payment was made: "gcash" only on payments read before providers. */
+export type PayMethod = "cash" | "e_payment" | "gcash";
+/** How a refund was given back (refunds keep their own method). */
+export type RefundMethod = "cash" | "gcash";
 export type PayType = "down_payment" | "balance";
 
 export const PAY_STATUS_LABEL: Record<PayStatus, string> = {
@@ -27,6 +31,9 @@ export type Payment = {
   method: PayMethod;
   status: PayStatus;
   gcash_reference: string | null;
+  provider: string | null;
+  providerName: string | null;
+  reference: string | null;
   proof_path: string | null;
   note: string | null;
   rejection_reason: string | null;
@@ -35,16 +42,33 @@ export type Payment = {
   verifier: { username: string; full_name: string | null } | null;
 };
 
+// Providers on payments arrive with supabase/migrations/20261019000000_custom_order_e_payments.sql; reads
+// before it fall back (withNote = false drops both the note and the providers).
 const PAYMENT_COLUMNS = (withNote: boolean) =>
-  `id, order_id, payment_type, amount, method, status, gcash_reference, gcash_screenshot_url, ${withNote ? "note, " : ""}rejection_reason, verified_at, created_at, verifier:profiles!payments_verified_by_fkey (username, full_name)`;
+  `id, order_id, payment_type, amount, method, status, gcash_reference, gcash_screenshot_url, ${
+    withNote ? "note, provider, reference, provider_row:payment_providers (name), " : ""
+  }rejection_reason, verified_at, created_at, verifier:profiles!payments_verified_by_fkey (username, full_name)`;
 
-type PaymentRow = Omit<Payment, "amount" | "proof_path" | "note"> & { amount: number | string; gcash_screenshot_url: string | null; note?: string | null };
-const toPayment = (r: PaymentRow): Payment => ({
-  ...r,
-  amount: Number(r.amount),
-  proof_path: r.gcash_screenshot_url,
-  note: r.note ?? null,
-});
+type PaymentRow = Omit<Payment, "amount" | "proof_path" | "note" | "provider" | "providerName" | "reference"> & {
+  amount: number | string;
+  gcash_screenshot_url: string | null;
+  note?: string | null;
+  provider?: string | null;
+  reference?: string | null;
+  provider_row?: { name: string } | null;
+};
+const toPayment = ({ provider_row, ...r }: PaymentRow): Payment => {
+  const legacy = r.method === "gcash" || (!r.provider && !!r.gcash_reference);
+  return {
+    ...r,
+    amount: Number(r.amount),
+    proof_path: r.gcash_screenshot_url,
+    note: r.note ?? null,
+    provider: r.provider ?? (legacy ? GCASH : null),
+    providerName: provider_row?.name ?? (legacy ? "GCash" : null),
+    reference: r.reference ?? r.gcash_reference ?? null,
+  };
+};
 
 /** An order's money: what's been paid (verified), what's waiting, refunds, and the owner's exceptions. */
 export type OrderMoney = {
@@ -59,7 +83,7 @@ export type OrderMoney = {
   downDue: number;
   downMet: boolean;
   payments: Payment[];
-  refunds: { id: string; amount: number; method: PayMethod; note: string; created_at: string; by: string }[];
+  refunds: { id: string; amount: number; method: RefundMethod; note: string; created_at: string; by: string }[];
   overrides: Partial<Record<"production" | "pickup", { reason: string; by: string; at: string }>>;
   /** False until the payments migration has run (recording, refunds, and exceptions need it). */
   migrated: boolean;
@@ -86,7 +110,7 @@ export async function fetchOrderMoney(supabase: SupabaseClient, orderId: string,
   const sent = payments.filter((p) => p.status === "submitted");
   const waiting = sum(sent);
   const waitingId = sent.length ? sent[sent.length - 1].id : null; // payments are newest first
-  type RefundRow = { id: string; amount: number | string; method: PayMethod; note: string; created_at: string; actor: { username: string; full_name: string | null } | null };
+  type RefundRow = { id: string; amount: number | string; method: RefundMethod; note: string; created_at: string; actor: { username: string; full_name: string | null } | null };
   const refunds = ((refRes.data ?? []) as unknown as RefundRow[]).map((r) => ({ id: r.id, amount: Number(r.amount), method: r.method, note: r.note, created_at: r.created_at, by: nameOf(r.actor) }));
   type OverrideRow = { kind: "production" | "pickup"; reason: string; created_at: string; actor: { username: string; full_name: string | null } | null };
   const overrides: OrderMoney["overrides"] = {};
@@ -197,12 +221,12 @@ export async function fetchPayment(supabase: SupabaseClient, id: string): Promis
   };
 }
 
-/** "Cash", or "GCash · 1234 567 890123". */
-export function methodLine(p: Pick<Payment, "method" | "gcash_reference">, short = false) {
+/** "Cash", or "GCash · 1234 567 890123" ("Maya · …9B04" when short). */
+export function methodLine(p: Pick<Payment, "method" | "provider" | "providerName" | "reference">, short = false) {
   if (p.method === "cash") return "Cash";
-  if (!p.gcash_reference) return "GCash";
-  const d = p.gcash_reference;
-  return short ? `GCash · ${d.slice(-4)}` : `GCash · ${[d.slice(0, 4), d.slice(4, 7), d.slice(7)].join(" ")}`;
+  const name = p.providerName ?? "E-payment";
+  if (!p.reference) return name;
+  return short ? `${name} · ${p.reference.slice(-4)}` : `${name} · ${formatReference(p.provider, p.reference)}`;
 }
 
 // ---------------------------------------------------------------------------------------------

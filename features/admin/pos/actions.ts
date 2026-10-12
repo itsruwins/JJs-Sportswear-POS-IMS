@@ -133,7 +133,7 @@ export async function createSale(
         return {
           ok: false,
           message: pay[2]
-            ? `That reference is already on sale ${pay[2]}. Check the number on the customer’s receipt.`
+            ? `That reference was already used (${pay[2]}). Check the number on the customer’s receipt.`
             : "The same reference is in this sale twice. Check the numbers.",
         };
       case "provider":
@@ -268,18 +268,32 @@ export async function scanReceipt(form: FormData): Promise<ScanResult> {
   return result;
 }
 
-/** The standing sale already carrying this reference, so the cashier hears it before Charge. */
+/** The standing sale or custom-order payment already carrying this reference, so the cashier hears it before Charge. */
 async function takenBy(supabase: Awaited<ReturnType<typeof requireStaff>>["supabase"], provider: string, reference: string | null) {
   if (!reference) return null;
-  const { data } = await supabase
-    .from("sale_payments")
-    .select("sale:sales!sale_payments_sale_id_fkey (receipt_number)")
-    .eq("provider", provider)
-    .eq("reference", reference)
-    .is("voided_at", null)
-    .limit(1)
-    .maybeSingle();
-  return (data as { sale: { receipt_number: string } | null } | null)?.sale?.receipt_number ?? null;
+  const [sale, order] = await Promise.all([
+    supabase
+      .from("sale_payments")
+      .select("sale:sales!sale_payments_sale_id_fkey (receipt_number)")
+      .eq("provider", provider)
+      .eq("reference", reference)
+      .is("voided_at", null)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("payments")
+      .select("order:custom_orders (order_number)")
+      .eq("provider", provider)
+      .eq("reference", reference)
+      .neq("status", "rejected")
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  return (
+    (sale.data as { sale: { receipt_number: string } | null } | null)?.sale?.receipt_number ??
+    (order.data as { order: { order_number: string } | null } | null)?.order?.order_number ??
+    null
+  );
 }
 
 /** Each scan clears a few photos past their 90 days; the scan rows themselves stay. */

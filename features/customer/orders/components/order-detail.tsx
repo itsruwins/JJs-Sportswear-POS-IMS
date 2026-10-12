@@ -20,7 +20,8 @@ import { AskShop } from "@/features/customer/chat/components/ask-shop";
 import { pageShell } from "@/features/customer/shell/components/page-parts";
 import { CancelRequest } from "./cancel-request";
 import { dayDate, shortDate, StageStrip, StatusPill } from "./order-parts";
-import { PayModal, type GcashInfo } from "./pay-modal";
+import type { PaymentProvider } from "@/features/shared/payments/model";
+import { PayModal } from "./pay-modal";
 
 export type PickupInfo = { name: string; address: string | null; city: string; hours: string | null; phone: string | null };
 
@@ -90,14 +91,16 @@ function PaymentPill({ status }: { status: MyPayment["status"] }) {
 }
 
 /** What the customer has to do next about money: the one amber thing in the app. */
-function ActionNotice({ o, money, uid, gcash }: { o: MyOrder; money: Money; uid: string; gcash: GcashInfo }) {
+function ActionNotice({ o, money, uid, providers }: { o: MyOrder; money: Money; uid: string; providers: PaymentProvider[] }) {
   const action = payAction(o.status, money);
   if (!action) return null;
   const text =
     action.kind === "down"
       ? `Pay the ${formatPeso(action.amount)} down payment so the shop can start making your order.`
       : o.status === "ready"
-        ? `Your order is ready. Pay the ${formatPeso(action.amount)} balance by GCash now, or in cash when you pick it up.`
+        ? providers.length
+          ? `Your order is ready. Pay the ${formatPeso(action.amount)} balance online now, or in cash when you pick it up.`
+          : `Your order is ready. Pay the ${formatPeso(action.amount)} balance when you pick it up.`
         : `There’s a ${formatPeso(action.amount)} balance left on this order.`;
   return (
     <div role="status" className="pay-notice mt-6 flex flex-col gap-4 rounded-2xl px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -109,14 +112,9 @@ function ActionNotice({ o, money, uid, gcash }: { o: MyOrder; money: Money; uid:
         {text}
         </span>
       </p>
-      <PayModal
-        orderId={o.id}
-        orderNumber={o.order_number}
-        uid={uid}
-        money={money}
-        gcash={gcash}
-        trigger={`Pay ${formatPeso(action.amount)}`}
-      />
+      {providers.length > 0 && (
+        <PayModal orderId={o.id} orderNumber={o.order_number} uid={uid} money={money} providers={providers} trigger={`Pay ${formatPeso(action.amount)}`} />
+      )}
     </div>
   );
 }
@@ -126,13 +124,14 @@ export function OrderDetailView({
   order: o,
   flash,
   uid,
-  gcash,
+  providers,
   pickup,
 }: {
   order: MyOrder;
   flash: "sent" | "saved" | null;
   uid: string;
-  gcash: GcashInfo;
+  /** The providers the shop takes online. */
+  providers: PaymentProvider[];
   pickup: PickupInfo;
 }) {
   const garments = fromLines(o.lines);
@@ -197,10 +196,10 @@ export function OrderDetailView({
           )}
         </div>
 
-        {money && <ActionNotice o={o} money={money} uid={uid} gcash={gcash} />}
+        {money && <ActionNotice o={o} money={money} uid={uid} providers={providers} />}
         {waiting && !action && (
           <p className="mt-5 text-[0.9375rem] text-ink-2">
-            Your <span className="tabular font-semibold text-ink">{formatPeso(money!.waiting)}</span> GCash payment is being checked by the shop.
+            Your <span className="tabular font-semibold text-ink">{formatPeso(money!.waiting)}</span> payment is being checked by the shop.
           </p>
         )}
 
@@ -421,7 +420,7 @@ export function OrderDetailView({
                           <span className="min-w-0">
                             <span className="tabular block text-[0.9375rem] font-semibold text-ink">{formatPeso(p.amount)}</span>
                             <span className="tabular block text-[0.8125rem] text-ink-2">
-                              {p.method === "gcash" ? `GCash${p.last4 ? ` · ref …${p.last4}` : ""}` : "Cash at the shop"} · {shortDate(p.created_at)}
+                              {p.method === "cash" ? "Cash at the shop" : `${p.providerName ?? "E-payment"}${p.last4 ? ` · ref …${p.last4}` : ""}`} · {shortDate(p.created_at)}
                             </span>
                           </span>
                           <PaymentPill status={p.status} />
@@ -434,9 +433,9 @@ export function OrderDetailView({
                   </ul>
                 )}
 
-                {!action && canPay(o.status, money) && (
+                {!action && canPay(o.status, money) && providers.length > 0 && (
                   <div className="mt-5">
-                    <PayModal orderId={o.id} orderNumber={o.order_number} uid={uid} money={money} gcash={gcash} trigger="Pay by GCash" tone="outline" />
+                    <PayModal orderId={o.id} orderNumber={o.order_number} uid={uid} money={money} providers={providers} trigger="Pay online" tone="outline" />
                   </div>
                 )}
                 {canPay(o.status, money) && (

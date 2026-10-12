@@ -13,6 +13,13 @@ export type PaymentProvider = {
   /** Where the cashier finds the reference on the receipt. */
   hint: string;
   isActive: boolean;
+  /** Customers can pay custom orders through it. */
+  acceptsOnline: boolean;
+  /** The shop's account customers send to (null: to follow). */
+  accountName: string | null;
+  accountNumber: string | null;
+  /** Public link to the shop's QR code for it, when there is one. */
+  qrUrl: string | null;
 };
 
 /** How one part of a sale was paid. */
@@ -27,7 +34,18 @@ export const GCASH = "gcash";
 
 /** GCash as it was before the providers list, for a database that hasn't had the e-payment update. */
 export const GCASH_ONLY: PaymentProvider[] = [
-  { code: GCASH, name: "GCash", kind: "e_wallet", pattern: "^[0-9]{13}$", hint: "The 13-digit Ref No. on the GCash receipt.", isActive: true },
+  {
+    code: GCASH,
+    name: "GCash",
+    kind: "e_wallet",
+    pattern: "^[0-9]{13}$",
+    hint: "The 13-digit Ref No. on the GCash receipt.",
+    isActive: true,
+    acceptsOnline: true,
+    accountName: null,
+    accountNumber: null,
+    qrUrl: null,
+  },
 ];
 
 /** Upper case, without spaces or dashes: the form references are stored and compared in. Leading zeros stay. */

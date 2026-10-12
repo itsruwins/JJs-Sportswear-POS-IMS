@@ -57,7 +57,7 @@ export const STAFF_SECTIONS: AdminSection[] = [
   { label: "Sales", icon: ReceiptText, href: "/admin/sales", description: "Today’s receipts and reprints" },
   { label: "Products", icon: Shirt, href: "/admin/products", description: "Look up stock by size and design" },
   { label: "Orders", icon: ClipboardList, href: "/admin/orders", description: "Follow custom orders" },
-  { label: "Payments", icon: Wallet, href: "/admin/payments", description: "Check GCash payments for custom orders" },
+  { label: "Payments", icon: Wallet, href: "/admin/payments", description: "Check e-payments for custom orders" },
 ];
 
 /** The dock and the More panel for a role. */

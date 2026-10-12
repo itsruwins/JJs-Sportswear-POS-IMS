@@ -3,12 +3,21 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, ImagePlus, LoaderCircle, Plus, X } from "lucide-react";
-import { checkCounterPayment, overrideRule, recordPayment, recordRefund, rejectPayment, verifyPayment } from "@/features/admin/payments/actions";
+import {
+  checkCounterPayment,
+  overrideRule,
+  readPaymentScreenshot,
+  recordPayment,
+  recordRefund,
+  rejectPayment,
+  verifyPayment,
+  type ScreenshotReading,
+} from "@/features/admin/payments/actions";
 import { Outcome, ReasonDialog, useAction } from "@/features/admin/orders/components/order-actions";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import type { PayMethod } from "@/features/admin/payments/data";
-import { formatGcashRef } from "@/features/admin/sales/data";
+import type { RefundMethod } from "@/features/admin/payments/data";
+import { cleanReference, digitsOnly, formatReference, referenceFits, referenceLength, type PaymentProvider } from "@/features/shared/payments/model";
 import { createClient } from "@/lib/supabase/client";
 
 const green = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-50";
@@ -20,10 +29,10 @@ const parseAmount = (s: string) => {
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
 };
 
-function MethodSwitch({ method, onMethod }: { method: PayMethod; onMethod: (m: PayMethod) => void }) {
+function MethodSwitch<M extends string>({ method, onMethod, options, label = "How they paid" }: { method: M; onMethod: (m: M) => void; options: readonly (readonly [M, string])[]; label?: string }) {
   return (
-    <div role="group" aria-label="How they paid" className="grid grid-cols-2 gap-1 rounded-xl bg-ground-2 p-1 shadow-[inset_0_0_0_1px_var(--line)]">
-      {(["cash", "gcash"] as const).map((m) => (
+    <div role="group" aria-label={label} className="grid grid-cols-2 gap-1 rounded-xl bg-ground-2 p-1 shadow-[inset_0_0_0_1px_var(--line)]">
+      {options.map(([m, text]) => (
         <button
           key={m}
           type="button"
@@ -31,7 +40,7 @@ function MethodSwitch({ method, onMethod }: { method: PayMethod; onMethod: (m: P
           onClick={() => onMethod(m)}
           className={`press h-10 rounded-lg text-[0.9375rem] font-semibold ${method === m ? "bg-ink text-ground" : "text-ink-2 hover:text-ink"}`}
         >
-          {m === "cash" ? "Cash" : "GCash"}
+          {text}
         </button>
       ))}
     </div>
@@ -63,12 +72,22 @@ function useSheet(open: boolean, busy: boolean, onClose: () => void) {
   };
 }
 
-/** Record money the shop received for an order: cash, or GCash with its reference and an optional screenshot. */
+const PAY_OPTIONS = [
+  ["cash", "Cash"],
+  ["e_payment", "E-payment"],
+] as const;
+const REFUND_OPTIONS = [
+  ["cash", "Cash"],
+  ["gcash", "GCash"],
+] as const;
+
+/** Record money the shop received for an order: cash, or an e-payment with its provider, reference, and an optional screenshot. */
 export function RecordPayment({
   orderId,
   customerId,
   due,
   downLeft,
+  providers,
   waiting = 0,
   waitingId = null,
 }: {
@@ -76,6 +95,8 @@ export function RecordPayment({
   customerId: string;
   due: number;
   downLeft: number;
+  /** Every active provider: staff record e-payments through any of them. */
+  providers: PaymentProvider[];
   /** Customer payments not yet reviewed; recording more money can leave them unverifiable. */
   waiting?: number;
   waitingId?: string | null;
@@ -86,23 +107,27 @@ export function RecordPayment({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState<PayMethod>("cash");
-  const [gcash, setGcash] = useState("");
+  const [method, setMethod] = useState<"cash" | "e_payment">("cash");
+  const [code, setCode] = useState(providers[0]?.code ?? "");
+  const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const { ref: sheetRef, props: sheetProps } = useSheet(open, busy, () => setOpen(false));
   const value = parseAmount(amount);
-  const refDigits = gcash.replace(/\D/g, "");
+  const provider = providers.find((p) => p.code === code) ?? null;
+  const length = provider ? referenceLength(provider) : null;
+  const numeric = provider ? digitsOnly(provider) : true;
+  const typed = cleanReference(reference).length;
   // Quick amounts leave out what the customer already sent for review.
   const rest = Math.max(0, Math.round((due - waiting) * 100) / 100);
   const downOpen = Math.max(0, Math.round((downLeft - waiting) * 100) / 100);
-  const ready = value > 0 && value <= due && (method === "cash" || refDigits.length === 13);
+  const ready = value > 0 && value <= due && (method === "cash" || (!!provider && referenceFits(provider, reference)));
 
   const reset = () => {
     setAmount("");
     setMethod("cash");
-    setGcash("");
+    setReference("");
     setNote("");
     setFile(null);
     setError("");
@@ -113,7 +138,7 @@ export function RecordPayment({
     setBusy(true);
     setError("");
     let proofPath: string | null = null;
-    if (method === "gcash" && file) {
+    if (method === "e_payment" && file) {
       try {
         const { blob, ext, type } = await prepareForUpload(file);
         proofPath = `${customerId}/${orderId}/${crypto.randomUUID()}.${ext}`;
@@ -125,7 +150,11 @@ export function RecordPayment({
         return;
       }
     }
-    const r = await run("record", () => recordPayment(orderId, value, method, method === "gcash" ? refDigits : "", proofPath, note), { quiet: true });
+    const r = await run(
+      "record",
+      () => recordPayment(orderId, value, method, method === "e_payment" ? code : null, method === "e_payment" ? cleanReference(reference) : "", proofPath, note),
+      { quiet: true },
+    );
     setBusy(false);
     if (r.ok || ("stale" in r && r.stale)) {
       reset();
@@ -210,26 +239,54 @@ export function RecordPayment({
 
           <p className="mt-5 text-[0.875rem] font-semibold text-ink">How they paid</p>
           <div className="mt-1.5">
-            <MethodSwitch method={method} onMethod={setMethod} />
+            <MethodSwitch method={method} onMethod={setMethod} options={PAY_OPTIONS} />
           </div>
 
-          {method === "gcash" && (
+          {method === "e_payment" && (
+            <div role="group" aria-label="Paid with" className="mt-3 flex flex-wrap gap-1.5">
+              {providers.map((p) => (
+                <button
+                  key={p.code}
+                  type="button"
+                  aria-pressed={p.code === code}
+                  onClick={() => {
+                    if (p.code !== code) setReference("");
+                    setCode(p.code);
+                  }}
+                  className={`press inline-flex h-9 items-center rounded-full px-3 text-[0.875rem] font-semibold ${
+                    p.code === code ? "bg-ink text-ground" : "text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2"
+                  }`}
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {method === "e_payment" && provider && (
             <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
               <div>
                 <label htmlFor={ids.ref} className="text-[0.875rem] font-semibold text-ink">
-                  GCash reference number
+                  {provider.name} reference number
                 </label>
                 <input
                   id={ids.ref}
-                  inputMode="numeric"
+                  inputMode={numeric ? "numeric" : "text"}
                   autoComplete="off"
-                  value={formatGcashRef(gcash)}
-                  onChange={(e) => setGcash(e.target.value.replace(/\D/g, "").slice(0, 13))}
+                  autoCapitalize="characters"
+                  spellCheck={false}
+                  value={numeric ? formatReference(provider.code, reference) : reference}
+                  onChange={(e) =>
+                    setReference(
+                      numeric ? e.target.value.replace(/\D/g, "").slice(0, length ?? 40) : e.target.value.toUpperCase().replace(/[^A-Z0-9 -]/g, "").slice(0, 60),
+                    )
+                  }
                   aria-describedby={`${ids.ref}-hint`}
                   className="auth-input tabular mt-1.5 px-4 text-[1.0625rem] tracking-[0.02em]"
                 />
                 <p id={`${ids.ref}-hint`} className="mt-1 text-[0.8125rem] text-ink-2">
-                  13 digits ({refDigits.length}/13)
+                  {provider.hint}
+                  {length ? ` (${typed}/${length})` : ""}
                 </p>
               </div>
               <div className="sm:pb-6">
@@ -305,7 +362,7 @@ export function ReviewPayment({ paymentId, canVerify = true }: { paymentId: stri
         title="Reject this payment?"
         body="The customer sees your reason and can send it again. Rejecting doesn’t change the order."
         label="What’s wrong with it?"
-        placeholder="For example: the reference number isn’t in our GCash history."
+        placeholder="For example: the reference number isn’t in our account history."
         confirm="Reject payment"
         maxLength={300}
         onClose={() => setRejecting(false)}
@@ -322,7 +379,7 @@ export function RecordRefund({ orderId, left }: { orderId: string; left: number 
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [amount, setAmount] = useState(String(left));
-  const [method, setMethod] = useState<PayMethod>("cash");
+  const [method, setMethod] = useState<RefundMethod>("cash");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const { ref: sheetRef, props: sheetProps } = useSheet(open, busy, () => setOpen(false));
@@ -391,7 +448,7 @@ export function RecordRefund({ orderId, left }: { orderId: string; left: number 
           </p>
           <p className="mt-5 text-[0.875rem] font-semibold text-ink">How it was given back</p>
           <div className="mt-1.5">
-            <MethodSwitch method={method} onMethod={setMethod} />
+            <MethodSwitch method={method} onMethod={setMethod} options={REFUND_OPTIONS} label="How it was given back" />
           </div>
           <label htmlFor={ids.note} className="mt-5 block text-[0.875rem] font-semibold text-ink">
             Note
@@ -490,12 +547,125 @@ export function CheckCounterPayment({ paymentId, status }: { paymentId: string; 
         title="Dispute this payment?"
         body="It stays on the sale, marked disputed, with your reason. Void the sale separately if the money never came in."
         label="What’s wrong with it?"
-        placeholder="For example: not in our GCash history for that day."
+        placeholder="For example: not in our account history for that day."
         confirm="Mark disputed"
         maxLength={300}
         onClose={() => setDisputing(false)}
         onConfirm={(reason) => run("dispute", () => checkCounterPayment(paymentId, "disputed", reason), { quiet: true })}
       />
     </div>
+  );
+}
+
+/**
+ * What the reader saw on the customer's screenshot, beside what they typed. Read once when the
+ * page opens (and kept); staff still decide by the shop's own account.
+ */
+export function PaymentReading({
+  paymentId,
+  amount,
+  reference,
+  provider,
+  providers,
+}: {
+  paymentId: string;
+  amount: number;
+  reference: string | null;
+  provider: string | null;
+  providers: { code: string; name: string }[];
+}) {
+  const [state, setState] = useState<{ busy: boolean; result: ScreenshotReading | null }>({ busy: true, result: null });
+  const started = useRef(false);
+  const read = async (again: boolean) => {
+    setState({ busy: true, result: null });
+    try {
+      setState({ busy: false, result: await readPaymentScreenshot(paymentId, again) });
+    } catch {
+      setState({ busy: false, result: { ok: false, kind: "unavailable", message: "We couldn’t reach the server." } });
+    }
+  };
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    read(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const r = state.result;
+  if (r && !r.ok && r.kind === "none") return null;
+  const name = (code: string | null) => providers.find((p) => p.code === code)?.name ?? null;
+  const row = (label: string, value: React.ReactNode, mark?: "same" | "differs" | "check" | null) => (
+    <>
+      <dt className="text-ink-2">{label}</dt>
+      <dd className="min-w-0 break-words text-ink">{value}</dd>
+      <dd className="text-right text-[0.8125rem]">
+        {mark === "same" && (
+          <span className="inline-flex items-center gap-1 text-ink-2">
+            <Check aria-hidden="true" className="size-3.5 text-board-text" strokeWidth={2.5} />
+            Matches
+          </span>
+        )}
+        {(mark === "differs" || mark === "check") && (
+          <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
+            <span aria-hidden="true" className="size-2 rounded-full bg-amber" />
+            {mark === "differs" ? "Differs" : "Check this"}
+          </span>
+        )}
+      </dd>
+    </>
+  );
+
+  return (
+    <section aria-live="polite" className="mt-5 max-w-[36rem] rounded-2xl bg-ground-2 px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--line)]">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[0.9375rem] font-semibold text-ink">What the reader saw</p>
+        {!state.busy && (
+          <button type="button" onClick={() => read(true)} className="press h-8 rounded-full px-2.5 text-[0.8125rem] font-semibold text-ink-2 hover:text-ink">
+            Read again
+          </button>
+        )}
+      </div>
+      {state.busy ? (
+        <p className="mt-2 inline-flex items-center gap-2 text-[0.875rem] text-ink-2">
+          <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+          Reading the screenshot…
+        </p>
+      ) : r && !r.ok ? (
+        <p className="mt-2 text-[0.875rem] text-ink-2">{r.message} Check the screenshot by eye.</p>
+      ) : r && r.ok ? (
+        <>
+          <dl className="mt-2 grid grid-cols-[auto_1fr_auto] items-baseline gap-x-4 gap-y-1.5 text-[0.9375rem]">
+            {row(
+              "Amount",
+              r.fields.amount !== null ? <span className="tabular">{formatPeso(r.fields.amount)}</span> : "Not on it",
+              r.fields.amount === null ? null : Math.round(r.fields.amount * 100) === Math.round(amount * 100) ? "same" : "differs",
+            )}
+            {row(
+              "Reference",
+              r.fields.reference ? <span className="tabular">{formatReference(r.fields.provider ?? provider, r.fields.reference)}</span> : "Not on it",
+              !r.fields.reference || !reference ? null : cleanReference(r.fields.reference) === cleanReference(reference) ? "same" : "differs",
+            )}
+            {row(
+              "Provider",
+              name(r.fields.provider) ?? "Couldn’t tell",
+              r.fields.provider && provider ? (r.fields.provider === provider ? "same" : "differs") : null,
+            )}
+            {row("Status", r.fields.status ? { successful: "Successful", pending: "Pending", failed: "Failed", unknown: "Not shown" }[r.fields.status] : "—", r.fields.status && r.fields.status !== "successful" ? "check" : null)}
+            {r.fields.date && row("Date", <span className="tabular">{r.fields.date}</span>)}
+            {r.fields.recipient && row("Sent to", r.fields.recipient)}
+          </dl>
+          {r.concerns.length > 0 && (
+            <ul className="mt-2.5 flex flex-wrap gap-1.5">
+              {r.concerns.map((c) => (
+                <li key={c} className={`rounded-[0.875rem] px-2.5 py-0.5 text-[0.8125rem] font-semibold leading-snug ${c === "suspicious" ? "bg-ink text-ground" : "text-ink shadow-[inset_0_0_0_1px_var(--ink)]"}`}>
+                  {c === "suspicious" ? "May be edited" : c === "photo_quality" ? "Blurry or glared" : "More than one receipt"}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2.5 text-[0.8125rem] text-ink-2">The reader can be wrong. The shop’s own account decides.</p>
+        </>
+      ) : null}
+    </section>
   );
 }

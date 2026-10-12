@@ -6,6 +6,7 @@ import { pageShell } from "@/features/customer/shell/components/page-parts";
 import { SHOP } from "@/lib/shop";
 import { ORDER_TABLES } from "@/features/shared/orders/tables";
 import { fetchMyOrder } from "@/features/customer/orders/data";
+import { fetchProviders } from "@/features/shared/payments/data";
 import { requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = { title: "Order · J&J Sportswear" };
@@ -17,7 +18,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/or
   if (!UUID.test(id)) notFound();
   const { supabase, profile } = await requireCustomer();
   const sp = await searchParams;
-  const { order, error } = await fetchMyOrder(supabase, id);
+  const [{ order, error }, { providers }] = await Promise.all([fetchMyOrder(supabase, id), fetchProviders(supabase)]);
   if (error) {
     return (
       <div className={pageShell}>
@@ -36,7 +37,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/or
         order={order}
         flash={flash}
         uid={profile.id}
-        gcash={{ name: SHOP.gcashName, number: SHOP.gcashNumber, qr: SHOP.gcashQr }}
+        providers={providers.filter((p) => p.isActive && p.acceptsOnline)}
         pickup={{ name: SHOP.name, address: SHOP.address, city: SHOP.city, hours: SHOP.hours, phone: SHOP.phone }}
       />
     </>
