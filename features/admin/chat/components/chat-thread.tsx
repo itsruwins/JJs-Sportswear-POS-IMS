@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, Mail, Phone } from "lucide-react";
-import { personName } from "@/components/admin/orders/order-bits";
-import { unreadFor, type ChatCustomer, type ChatMessage, type CustomerOrder } from "@/lib/admin/chat";
-import { STATUS_LABEL } from "@/lib/admin/orders";
+import { personName } from "@/features/admin/orders/components/order-parts";
+import { unreadFor, type ChatCustomer, type ChatMessage, type CustomerOrder } from "@/features/admin/chat/data";
+import { STATUS_LABEL } from "@/features/admin/orders/data";
 import { clock, dayLabel, firstNameOf, initials, sameDay } from "@/features/shared/chat/format";
 import { Composer, MarkRead, ScrollToEnd } from "./chat-client";
 

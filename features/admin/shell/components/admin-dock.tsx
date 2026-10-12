@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Ellipsis } from "lucide-react";
-import { fetchUnreadChats } from "@/lib/admin/chat";
+import { fetchUnreadChats } from "@/features/admin/chat/data";
 import { createClient } from "@/lib/supabase/client";
-import type { StaffRole } from "@/lib/admin/session";
-import { navFor, type AdminSection } from "./nav";
+import type { StaffRole } from "@/features/admin/shell/session";
+import { navFor, type AdminSection } from "@/features/admin/shell/nav";
 import { usePopoverOpen } from "@/features/shared/ui/use-popover-open";
 
 function DockIcon({ section, soon = false }: { section: AdminSection; soon?: boolean }) {

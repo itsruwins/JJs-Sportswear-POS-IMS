@@ -4,8 +4,8 @@ import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, LoaderCircle, Mail, Phone, Search, UserPlus, X } from "lucide-react";
-import { changeRole, searchAccounts } from "@/app/admin/staff/actions";
-import { displayName, type Account, type AccountRole, type Member } from "@/lib/admin/staff";
+import { changeRole, searchAccounts } from "@/features/admin/staff/actions";
+import { displayName, type Account, type AccountRole, type Member } from "@/features/admin/staff/data";
 
 const secondary =
   "press inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3.5 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 disabled:opacity-60";

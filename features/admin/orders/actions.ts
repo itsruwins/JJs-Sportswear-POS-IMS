@@ -1,7 +1,7 @@
 "use server";
 
-import { PRODUCTION_MIGRATION, STEPS, type OrderStatus, type Step } from "@/lib/admin/orders";
-import { ownerSession } from "@/lib/admin/session";
+import { PRODUCTION_MIGRATION, STEPS, type OrderStatus, type Step } from "./data";
+import { ownerSession } from "@/features/admin/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const STEP_IDS = STEPS.map((s) => s.id);

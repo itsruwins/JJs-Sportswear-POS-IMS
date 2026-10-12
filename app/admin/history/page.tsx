@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { History } from "lucide-react";
-import { HistoryFilters } from "@/components/admin/history/history-filters";
-import { CsvLink } from "@/components/admin/reports/report-tables";
-import { HistoryList } from "@/components/admin/history/history-list";
+import { HistoryFilters } from "@/features/admin/history/components/history-filters";
+import { CsvLink } from "@/features/admin/reports/components/report-tables";
+import { HistoryList } from "@/features/admin/history/components/history-list";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
-import { fetchHistory, fetchHistoryOptions, HISTORY_STEP, MAX_SHOW, manilaToday, parseHistoryFilters, shiftDate } from "@/lib/admin/history";
-import { requireOwner } from "@/lib/admin/session";
+import { fetchHistory, fetchHistoryOptions, HISTORY_STEP, MAX_SHOW, manilaToday, parseHistoryFilters, shiftDate } from "@/features/admin/history/data";
+import { requireOwner } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "History · J&J Sportswear Admin" };
 

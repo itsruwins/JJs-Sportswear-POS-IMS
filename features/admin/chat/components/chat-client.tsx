@@ -3,9 +3,9 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, LoaderCircle, SendHorizontal, X } from "lucide-react";
-import { markThreadRead, sendMessage } from "@/app/admin/chat/actions";
-import { MESSAGE_MAX, type CustomerOrder } from "@/lib/admin/chat";
-import { STATUS_LABEL } from "@/lib/admin/orders";
+import { markThreadRead, sendMessage } from "@/features/admin/chat/actions";
+import { MESSAGE_MAX, type CustomerOrder } from "@/features/admin/chat/data";
+import { STATUS_LABEL } from "@/features/admin/orders/data";
 import { createClient } from "@/lib/supabase/client";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 

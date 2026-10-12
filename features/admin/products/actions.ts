@@ -1,7 +1,7 @@
 "use server";
 
-import { ownerSession, requireStaff } from "@/lib/admin/session";
-import { hasStockHistory } from "@/lib/admin/stock";
+import { ownerSession, requireStaff } from "@/features/admin/shell/session";
+import { hasStockHistory } from "@/features/admin/stock/data";
 import {
   normalizeTags,
   validateProduct,
@@ -9,7 +9,7 @@ import {
   type FieldErrors,
   type ProductInput,
   type VariantInput,
-} from "@/lib/admin/product-input";
+} from "./validation";
 
 export type ActionResult = { ok: true; id: string } | { ok: false; message: string; fieldErrors?: FieldErrors };
 

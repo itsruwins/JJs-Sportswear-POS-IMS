@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowRight, Check, ChevronRight, Shirt } from "lucide-react";
 import { formatPeso, type StockMove } from "@/features/shared/catalog/catalog";
-import type { StaffRole } from "@/lib/admin/session";
-import { RecentMoves } from "./stock/recent-moves";
-import { DOCK_SECTIONS, MORE_SECTIONS, ROLE_LABEL, visibleTo } from "./nav";
+import type { StaffRole } from "@/features/admin/shell/session";
+import { RecentMoves } from "@/features/admin/stock/components/recent-moves";
+import { DOCK_SECTIONS, MORE_SECTIONS, ROLE_LABEL, visibleTo } from "@/features/admin/shell/nav";
 import { ReadoutBoard, type Readout } from "./readout-board";
 
 export type RestockRow = {

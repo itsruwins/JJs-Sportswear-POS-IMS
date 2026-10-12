@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
-import { ReportPeriod } from "@/components/admin/reports/report-controls";
-import { SalesFigures, SalesList } from "@/components/admin/sales/sales-list";
-import { historyBounds, manilaToday, parseHistoryFilters, shiftDate } from "@/lib/admin/history";
-import { fetchSales, fetchSalesTotals } from "@/lib/admin/sales";
-import { requireStaff } from "@/lib/admin/session";
+import { ReportPeriod } from "@/features/admin/reports/components/report-controls";
+import { SalesFigures, SalesList } from "@/features/admin/sales/components/sales-list";
+import { historyBounds, manilaToday, parseHistoryFilters, shiftDate } from "@/features/admin/history/data";
+import { fetchSales, fetchSalesTotals } from "@/features/admin/sales/data";
+import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Sales · J&J Sportswear Admin" };
 

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { PackagePlus, Search, Shirt, X } from "lucide-react";
 import { productStock, sizeSummaries, type CatalogProduct } from "@/features/shared/catalog/catalog";
-import { ProductThumb, SizeRail } from "@/components/admin/products/product-bits";
+import { ProductThumb, SizeRail } from "@/features/admin/products/components/product-parts";
 import { AdjustSheet } from "./adjust-sheet";
 
 type Filter = "all" | "low" | "out";

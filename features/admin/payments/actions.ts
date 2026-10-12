@@ -1,8 +1,8 @@
 "use server";
 
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { PAYMENTS_MIGRATION, type PayMethod } from "@/lib/admin/payments";
-import { requireStaff } from "@/lib/admin/session";
+import { PAYMENTS_MIGRATION, type PayMethod } from "./data";
+import { requireStaff } from "@/features/admin/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const validId = (id: unknown): id is string => typeof id === "string" && UUID.test(id);

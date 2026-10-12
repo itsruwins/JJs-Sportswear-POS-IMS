@@ -12,7 +12,7 @@ import {
   unique,
   type CatalogProduct,
 } from "@/features/shared/catalog/catalog";
-import { Pill, ProductThumb, SizeRail } from "./product-bits";
+import { Pill, ProductThumb, SizeRail } from "./product-parts";
 
 export type Filter = "active" | "low" | "out" | "archived";
 export type Sort = "name" | "attention" | "updated";

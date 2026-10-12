@@ -4,11 +4,11 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, ChevronDown, LoaderCircle, Minus, Plus, Search, Trash2, X } from "lucide-react";
-import { createSale, type LineProblem } from "@/app/admin/pos/actions";
-import { ProductThumb } from "@/components/admin/products/product-bits";
+import { createSale, type LineProblem } from "@/features/admin/pos/actions";
+import { ProductThumb } from "@/features/admin/products/components/product-parts";
 import { FlipText } from "@/features/shared/ui/flip-text";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { formatGcashRef, type PaymentMethod } from "@/lib/admin/sales";
+import { formatGcashRef, type PaymentMethod } from "@/features/admin/sales/data";
 
 export type PosVariant = {
   id: string;

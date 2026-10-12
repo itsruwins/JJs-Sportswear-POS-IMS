@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { ArrowLeft, Mail, MessageCircle, Phone } from "lucide-react";
 import { clock, dayLabel, firstNameOf } from "@/features/shared/chat/format";
-import { unreadFor, type ChatMessage } from "@/lib/admin/chat";
+import { unreadFor, type ChatMessage } from "@/features/admin/chat/data";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { downPayment, PRODUCTION_MIGRATION, STATUS_LABEL, STEPS, VIEWS, type OrderDetail, type OrderStatus, type OrderView } from "@/lib/admin/orders";
+import { downPayment, PRODUCTION_MIGRATION, STATUS_LABEL, STEPS, VIEWS, type OrderDetail, type OrderStatus, type OrderView } from "@/features/admin/orders/data";
 import { CancelOrderButton, HandoverPanel, OrderFlash, PhotoManager, ProductionChecklist, ReviewPanel } from "./order-actions";
-import { PaymentException, RecordPayment, RecordRefund } from "@/components/admin/payments/payment-actions";
-import { PayPill } from "@/components/admin/payments/payment-bits";
-import { methodLine, PAY_TYPE_LABEL, PAYMENTS_MIGRATION, type OrderMoney } from "@/lib/admin/payments";
-import { ago, personName, StatusPill, when } from "./order-bits";
+import { PaymentException, RecordPayment, RecordRefund } from "@/features/admin/payments/components/payment-actions";
+import { PayPill } from "@/features/admin/payments/components/payment-parts";
+import { methodLine, PAY_TYPE_LABEL, PAYMENTS_MIGRATION, type OrderMoney } from "@/features/admin/payments/data";
+import { ago, personName, StatusPill, when } from "./order-parts";
 
 const TRACK: { status: OrderStatus; label: string }[] = [
   { status: "pending", label: "Placed" },

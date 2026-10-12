@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
-import { csvResponse } from "@/lib/admin/csv";
-import { fetchHistoryForExport, historyBounds, manilaToday, parseHistoryFilters } from "@/lib/admin/history";
-import { fetchMovements, fetchStockRows, needsRestock, STATE_LABEL } from "@/lib/admin/inventory";
-import { fetchSalesReport } from "@/lib/admin/sales-report";
-import { requireStaff } from "@/lib/admin/session";
+import { csvResponse } from "@/features/admin/reports/csv";
+import { fetchHistoryForExport, historyBounds, manilaToday, parseHistoryFilters } from "@/features/admin/history/data";
+import { fetchMovements, fetchStockRows, needsRestock, STATE_LABEL } from "@/features/admin/stock/data";
+import { fetchSalesReport } from "@/features/admin/reports/data";
+import { requireStaff } from "@/features/admin/shell/session";
 
 const SALES_KINDS = ["sales-summary", "sales-series", "sales-products", "sales-variants", "sales-cashiers"];
 

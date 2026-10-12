@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { change, type SalesReport } from "@/lib/admin/sales-report";
+import { change, type SalesReport } from "@/features/admin/reports/data";
 import { CsvLink, ReportSection, Scroll, stick } from "./report-tables";
 import { SalesChart } from "./sales-chart";
 

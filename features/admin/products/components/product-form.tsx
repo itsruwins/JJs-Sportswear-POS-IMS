@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, LoaderCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { saveProduct } from "@/app/admin/products/actions";
+import { saveProduct } from "@/features/admin/products/actions";
 import { SIZE_GROUPS, STANDARD_SIZES, UPCHARGE_SIZES } from "@/features/shared/catalog/sizes";
-import { suggestSku } from "@/lib/admin/sku";
+import { suggestSku } from "@/features/admin/products/sku";
 import { formatPeso, sortSizes, unique, variantState, type CatalogProduct } from "@/features/shared/catalog/catalog";
 import {
   LIMITS,
@@ -16,7 +16,7 @@ import {
   variantKey,
   type FieldErrors,
   type ProductInput,
-} from "@/lib/admin/product-input";
+} from "@/features/admin/products/validation";
 import { ChipInput } from "./chip-input";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { PhotoPicker, type PhotoItem } from "./photo-picker";

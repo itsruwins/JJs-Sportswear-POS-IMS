@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
-import { Pill } from "@/components/admin/products/product-bits";
+import { Pill } from "@/features/admin/products/components/product-parts";
 import { formatPeso, type StockState } from "@/features/shared/catalog/catalog";
-import { variantLabel, type Movement, type ProductGroup, type StockRow } from "@/lib/admin/inventory";
+import { variantLabel, type Movement, type ProductGroup, type StockRow } from "@/features/admin/stock/data";
 
 const th = "voice-label border-b border-line py-2.5 pr-4 text-[0.8125rem] font-semibold text-ink-2";
 const td = "border-b border-line py-2.5 pr-4";

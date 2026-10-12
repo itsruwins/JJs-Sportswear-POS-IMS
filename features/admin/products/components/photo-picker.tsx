@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import { ImagePlus, Star, X } from "lucide-react";
-import { LIMITS } from "@/lib/admin/product-input";
+import { LIMITS } from "@/features/admin/products/validation";
 
 export type PhotoItem = {
   key: string;

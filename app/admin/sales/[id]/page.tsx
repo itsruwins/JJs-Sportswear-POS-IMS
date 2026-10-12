@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Check, Plus } from "lucide-react";
-import { Receipt } from "@/components/admin/sales/receipt";
-import { PrintButtons, VoidSaleButton } from "@/components/admin/sales/receipt-actions";
-import { manilaToday } from "@/lib/admin/history";
-import { fetchSale } from "@/lib/admin/sales";
-import { requireStaff } from "@/lib/admin/session";
+import { Receipt } from "@/features/admin/sales/components/receipt";
+import { PrintButtons, VoidSaleButton } from "@/features/admin/sales/components/receipt-actions";
+import { manilaToday } from "@/features/admin/history/data";
+import { fetchSale } from "@/features/admin/sales/data";
+import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Receipt · J&J Sportswear Admin" };
 

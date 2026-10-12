@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import type { Bucket, SeriesPoint } from "@/lib/admin/sales-report";
+import type { Bucket, SeriesPoint } from "@/features/admin/reports/data";
 
 /** Clean axis steps: 1, 2, or 5 × a power of ten, about four of them. */
 function ticksFor(max: number) {

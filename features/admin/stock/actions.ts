@@ -1,7 +1,7 @@
 "use server";
 
-import { ownerSession } from "@/lib/admin/session";
-import { MAX_AMOUNT, STOCK_ACTIONS, stockReason, type StockAction } from "@/lib/admin/stock-types";
+import { ownerSession } from "@/features/admin/shell/session";
+import { MAX_AMOUNT, STOCK_ACTIONS, stockReason, type StockAction } from "./model";
 
 export type StockEntry = { variantId: string; amount: number };
 

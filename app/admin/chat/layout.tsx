@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ChatShell } from "@/components/admin/chat/chat-shell";
+import { ChatShell } from "@/features/admin/chat/components/chat-shell";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
-import { CHAT_MIGRATION, fetchInbox } from "@/lib/admin/chat";
-import { requireStaff, STAFF_HOME } from "@/lib/admin/session";
+import { CHAT_MIGRATION, fetchInbox } from "@/features/admin/chat/data";
+import { requireStaff, STAFF_HOME } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Chat · J&J Sportswear Admin" };
 

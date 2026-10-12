@@ -4,8 +4,8 @@ import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, ClipboardList, Search, X } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import type { OrderSummary, OrderView } from "@/lib/admin/orders";
-import { personName, StatusPill } from "./order-bits";
+import type { OrderSummary, OrderView } from "@/features/admin/orders/data";
+import { personName, StatusPill } from "./order-parts";
 
 /** Orders in the current tab, with a search over order number, customer, and what they asked for. */
 export function OrdersList({ orders, ages, emptyNote, view }: { orders: OrderSummary[]; ages: Record<string, string>; emptyNote: string; view: OrderView }) {

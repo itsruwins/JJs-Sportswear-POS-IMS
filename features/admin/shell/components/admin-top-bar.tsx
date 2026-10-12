@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut, Store } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { StaffRole } from "@/lib/admin/session";
+import type { StaffRole } from "@/features/admin/shell/session";
 import { Wordmark } from "@/features/shared/ui/wordmark";
 import { ThemeButton } from "@/features/shared/ui/theme-button";
-import { ROLE_LABEL, STAFF_HOME } from "./nav";
+import { ROLE_LABEL, STAFF_HOME } from "@/features/admin/shell/nav";
 import { NotificationBell } from "@/features/shared/ui/notification-bell";
 import { usePopoverOpen } from "@/features/shared/ui/use-popover-open";
 

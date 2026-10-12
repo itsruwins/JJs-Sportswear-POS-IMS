@@ -3,10 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CircleCheck } from "lucide-react";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
-import { ProductActions } from "@/components/admin/products/product-actions";
-import { AdjustStockButton } from "@/components/admin/stock/adjust-button";
-import { RecentMoves } from "@/components/admin/stock/recent-moves";
-import { Pill, ProductThumb } from "@/components/admin/products/product-bits";
+import { ProductActions } from "@/features/admin/products/components/product-actions";
+import { AdjustStockButton } from "@/features/admin/stock/components/adjust-button";
+import { RecentMoves } from "@/features/admin/stock/components/recent-moves";
+import { Pill, ProductThumb } from "@/features/admin/products/components/product-parts";
 import {
   fetchProduct,
   fetchRecentMoves,
@@ -19,8 +19,8 @@ import {
   unique,
   variantState,
 } from "@/features/shared/catalog/catalog";
-import { requireStaff } from "@/lib/admin/session";
-import { hasStockHistory } from "@/lib/admin/stock";
+import { requireStaff } from "@/features/admin/shell/session";
+import { hasStockHistory } from "@/features/admin/stock/data";
 
 export const metadata: Metadata = { title: "Product · J&J Sportswear Admin" };
 

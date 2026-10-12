@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Ban, LoaderCircle, Printer } from "lucide-react";
-import { voidSale } from "@/app/admin/pos/actions";
+import { voidSale } from "@/features/admin/pos/actions";
 
 type Paper = "thermal" | "a4";
 

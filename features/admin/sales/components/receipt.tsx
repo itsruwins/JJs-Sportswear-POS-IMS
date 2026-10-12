@@ -1,5 +1,5 @@
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { formatGcashRef, METHOD_LABEL, personName, type SaleDetail } from "@/lib/admin/sales";
+import { formatGcashRef, METHOD_LABEL, personName, type SaleDetail } from "@/features/admin/sales/data";
 import { SHOP } from "@/lib/shop";
 
 const when = (iso: string) =>

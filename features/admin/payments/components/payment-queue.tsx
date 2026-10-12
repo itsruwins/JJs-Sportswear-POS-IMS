@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ChevronRight, Wallet } from "lucide-react";
-import { ago, personName } from "@/components/admin/orders/order-bits";
+import { ago, personName } from "@/features/admin/orders/components/order-parts";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { methodLine, PAY_TYPE_LABEL, QUEUE_VIEWS, type QueueRow, type QueueView } from "@/lib/admin/payments";
-import { PayPill } from "./payment-bits";
+import { methodLine, PAY_TYPE_LABEL, QUEUE_VIEWS, type QueueRow, type QueueView } from "@/features/admin/payments/data";
+import { PayPill } from "./payment-parts";
 
 const EMPTY: Record<QueueView, string> = {
   submitted: "Nothing to review. GCash payments customers send for their custom orders show up here.",

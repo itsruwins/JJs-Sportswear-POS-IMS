@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
-import { ChatThread } from "@/components/admin/chat/chat-thread";
-import { fetchThread, findCustomer } from "@/lib/admin/chat";
-import { requireStaff, STAFF_HOME } from "@/lib/admin/session";
+import { ChatThread } from "@/features/admin/chat/components/chat-thread";
+import { fetchThread, findCustomer } from "@/features/admin/chat/data";
+import { requireStaff, STAFF_HOME } from "@/features/admin/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

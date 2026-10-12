@@ -16,10 +16,10 @@ import {
   savePrice,
   setStep,
   type OrderResult,
-} from "@/app/admin/orders/actions";
+} from "@/features/admin/orders/actions";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { downPayment, STEPS, type OrderStatus, type Step } from "@/lib/admin/orders";
+import { downPayment, STEPS, type OrderStatus, type Step } from "@/features/admin/orders/data";
 import { createClient } from "@/lib/supabase/client";
 
 const green = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-50";

@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, ImagePlus, LoaderCircle, Plus, X } from "lucide-react";
-import { overrideRule, recordPayment, recordRefund, rejectPayment, verifyPayment } from "@/app/admin/payments/actions";
-import { Outcome, ReasonDialog, useAction } from "@/components/admin/orders/order-actions";
+import { overrideRule, recordPayment, recordRefund, rejectPayment, verifyPayment } from "@/features/admin/payments/actions";
+import { Outcome, ReasonDialog, useAction } from "@/features/admin/orders/components/order-actions";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import type { PayMethod } from "@/lib/admin/payments";
-import { formatGcashRef } from "@/lib/admin/sales";
+import type { PayMethod } from "@/features/admin/payments/data";
+import { formatGcashRef } from "@/features/admin/sales/data";
 import { createClient } from "@/lib/supabase/client";
 
 const green = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-50";

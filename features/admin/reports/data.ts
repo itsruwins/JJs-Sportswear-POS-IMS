@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { historyBounds, manilaToday, shiftDate, type HistoryFilters } from "./history";
+import { historyBounds, manilaToday, shiftDate, type HistoryFilters } from "@/features/admin/history/data";
 
 export type Bucket = "hour" | "day" | "month";
 

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { manilaToday, shiftDate } from "./history";
-import type { StaffRole } from "./session";
+import { manilaToday, shiftDate } from "@/features/admin/history/data";
+import type { StaffRole } from "@/features/admin/shell/session";
 
 export type AccountRole = "customer" | StaffRole;
 

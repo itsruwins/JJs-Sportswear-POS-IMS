@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Archive, ArchiveRestore, LoaderCircle, Pencil, Trash2 } from "lucide-react";
-import { deleteProduct, setProductArchived } from "@/app/admin/products/actions";
+import { deleteProduct, setProductArchived } from "@/features/admin/products/actions";
 
 type Props = {
   id: string;

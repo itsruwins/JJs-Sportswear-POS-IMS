@@ -1,4 +1,4 @@
-import { PAY_STATUS_LABEL, type PayStatus } from "@/lib/admin/payments";
+import { PAY_STATUS_LABEL, type PayStatus } from "@/features/admin/payments/data";
 
 /** A payment's status: amber only while it waits on the shop (to review), like a new order. */
 export function PayPill({ status }: { status: PayStatus }) {

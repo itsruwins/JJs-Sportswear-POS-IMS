@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
-import { OrderView } from "@/components/admin/orders/order-view";
-import { fetchOrder, VIEWS, type OrderView as OrdersTab } from "@/lib/admin/orders";
+import { OrderView } from "@/features/admin/orders/components/order-view";
+import { fetchOrder, VIEWS, type OrderView as OrdersTab } from "@/features/admin/orders/data";
 import { ORDER_TABLES } from "@/features/shared/orders/tables";
-import { fetchOrderMessages } from "@/lib/admin/chat";
-import { fetchOrderMoney } from "@/lib/admin/payments";
-import { requireStaff } from "@/lib/admin/session";
+import { fetchOrderMessages } from "@/features/admin/chat/data";
+import { fetchOrderMoney } from "@/features/admin/payments/data";
+import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Custom order · J&J Sportswear Admin" };
 

@@ -1,7 +1,7 @@
 "use server";
 
-import { CHAT_MIGRATION, CHAT_PHOTOS_MIGRATION, MESSAGE_MAX } from "@/lib/admin/chat";
-import { requireStaff } from "@/lib/admin/session";
+import { CHAT_MIGRATION, CHAT_PHOTOS_MIGRATION, MESSAGE_MAX } from "./data";
+import { requireStaff } from "@/features/admin/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const validId = (id: unknown): id is string => typeof id === "string" && UUID.test(id);

@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MessageCircle, Search } from "lucide-react";
-import { personName } from "@/components/admin/orders/order-bits";
-import type { InboxRow } from "@/lib/admin/chat";
+import { personName } from "@/features/admin/orders/components/order-parts";
+import type { InboxRow } from "@/features/admin/chat/data";
 import { initials, inboxTime } from "@/features/shared/chat/format";
 
 type Props = {

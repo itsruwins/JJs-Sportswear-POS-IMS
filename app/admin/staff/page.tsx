@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
-import { StaffScreen } from "@/components/admin/staff/staff-screen";
-import { requireStaff, STAFF_HOME } from "@/lib/admin/session";
-import { fetchTeam } from "@/lib/admin/staff";
+import { StaffScreen } from "@/features/admin/staff/components/staff-screen";
+import { requireStaff, STAFF_HOME } from "@/features/admin/shell/session";
+import { fetchTeam } from "@/features/admin/staff/data";
 
 export const metadata: Metadata = { title: "Staff · J&J Sportswear Admin" };
 

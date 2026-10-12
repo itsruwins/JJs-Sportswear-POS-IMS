@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { OrderStatus } from "./orders";
+import type { OrderStatus } from "@/features/admin/orders/data";
 
 export const CHAT_MIGRATION = "supabase/migrations/20261011000000_owner_chat.sql";
 export const CHAT_PHOTOS_MIGRATION = "supabase/migrations/20261015000000_chat_photos.sql";

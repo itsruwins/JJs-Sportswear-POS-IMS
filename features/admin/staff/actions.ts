@@ -1,7 +1,7 @@
 "use server";
 
-import { ownerSession } from "@/lib/admin/session";
-import { displayName, PROFILE_COLUMNS, toAccount, type Account, type AccountRole } from "@/lib/admin/staff";
+import { ownerSession } from "@/features/admin/shell/session";
+import { displayName, PROFILE_COLUMNS, toAccount, type Account, type AccountRole } from "./data";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ROLES: AccountRole[] = ["customer", "staff", "owner"];

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { downPayment, type OrderStatus } from "./orders";
+import { downPayment, type OrderStatus } from "@/features/admin/orders/data";
 
 export type PayStatus = "pending" | "submitted" | "verified" | "rejected";
 export type PayMethod = "cash" | "gcash";

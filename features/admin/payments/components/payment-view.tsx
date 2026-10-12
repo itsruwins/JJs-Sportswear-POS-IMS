@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { OrderFlash } from "@/components/admin/orders/order-actions";
-import { personName, when } from "@/components/admin/orders/order-bits";
-import { PrintButtons } from "@/components/admin/sales/receipt-actions";
+import { OrderFlash } from "@/features/admin/orders/components/order-actions";
+import { personName, when } from "@/features/admin/orders/components/order-parts";
+import { PrintButtons } from "@/features/admin/sales/components/receipt-actions";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { methodLine, PAY_TYPE_LABEL, type PaymentDetail } from "@/lib/admin/payments";
-import { formatGcashRef } from "@/lib/admin/sales";
+import { methodLine, PAY_TYPE_LABEL, type PaymentDetail } from "@/features/admin/payments/data";
+import { formatGcashRef } from "@/features/admin/sales/data";
 import { SHOP } from "@/lib/shop";
 import { ReviewPayment } from "./payment-actions";
-import { PayPill } from "./payment-bits";
+import { PayPill } from "./payment-parts";
 
 const round = (n: number) => Math.round(n * 100) / 100;
 /** Recorded by staff at the counter: saved as verified in the same moment it was created. */

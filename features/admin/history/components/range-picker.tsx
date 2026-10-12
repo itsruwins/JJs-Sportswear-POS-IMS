@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
-import type { HistoryRange } from "@/lib/admin/history";
+import type { HistoryRange } from "@/features/admin/history/data";
 
 const RANGES: { id: HistoryRange; label: string }[] = [
   { id: "today", label: "Today" },

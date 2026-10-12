@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import type { HistoryFilters as Filters, HistoryType } from "@/lib/admin/history";
+import type { HistoryFilters as Filters, HistoryType } from "@/features/admin/history/data";
 import { filterSelect as select, RangePicker } from "./range-picker";
 
 const TYPES: { id: HistoryType; label: string }[] = [

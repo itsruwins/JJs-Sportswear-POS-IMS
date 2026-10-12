@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, ReceiptText } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { METHOD_LABEL, personName, type SaleSummary, type SalesTotals } from "@/lib/admin/sales";
+import { METHOD_LABEL, personName, type SaleSummary, type SalesTotals } from "@/features/admin/sales/data";
 
 /** The owner's figures for the period: standing sales only, voids noted apart. */
 export function SalesFigures({ totals }: { totals: SalesTotals }) {

@@ -3,8 +3,8 @@
 import { useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Printer } from "lucide-react";
-import { RangePicker, type RangePatch } from "@/components/admin/history/range-picker";
-import type { HistoryRange } from "@/lib/admin/history";
+import { RangePicker, type RangePatch } from "@/features/admin/history/components/range-picker";
+import type { HistoryRange } from "@/features/admin/history/data";
 
 /** A page's period, kept in the URL; the default range (30 days on Reports) stays out of it. */
 export function ReportPeriod({

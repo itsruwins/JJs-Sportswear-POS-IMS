@@ -12,7 +12,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import type { StaffRole } from "@/lib/admin/session";
+import type { StaffRole } from "./session";
 
 export type AdminSection = {
   label: string;

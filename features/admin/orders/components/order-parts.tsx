@@ -1,4 +1,4 @@
-import { STATUS_LABEL, type OrderStatus } from "@/lib/admin/orders";
+import { STATUS_LABEL, type OrderStatus } from "@/features/admin/orders/data";
 
 /**
  * An order's status. Amber marks the one state waiting on the shop (a new order to review);

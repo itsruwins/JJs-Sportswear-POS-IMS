@@ -1,7 +1,7 @@
 "use server";
 
-import { requireStaff } from "@/lib/admin/session";
-import type { PaymentMethod } from "@/lib/admin/sales";
+import { requireStaff } from "@/features/admin/shell/session";
+import type { PaymentMethod } from "@/features/admin/sales/data";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // The final sale function arrives with this follow-up (after 20261007000000_pos_gcash_and_voids.sql).
