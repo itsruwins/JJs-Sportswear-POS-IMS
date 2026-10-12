@@ -1902,3 +1902,102 @@ button.admin-dock-item[data-current="true"]:hover {
     box-shadow: inset 0 0 0 1.5px black;
   }
 }
+
+/* ---------- Admin: point of sale, e-payment sheet ---------- */
+
+/* The receipt photo sits on the light photo backdrop, uncropped, the way it was taken. */
+.scan-photo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 1.125rem;
+  background: var(--photo-bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.scan-photo img {
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  transition: opacity 220ms var(--ease-out), filter 220ms var(--ease-out);
+}
+.scan-photo[data-busy] img {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+.scan-reading {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ground);
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.scan-thumb {
+  width: 4.5rem;
+  height: 6rem;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: var(--photo-bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.scan-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* What the payment means for the sale. Quiet ground-2 when it's only information; an amber
+   edge (never a fill) while something needs the cashier now, like the pay notice. */
+.scan-notices {
+  display: grid;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  background: var(--ground-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  padding: 0.875rem 1rem;
+}
+.scan-notices-urgent {
+  box-shadow: inset 0 0 0 1.5px var(--amber);
+}
+.scan-notices b {
+  font-weight: 650;
+}
+
+.scan-check {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  flex-shrink: 0;
+  border-radius: 0.375rem;
+  background: var(--ground);
+  box-shadow: inset 0 0 0 1.5px var(--ink-2);
+  transition: background-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+.scan-check:checked {
+  background: var(--ink);
+  box-shadow: none;
+}
+.scan-check:checked::after {
+  content: "";
+  width: 0.4rem;
+  height: 0.7rem;
+  margin-top: -0.15rem;
+  border: solid var(--ground);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-photo img,
+  .scan-check {
+    transition: none;
+  }
+}

@@ -8,7 +8,11 @@ import { createSale, type LineProblem, type PaymentPart } from "@/features/admin
 import { ProductThumb } from "@/features/admin/products/components/product-parts";
 import { FlipText } from "@/features/shared/ui/flip-text";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { cleanReference, digitsOnly, formatReference, referenceFits, referenceLength, type PaymentProvider } from "@/features/shared/payments/model";
+import type { PaymentProvider } from "@/features/shared/payments/model";
+import { parseAmount, roundPeso } from "@/features/admin/pos/amounts";
+import type { EPayment } from "@/features/admin/pos/scan";
+import { PosPayments } from "@/features/admin/pos/components/pos-payments";
+import { PosScanSheet, type ReceiptPhoto, type ScanSession } from "@/features/admin/pos/components/pos-scan-sheet";
 
 export type PosVariant = {
   id: string;
@@ -25,12 +29,10 @@ type CartLine = { variantId: string; qty: number };
 type Line = CartLine & { product: PosProduct | null; variant: PosVariant | null };
 type Issue = { kind: "short"; available: number } | { kind: "unavailable" } | null;
 
-type Method = "cash" | "e_payment";
-
-/** The sale in progress, kept for this browser tab so a stray tap or a refresh doesn't lose it. */
-type Saved = { cart: CartLine[]; method: Method; cash: string; provider: string; reference: string; key: string };
-/** A sale saved before e-payments: "gcash" as the method, the reference under `gcash`. */
-type OldSaved = Partial<Omit<Saved, "method">> & { method?: Method | "gcash"; gcash?: string };
+/** The sale in progress, kept for this browser tab so a stray tap or a refresh doesn't lose it (receipt photos aren't kept). */
+type Saved = { cart: CartLine[]; cashOn: boolean; cash: string; ePayments: EPayment[]; key: string };
+/** A sale saved by an earlier version: one method ("gcash" before e-payments), and no list of e-payments. */
+type OldSaved = Partial<Saved> & { method?: "cash" | "e_payment" | "gcash" };
 const STORE = "jj-pos-sale";
 
 const variantName = (v: Pick<PosVariant, "size" | "color">) => [v.size, v.color].filter(Boolean).join(" · ") || "One size";
@@ -49,17 +51,6 @@ function matches(p: PosProduct, tokens: string[]) {
   });
 }
 
-/** Bills a customer is likely to hand over, above the total. */
-function quickAmounts(total: number) {
-  const steps = [100, 500, 1000].map((s) => Math.ceil(total / s) * s);
-  return [...new Set(steps)].filter((a) => a > total).slice(0, 3);
-}
-
-const parseAmount = (s: string) => {
-  const n = Number(s.replace(/[^\d.]/g, ""));
-  return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
-};
-
 /** The counter screen: search and pick on the left, the sale on the right (a second step on phones). */
 export function PosScreen({ products, providers, header }: { products: PosProduct[]; providers: PaymentProvider[]; header?: React.ReactNode }) {
   const router = useRouter();
@@ -71,10 +62,13 @@ export function PosScreen({ products, providers, header }: { products: PosProduc
   const [open, setOpen] = useState<string | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [view, setView] = useState<"pick" | "cart">("pick");
-  const [method, setMethod] = useState<Method>("cash");
+  // Payments: cash (when on) plus any e-payments, in the order they were added.
+  const [cashOn, setCashOn] = useState(true);
   const [cash, setCash] = useState("");
-  const [provider, setProvider] = useState(providers[0]?.code ?? "");
-  const [reference, setReference] = useState("");
+  const [ePayments, setEPayments] = useState<EPayment[]>([]);
+  // The e-payment sheet, and the receipt photos taken in this tab (kept to reopen a payment; never saved).
+  const [session, setSession] = useState<ScanSession | null>(null);
+  const [photos, setPhotos] = useState<Record<string, ReceiptPhoto>>({});
   // One key per sale: a Charge retried after a lost reply returns the same sale, never a second one.
   const [saleKey, setSaleKey] = useState(newKey);
   const [restored, setRestored] = useState(false);
@@ -92,11 +86,9 @@ export function PosScreen({ products, providers, header }: { products: PosProduc
       if (saved?.cart?.length) {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring browser storage once, after hydration
         setCart(saved.cart);
-        setMethod(saved.method === "e_payment" || saved.method === "gcash" ? "e_payment" : "cash");
+        setCashOn(saved.cashOn ?? !(saved.method === "e_payment" || saved.method === "gcash"));
         setCash(saved.cash ?? "");
-        const code = saved.provider ?? (saved.method === "gcash" ? "gcash" : "");
-        if (providers.some((p) => p.code === code)) setProvider(code);
-        setReference(saved.reference ?? saved.gcash ?? "");
+        setEPayments((saved.ePayments ?? []).filter((p) => providers.some((x) => x.code === p.provider)));
         if (saved.key) setSaleKey(saved.key);
       }
     } catch {
@@ -110,12 +102,12 @@ export function PosScreen({ products, providers, header }: { products: PosProduc
   useEffect(() => {
     if (!restored) return;
     try {
-      if (cart.length) sessionStorage.setItem(STORE, JSON.stringify({ cart, method, cash, provider, reference, key: saleKey } satisfies Saved));
+      if (cart.length) sessionStorage.setItem(STORE, JSON.stringify({ cart, cashOn, cash, ePayments, key: saleKey } satisfies Saved));
       else sessionStorage.removeItem(STORE);
     } catch {
       // See above.
     }
-  }, [restored, cart, method, cash, provider, reference, saleKey]);
+  }, [restored, cart, cashOn, cash, ePayments, saleKey]);
 
   // Counters with a keyboard start typing straight away; phones don't get the keyboard thrown up.
   useEffect(() => {
@@ -158,17 +150,37 @@ export function PosScreen({ products, providers, header }: { products: PosProduc
   const hasIssue = lines.some((l) => issueOf(l));
   const inCart = (variantId: string) => cart.find((c) => c.variantId === variantId)?.qty ?? 0;
 
-  const received = method === "cash" ? parseAmount(cash) : total;
-  const chosen = providers.find((p) => p.code === provider) ?? null;
-  const paymentOk = method === "cash" ? received >= total : chosen !== null && referenceFits(chosen, reference);
+  // The same rules the database applies: the payments cover the total, change is cash, and cash
+  // on top of e-payments that already cover the total would only come straight back out.
+  const received = cashOn ? parseAmount(cash) : 0;
+  const epay = roundPeso(ePayments.reduce((s, p) => s + p.amount, 0));
+  const due = roundPeso(total - received - epay);
+  const cashNotNeeded = received > 0 && ePayments.length > 0 && epay >= total;
+  const started = ePayments.length > 0 || (cashOn && cash.trim() !== "");
+  const paymentOk = started && due <= 0 && !cashNotNeeded;
   const canCharge = lines.length > 0 && !hasIssue && paymentOk && !busy;
   const blocked = hasIssue
     ? "Fix the flagged items first."
-    : method === "cash"
-      ? cash.trim() === ""
+    : !started
+      ? cashOn
         ? "Enter the cash received."
-        : `Cash is short by ${formatPeso(Math.round((total - received) * 100) / 100)}.`
-      : referenceBlocked(chosen, reference);
+        : "Pick the bank or e-wallet, then photograph the receipt."
+      : cashNotNeeded
+        ? "The e-payments already cover the total. Remove the cash."
+        : ePayments.length === 0
+          ? `Cash is short by ${formatPeso(due)}.`
+          : `${formatPeso(due)} still due.`;
+  // What a new (or reopened) e-payment has left to cover: the total less every other payment.
+  const dueFor = (id: string | null) => roundPeso(total - received - ePayments.filter((p) => p.id !== id).reduce((s, p) => s + p.amount, 0));
+
+  const dropPhoto = (id: string) =>
+    setPhotos((all) => {
+      if (!all[id]) return all;
+      URL.revokeObjectURL(all[id].url);
+      const rest = { ...all };
+      delete rest[id];
+      return rest;
+    });
 
   const setQty = (variantId: string, qty: number) => {
     const l = lines.find((x) => x.variantId === variantId);
@@ -193,7 +205,10 @@ export function PosScreen({ products, providers, header }: { products: PosProduc
     setCart([]);
     setRefused({});
     setCash("");
-    setReference("");
+    setCashOn(true);
+    setEPayments([]);
+    Object.values(photos).forEach((p) => URL.revokeObjectURL(p.url));
+    setPhotos({});
     setError(null);
     setSaleKey(newKey());
     setView("pick");
@@ -214,10 +229,10 @@ export function PosScreen({ products, providers, header }: { products: PosProduc
     if (!canCharge) return;
     setBusy(true);
     setError(null);
-    const payments: PaymentPart[] =
-      method === "cash" || !chosen
-        ? [{ method: "cash", amount: received }]
-        : [{ method: "e_payment", provider: chosen.code, reference: cleanReference(reference), amount: total }];
+    const payments: PaymentPart[] = [
+      ...ePayments.map((p) => ({ method: "e_payment" as const, provider: p.provider, reference: p.reference, amount: p.amount })),
+      ...(received > 0 ? [{ method: "cash" as const, amount: received }] : []),
+    ];
     try {
       const result = await createSale(
         lines.map((l) => ({ variantId: l.variantId, quantity: l.qty })),
@@ -380,28 +395,28 @@ export function PosScreen({ products, providers, header }: { products: PosProduc
             </div>
 
             <div className="mt-4">
-              <Payment
-                method={method}
-                onMethod={(m) => {
-                  setMethod(m);
+              <PosPayments
+                total={total}
+                providers={providers}
+                cashOn={cashOn}
+                onCashOn={(on) => {
+                  setCashOn(on);
                   setError(null);
                 }}
-                total={total}
                 cash={cash}
                 onCash={(v) => {
                   setCash(v);
                   setError(null);
                 }}
-                providers={providers}
-                provider={chosen}
-                onProvider={(code) => {
-                  if (code !== provider) setReference("");
-                  setProvider(code);
-                  setError(null);
+                ePayments={ePayments}
+                onNew={(code) => setSession({ id: crypto.randomUUID(), provider: code, editing: null })}
+                onEdit={(id) => {
+                  const p = ePayments.find((x) => x.id === id);
+                  if (p) setSession({ id: crypto.randomUUID(), provider: p.provider, editing: p });
                 }}
-                reference={reference}
-                onReference={(v) => {
-                  setReference(v);
+                onRemove={(id) => {
+                  setEPayments((all) => all.filter((p) => p.id !== id));
+                  dropPhoto(id);
                   setError(null);
                 }}
               />
@@ -433,6 +448,35 @@ export function PosScreen({ products, providers, header }: { products: PosProduc
           </form>
         )}
       </aside>
+
+      <PosScanSheet
+        session={session}
+        providers={providers}
+        due={dueFor(session?.editing?.id ?? null)}
+        others={ePayments}
+        photo={session?.editing ? (photos[session.editing.id] ?? null) : null}
+        onProvider={(code) => setSession((s) => (s ? { ...s, provider: code } : s))}
+        onAdd={(payment, photo) => {
+          setEPayments((all) => (all.some((p) => p.id === payment.id) ? all.map((p) => (p.id === payment.id ? payment : p)) : [...all, payment]));
+          setPhotos((all) => {
+            const old = all[payment.id];
+            if (old && old.url !== photo?.url) URL.revokeObjectURL(old.url);
+            const rest = { ...all };
+            if (photo) rest[payment.id] = photo;
+            else delete rest[payment.id];
+            return rest;
+          });
+          setError(null);
+          setSaid(`Added ${providers.find((x) => x.code === payment.provider)?.name ?? "e-payment"} payment of ${formatPeso(payment.amount)}.`);
+          setSession(null);
+        }}
+        onRemove={(id) => {
+          setEPayments((all) => all.filter((p) => p.id !== id));
+          dropPhoto(id);
+          setSession(null);
+        }}
+        onClose={() => setSession(null)}
+      />
 
       {/* Phones and tablets: the sale is one tap away while picking. */}
       {lines.length > 0 && view === "pick" && (
@@ -641,163 +685,5 @@ function CartRow({
         </div>
       )}
     </li>
-  );
-}
-
-/** What's still missing before an e-payment can be charged, said under the Charge button. */
-function referenceBlocked(provider: PaymentProvider | null, reference: string) {
-  if (!provider) return "Pick the bank or e-wallet the customer paid with.";
-  const length = referenceLength(provider);
-  const typed = cleanReference(reference).length;
-  if (length) return `Enter the ${length}-digit ${provider.name} reference (${typed}/${length}).`;
-  return typed ? `That ${provider.name} reference doesn’t look complete.` : `Enter the ${provider.name} reference number.`;
-}
-
-function Payment({
-  method,
-  onMethod,
-  total,
-  cash,
-  onCash,
-  providers,
-  provider,
-  onProvider,
-  reference,
-  onReference,
-}: {
-  method: Method;
-  onMethod: (m: Method) => void;
-  total: number;
-  cash: string;
-  onCash: (v: string) => void;
-  providers: PaymentProvider[];
-  provider: PaymentProvider | null;
-  onProvider: (code: string) => void;
-  reference: string;
-  onReference: (v: string) => void;
-}) {
-  const cashId = useId();
-  const refId = useId();
-  const providerId = useId();
-  const received = parseAmount(cash);
-  const length = provider ? referenceLength(provider) : null;
-  const numeric = provider ? digitsOnly(provider) : false;
-  const fits = provider ? referenceFits(provider, reference) : false;
-  const typed = cleanReference(reference).length;
-
-  return (
-    <div>
-      <div role="group" aria-label="Payment" className="grid grid-cols-2 gap-1 rounded-xl bg-ground-2 p-1 shadow-[inset_0_0_0_1px_var(--line)]">
-        {(["cash", "e_payment"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            aria-pressed={method === m}
-            onClick={() => onMethod(m)}
-            className={`press h-10 rounded-lg text-[0.9375rem] font-semibold ${method === m ? "bg-ink text-ground" : "text-ink-2 hover:text-ink"}`}
-          >
-            {m === "cash" ? "Cash" : "E-payment"}
-          </button>
-        ))}
-      </div>
-
-      {method === "cash" ? (
-        <div className="mt-4">
-          <label htmlFor={cashId} className="text-[0.875rem] font-semibold text-ink">
-            Cash received
-          </label>
-          <div className="relative mt-1.5">
-            <span aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[1rem] text-ink-2">
-              ₱
-            </span>
-            <input
-              id={cashId}
-              inputMode="decimal"
-              autoComplete="off"
-              value={cash}
-              onChange={(e) => onCash(e.target.value.replace(/[^\d.,]/g, ""))}
-              placeholder="0"
-              className="auth-input tabular pl-9 pr-4 text-[1.125rem]"
-            />
-          </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {[total, ...quickAmounts(total)].map((a, i) => (
-              <button key={a} type="button" onClick={() => onCash(String(a))} className={`${outline} tabular h-9 rounded-full px-3 text-[0.875rem]`}>
-                {i === 0 ? "Exact" : formatPeso(a)}
-              </button>
-            ))}
-          </div>
-          <div className="mt-4 flex items-baseline justify-between gap-4">
-            <span className="text-[0.9375rem] font-semibold text-ink">Change</span>
-            {cash === "" ? (
-              <span className="text-[0.9375rem] text-ink-2">—</span>
-            ) : received >= total ? (
-              <span className="voice-board tabular text-[1.75rem] leading-none text-ink">{formatPeso(Math.round((received - total) * 100) / 100)}</span>
-            ) : (
-              <span className="tabular text-[0.9375rem] font-semibold text-ink">Short by {formatPeso(Math.round((total - received) * 100) / 100)}</span>
-            )}
-          </div>
-        </div>
-      ) : providers.length === 0 ? (
-        <p role="alert" className="auth-alert mt-4 rounded-xl px-4 py-3 text-[0.9375rem]">
-          We couldn’t load the banks and e-wallets. Refresh the page to try again; cash works in the meantime.
-        </p>
-      ) : (
-        <div className="mt-4">
-          <p id={providerId} className="text-[0.875rem] font-semibold text-ink">
-            Paid with
-          </p>
-          <div role="group" aria-labelledby={providerId} className="mt-1.5 flex flex-wrap gap-1.5">
-            {providers.map((p) => {
-              const on = provider?.code === p.code;
-              return (
-                <button
-                  key={p.code}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => onProvider(p.code)}
-                  className={`press inline-flex h-9 items-center rounded-full px-3 text-[0.875rem] font-semibold ${
-                    on ? "bg-ink text-ground" : "text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2"
-                  }`}
-                >
-                  {p.name}
-                </button>
-              );
-            })}
-          </div>
-
-          {provider && (
-            <>
-              <label htmlFor={refId} className="mt-4 block text-[0.875rem] font-semibold text-ink">
-                {provider.name} reference number
-              </label>
-              <input
-                id={refId}
-                inputMode={numeric ? "numeric" : "text"}
-                autoComplete="off"
-                autoCapitalize="characters"
-                spellCheck={false}
-                value={numeric ? formatReference(provider.code, reference) : reference}
-                onChange={(e) =>
-                  onReference(
-                    numeric
-                      ? e.target.value.replace(/\D/g, "").slice(0, length ?? 40)
-                      : e.target.value.toUpperCase().replace(/[^A-Z0-9 -]/g, "").slice(0, 60),
-                  )
-                }
-                placeholder={numeric && length === 13 ? "1234 567 890123" : undefined}
-                aria-describedby={`${refId}-hint`}
-                className="auth-input tabular mt-1.5 px-4 text-[1.125rem] tracking-[0.02em]"
-              />
-              <p id={`${refId}-hint`} className={`mt-1.5 text-[0.8125rem] ${fits ? "font-semibold text-ink" : "text-ink-2"}`}>
-                {fits
-                  ? `Check it matches the customer’s receipt for ${formatPeso(total)}.`
-                  : `${provider.hint}${length ? ` (${typed}/${length})` : ""}`}
-              </p>
-            </>
-          )}
-        </div>
-      )}
-    </div>
   );
 }

@@ -41,6 +41,27 @@ Goal: the counter takes cash and e-payments from GCash, Maya, MariBank, UnionBan
 - Designed with `/impeccable` and `/apple-design`, approved before it's built.
 - Split payments: add parts, see the amount still due, and see the change.
 - The capture and upload step, the review form, and every state: no receipt, permission denied, unavailable, captured, analyzing, read, partly read, unreadable, service error or quota, missing reference, amount mismatch, duplicate, awaiting check, rejected, and done. Scanning is stubbed until E3.
+- **Decisions (2026-10-12):** a payment list, the scan in a sheet over the sale, provider first and then the scan, and sample results in development only.
+- **Built 2026-10-12:**
+  - **Sale panel** (`components/pos-payments.tsx`):
+    - Cash | E-payment stays the way in, and cash works exactly as before.
+    - E-payment shows the provider chips, and a chip opens the sheet. Cash short of the total offers "Pay the rest by e-payment".
+    - Once an e-payment is in: rows for each part (tap to reopen, × to remove), an optional cash row, then Still due, Change (cash), or Paid in full, and Add payment.
+    - Charge follows the same rules as the database. It names why it can't run, including cash on top of e-payments that already cover the total.
+  - **Sheet** (`components/pos-scan-sheet.tsx`):
+    - Built on the auth dialog: a bottom sheet on phones, a wide dialog from 640px.
+    - Steps: photograph (the phone's own camera, or upload a screenshot), preview (Read receipt or Retake), reading (Cancel works), and review.
+    - Review shows the reference and amount, plus the date, time, and status when read. Each field is marked from the receipt, check this, not on the receipt, or changed by hand.
+    - Review notes sit in one panel, edged amber while something needs the cashier:
+      - Information only: covers part of the total, over the total (cash change), and an amount that differs from the receipt.
+      - Needs a tick: another provider's receipt (with Switch), dated before today, and Pending.
+      - Stops the payment: Failed, and a reference already used.
+    - Failures (unreadable, file, over the limit, unavailable) each offer Retake and Type the details.
+    - A tap outside closes the sheet only before there's a photo.
+    - Photos stay in this tab as blob URLs and are never saved with the sale in progress.
+  - **Model:** `scan.ts` holds the result types and review rules that E3 and E4 reuse. `scan-demo.ts` holds sample results for development only, marked DEMO. In production, Read receipt says reading isn't available yet and offers typing.
+  - **Amounts:** an amount the receipt doesn't show is left empty rather than guessed. A changed amount shows the receipt's figure; the owner override comes in E4.
+  - **Checked:** screenshots on phone, tablet, and desktop, light and dark, and all 11 sample results, with no console errors. The design detector found only advisory font sizes, the same steps the POS already uses.
 
 ### Phase E3: Gemini receipt reading
 - A `scanReceipt` server action behind `requireStaff`, with file type and size checks and resizing.
