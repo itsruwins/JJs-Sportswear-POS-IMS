@@ -199,7 +199,7 @@ const PHOTO_DAYS = 90;
  */
 export async function scanReceipt(form: FormData): Promise<ScanResult> {
   const { supabase, profile } = await requireStaff();
-  const fail = (kind: ScanFailure, message: string): ScanResult => ({ ok: false, kind, message, demo: false });
+  const fail = (kind: ScanFailure, message: string): ScanResult => ({ ok: false, kind, message });
 
   const photo = form.get("photo");
   const picked = form.get("provider");
@@ -241,7 +241,6 @@ export async function scanReceipt(form: FormData): Promise<ScanResult> {
         duplicateOf: await takenBy(supabase, checked.fields.provider ?? chosen.code, checked.fields.reference),
         concerns: checked.concerns,
         scanId: null,
-        demo: false,
       };
     } else {
       outcome = checked.kind;

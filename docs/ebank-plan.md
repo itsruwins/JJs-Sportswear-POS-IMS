@@ -59,7 +59,7 @@ Goal: the counter takes cash and e-payments from GCash, Maya, MariBank, UnionBan
     - Failures (unreadable, file, over the limit, unavailable) each offer Retake and Type the details.
     - A tap outside closes the sheet only before there's a photo.
     - Photos stay in this tab as blob URLs and are never saved with the sale in progress.
-  - **Model:** `scan.ts` holds the result types and review rules that E3 and E4 reuse. `scan-demo.ts` holds sample results for development only, marked DEMO. In production, Read receipt says reading isn't available yet and offers typing.
+  - **Model:** `scan.ts` holds the result types and review rules that E3 and E4 reuse. Sample results for development (`scan-demo.ts`, marked DEMO) were removed on 2026-10-13 once the real reader was tested; without a reader, Read receipt says reading isn't available and offers typing.
   - **Amounts:** an amount the receipt doesn't show is left empty rather than guessed. A changed amount shows the receipt's figure; the owner override comes in E4.
   - **Checked:** screenshots on phone, tablet, and desktop, light and dark, and all 11 sample results, with no console errors. The design detector found only advisory font sizes, the same steps the POS already uses.
 

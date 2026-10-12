@@ -23,7 +23,6 @@ import {
   type ScanFailure,
   type ScanResult,
 } from "@/features/admin/pos/scan";
-import { DEMO_KINDS, demoScan, demoScans, type DemoKind } from "@/features/admin/pos/scan-demo";
 
 /** One opening of the sheet: a new payment through a provider, or one already in the sale. */
 export type ScanSession = { id: string; provider: string; editing: EPayment | null };
@@ -88,7 +87,7 @@ export function PosScanSheet({
   const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const readToken = useRef(0);
-  const ids = { title: useId(), ref: useId(), amount: useId(), demo: useId() };
+  const ids = { title: useId(), ref: useId(), amount: useId() };
 
   // The sheet keeps showing its last session while it closes, so the content doesn't vanish mid-slide.
   const [shown, setShown] = useState<ScanSession | null>(session);
@@ -102,13 +101,10 @@ export function PosScanSheet({
   const [concerns, setConcerns] = useState<ScanConcern[]>([]);
   const [scanId, setScanId] = useState<string | null>(null);
   const [approval, setApproval] = useState<Approval | null>(null);
-  const [demo, setDemo] = useState(false);
   const [failure, setFailure] = useState<{ kind: ScanFailure; detail?: string } | null>(null);
   const [reference, setReference] = useState("");
   const [amount, setAmount] = useState("");
   const [confirmed, setConfirmed] = useState<ReviewNotice["kind"][]>([]);
-  // In development the photo is read for real when the reader is connected; samples stay a pick away.
-  const [demoKind, setDemoKind] = useState<DemoKind>(reader ? "real" : "good");
   const [touch, setTouch] = useState(true);
 
   // A new session starts fresh: a new payment at the first step, a reopened one at its review.
@@ -124,7 +120,6 @@ export function PosScanSheet({
     setConcerns([]);
     setScanId(e?.scanId ?? null);
     setApproval(e?.approval ?? null);
-    setDemo(false);
     setFailure(null);
     setReference(e?.reference ?? "");
     setAmount(e ? String(e.amount) : "");
@@ -177,7 +172,6 @@ export function PosScanSheet({
   };
 
   const apply = (result: ScanResult) => {
-    setDemo(result.demo);
     if (!result.ok) {
       setFailure({ kind: result.kind });
       setStep("failed");
@@ -200,11 +194,8 @@ export function PosScanSheet({
     const token = ++readToken.current;
     setStep("reading");
     let result: ScanResult;
-    if (demoScans && demoKind !== "real") {
-      await new Promise((r) => setTimeout(r, 1200));
-      result = demoScan(demoKind, provider, providers, due);
-    } else if (!reader || !photo) {
-      result = { ok: false, kind: "unavailable", message: "", demo: false };
+    if (!reader || !photo) {
+      result = { ok: false, kind: "unavailable", message: "" };
     } else {
       const form = new FormData();
       form.set("photo", photo.blob, "receipt");
@@ -213,7 +204,7 @@ export function PosScanSheet({
         result = await scanReceipt(form);
       } catch {
         // The connection dropped: nothing in the sale changed, and the details can be typed.
-        result = { ok: false, kind: "unavailable", message: "", demo: false };
+        result = { ok: false, kind: "unavailable", message: "" };
       }
     }
     if (token !== readToken.current) return; // cancelled
@@ -239,7 +230,6 @@ export function PosScanSheet({
     setConcerns([]);
     setScanId(null);
     setApproval(null);
-    setDemo(false);
     setFailure(null);
     setReference("");
     setAmount(due > 0 ? String(due) : "");
@@ -362,7 +352,6 @@ export function PosScanSheet({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            {demo && <DemoPill />}
             <button
               type="button"
               onClick={() => dialog.current?.close()}
@@ -459,29 +448,6 @@ export function PosScanSheet({
             </div>
             {step === "preview" ? (
               <>
-                {demoScans && (
-                  <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-ground-2 px-3.5 py-2.5 shadow-[inset_0_0_0_1px_var(--line)]">
-                    <DemoPill />
-                    <label htmlFor={ids.demo} className="text-[0.8125rem] font-semibold text-ink">
-                      Result
-                    </label>
-                    <select
-                      id={ids.demo}
-                      value={demoKind}
-                      onChange={(e) => setDemoKind(e.target.value as DemoKind)}
-                      className="h-9 min-w-0 flex-1 rounded-full bg-ground px-3 text-[0.875rem] text-ink shadow-[inset_0_0_0_1px_var(--line)]"
-                    >
-                      {Object.entries(DEMO_KINDS).map(([k, label]) => (
-                        <option key={k} value={k}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="w-full text-[0.75rem] text-ink-2">
-                      Development only. Pick a sample to see a state without a receipt that shows it{reader ? "" : "; the reader isn’t connected"}.
-                    </p>
-                  </div>
-                )}
                 <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
                   <button type="button" onClick={readReceipt} className={green}>
                     Read receipt
@@ -553,8 +519,6 @@ export function PosScanSheet({
               add();
             }}
           >
-            {demo && read && <p className="mb-3 text-[0.8125rem] font-semibold text-ink">Sample result, not read from the photo.</p>}
-
             <div className="flex gap-4">
               {photo && (
                 <button type="button" onClick={() => setZoom(true)} className="press scan-thumb shrink-0" aria-label="See the receipt photo full size">
@@ -734,10 +698,6 @@ function FieldMark({ mark }: { mark: Mark }) {
       Changed by hand
     </span>
   );
-}
-
-function DemoPill() {
-  return <span className="voice-label rounded-full px-2 py-0.5 text-[0.6875rem] uppercase text-ink shadow-[inset_0_0_0_1.5px_var(--ink)]">Demo</span>;
 }
 
 /** What the payment means for the sale, and anything the cashier has to settle first, in one panel. */
