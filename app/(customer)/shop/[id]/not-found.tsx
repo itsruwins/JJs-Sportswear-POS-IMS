@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { pageShell } from "@/components/customer/page-parts";
+import { pageShell } from "@/features/customer/shell/components/page-parts";
 
 export default function ProductNotFound() {
   return (

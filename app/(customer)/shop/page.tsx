@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { ShopView } from "@/components/customer/shop/shop-view";
-import { readQuery } from "@/lib/customer/catalog";
-import { fetchShop } from "@/lib/customer/shop-data";
-import { requireCustomer } from "@/lib/customer/session";
+import { ShopView } from "@/features/customer/shop/components/shop-view";
+import { readQuery } from "@/features/customer/shop/model";
+import { fetchShop } from "@/features/customer/shop/data";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = { title: "Shop · J&J Sportswear" };
 

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LiveRefresh } from "@/components/admin/live-refresh";
-import { ago } from "@/components/admin/orders/order-bits";
-import { OrdersList } from "@/components/admin/orders/orders-list";
-import { fetchOrders, ORDER_TABLES, PRODUCTION_MIGRATION, VIEWS, type OrderView } from "@/lib/admin/orders";
-import { requireStaff } from "@/lib/admin/session";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
+import { ago } from "@/features/admin/orders/components/order-parts";
+import { OrdersList } from "@/features/admin/orders/components/orders-list";
+import { fetchOrders, PRODUCTION_MIGRATION, VIEWS, type OrderView } from "@/features/admin/orders/data";
+import { ORDER_TABLES } from "@/features/shared/orders/tables";
+import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Custom orders · J&J Sportswear Admin" };
 

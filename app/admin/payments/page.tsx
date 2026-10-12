@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { LiveRefresh } from "@/components/admin/live-refresh";
-import { PaymentQueue } from "@/components/admin/payments/payment-queue";
-import { fetchPaymentQueue, QUEUE_VIEWS, type QueueView } from "@/lib/admin/payments";
-import { requireStaff } from "@/lib/admin/session";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
+import { PaymentQueue } from "@/features/admin/payments/components/payment-queue";
+import { fetchPaymentQueue, QUEUE_VIEWS, type QueueView } from "@/features/admin/payments/data";
+import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Payments · J&J Sportswear Admin" };
 
