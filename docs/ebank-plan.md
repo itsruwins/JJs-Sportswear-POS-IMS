@@ -101,7 +101,26 @@ Goal: the counter takes cash and e-payments from GCash, Maya, MariBank, UnionBan
 - Extracted amount vs. the part's amount, with the owner override and its reason.
 - A duplicate check at scan time, a warning for an old receipt date, and a warning when the provider doesn't match.
 - Each sale links to the scan it used.
-- The owner marks e-payments `matched` or `disputed` from Sales.
+- The owner marks e-payments `matched` or `disputed` (in Payments, as decided below).
+- **Decisions (2026-10-12):** the owner approves on the sheet by signing in there. Typed references are allowed but flagged for the owner. The owner checks counter e-payments in Payments, next to custom-order payments.
+- **Built 2026-10-12:**
+  - **Migration** `20261018000000_e_payment_checks.sql`:
+    - `payment_overrides`: the owner's approval for one cashier, provider, reference, and amount, with a reason. One use, within 10 minutes. Only an owner's own session can write one.
+    - `sale_payments` records how each e-payment was entered (`scan` or `typed`), its `scan_id`, what the receipt showed (amount and reference), and its `override_id`. Earlier e-payments are marked typed.
+    - `create_pos_sale` accepts a scan only when it's the cashier's own, read successfully, under a day old, and not used before. A changed amount needs a matching override (`payment:<n>:needs_override`). The sale then claims its scans and overrides.
+    - `check_sale_payment` (owner only): matched, disputed with a reason, or back to be checked.
+  - **POS:**
+    - At scan time, a reference already on a standing sale is refused before Charge, naming the sale.
+    - A real scan whose amount was changed shows **Ask the owner to approve**. A staff cashier hands the device over: the owner's username and password are checked on a throwaway client with no session (the same way `changePassword` checks), and the approval is written as the owner. The cashier stays signed in.
+    - The owner at the counter only gives a reason.
+    - An approval stops counting if the amount, reference, or provider changes.
+  - **Payments (owner):**
+    - Custom orders | Counter e-payments, each with an amber count of what's waiting.
+    - Counter e-payments has To check (oldest first, with anything flagged first), Matched, and Disputed.
+    - Each row shows the receipt photo (signed link, 1 hour) or a typed mark, the provider and reference, the amount, a link to the sale, the cashier, and who it was sent to.
+    - Flags: typed by hand; receipt amount and who approved the change, with their reason; reference changed; may be edited; receipt said Pending or Failed; receipt dated another day; blurry or glared photo.
+    - Buttons: Matched, Disputed (with a reason), and Undo.
+  - **Tested:** 22 PGlite checks covering typed and scanned entries, scan reuse, another cashier's scan, an unread scan, a junk id, a day-old scan, a changed amount with and without approval, an approval for the wrong amount or cashier, an expired or used approval, a forged approval row, and the owner's check, dispute, and undo. Screenshots of the approval panel (staff on tablet, owner on phone) and the owner's list (desktop and phone), with no console errors.
 
 ### Phase E5: Custom-order payments
 - The customer pay flow and the owner's payment queue take the same providers and reference rules.

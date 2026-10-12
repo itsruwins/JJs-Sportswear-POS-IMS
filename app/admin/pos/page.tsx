@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Point of sale · J&J Sportswear Admi
 
 /** The counter: find an item, pick its size and color, take cash or an e-payment, and print the receipt. */
 export default async function PosPage() {
-  const { supabase } = await requireStaff();
+  const { supabase, profile } = await requireStaff();
   const [{ products, error }, { providers }] = await Promise.all([fetchCatalog(supabase), fetchProviders(supabase)]);
 
   // Only what can be sold: products in the catalog and their visible sizes and colors.
@@ -72,7 +72,7 @@ export default async function PosPage() {
           </p>
         </>
       ) : (
-        <PosScreen products={forSale} providers={providers.filter((p) => p.isActive)} reader={geminiConfigured()} header={header} />
+        <PosScreen products={forSale} providers={providers.filter((p) => p.isActive)} reader={geminiConfigured()} isOwner={profile.role === "owner"} header={header} />
       )}
     </div>
   );

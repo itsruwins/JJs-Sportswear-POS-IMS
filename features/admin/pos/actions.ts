@@ -1,6 +1,8 @@
 "use server";
 
+import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { requireStaff } from "@/features/admin/shell/session";
+import { usernameToEmail } from "@/features/shared/auth/credentials";
 import { fetchProviders } from "@/features/shared/payments/data";
 import { cleanReference, GCASH } from "@/features/shared/payments/model";
 import { geminiConfigured, GeminiError, readReceiptImage } from "@/features/admin/pos/gemini";
@@ -13,7 +15,18 @@ const MIGRATION = "supabase/migrations/20261016120000_e_payments.sql";
 export type CartItem = { variantId: string; quantity: number };
 
 /** One part of the payment: cash, or an e-payment through a provider with its reference number. */
-export type PaymentPart = { method: "cash"; amount: number } | { method: "e_payment"; provider: string; reference: string; amount: number };
+export type PaymentPart =
+  | { method: "cash"; amount: number }
+  | {
+      method: "e_payment";
+      provider: string;
+      reference: string;
+      amount: number;
+      /** The receipt scan it was read from (receipt_scans), when it was scanned. */
+      scanId?: string | null;
+      /** The owner's approval for an amount different from the receipt. */
+      overrideId?: string | null;
+    };
 
 /** A refused item points back to its cart line, so the cart can offer the fix. */
 export type LineProblem = { variantId?: string; sku?: string; kind: "short"; available: number } | { variantId?: string; sku?: string; kind: "unavailable" };
@@ -50,7 +63,9 @@ export async function createSale(
             typeof p.provider === "string" &&
             /^[a-z][a-z0-9_]{1,31}$/.test(p.provider) &&
             typeof p.reference === "string" &&
-            p.reference.length <= 80)),
+            p.reference.length <= 80 &&
+            (p.scanId == null || (typeof p.scanId === "string" && UUID.test(p.scanId))) &&
+            (p.overrideId == null || (typeof p.overrideId === "string" && UUID.test(p.overrideId))))),
     ) &&
     typeof requestId === "string" &&
     UUID.test(requestId);
@@ -59,7 +74,14 @@ export async function createSale(
   const p_payments = payments.map((p) =>
     p.method === "cash"
       ? { method: "cash" as const, amount: Math.round(p.amount * 100) / 100 }
-      : { method: "e_payment" as const, provider: p.provider, reference: cleanReference(p.reference), amount: Math.round(p.amount * 100) / 100 },
+      : {
+          method: "e_payment" as const,
+          provider: p.provider,
+          reference: cleanReference(p.reference),
+          amount: Math.round(p.amount * 100) / 100,
+          scan_id: p.scanId ?? null,
+          override_id: p.overrideId ?? null,
+        },
   );
   if (p_payments.some((p) => p.method === "e_payment" && !p.reference)) return { ok: false, message: "Enter the reference number from the customer’s receipt." };
 
@@ -69,7 +91,7 @@ export async function createSale(
   // or GCash still works through it; other providers and split payments wait.
   if (error?.code === "PGRST202") {
     const [only] = p_payments;
-    if (p_payments.length !== 1 || (only.method === "e_payment" && only.provider !== GCASH)) {
+    if (p_payments.length !== 1 || (only.method === "e_payment" && (only.provider !== GCASH || only.scan_id))) {
       return { ok: false, message: `This payment needs the latest database update (${MIGRATION}). Cash and GCash work in the meantime.` };
     }
     ({ data, error } = await supabase.rpc("create_pos_sale", {
@@ -120,6 +142,10 @@ export async function createSale(
         return { ok: false, message: "The e-payments already cover the total, so take no cash." };
       case "cash_twice":
         return { ok: false, message: "Put all the cash in one payment." };
+      case "needs_override":
+        return { ok: false, message: "An amount differs from its receipt, and the owner’s approval is missing or expired. Reopen the payment and ask again." };
+      case "scan":
+        return { ok: false, message: "A receipt scan can’t be used for this sale. Reopen the payment and scan it again, or type the details." };
       case "amount":
       case "method":
         return { ok: false, message: "A payment doesn’t look right. Check the amounts and try again." };
@@ -208,7 +234,15 @@ export async function scanReceipt(form: FormData): Promise<ScanResult> {
     if (checked.ok) {
       outcome = "read";
       reading = { fields: checked.fields, unsure: checked.unsure, problems: checked.problems, confidence: checked.confidence };
-      result = { ok: true, fields: checked.fields, unsure: checked.unsure, duplicateOf: null, concerns: checked.concerns, scanId: null, demo: false };
+      result = {
+        ok: true,
+        fields: checked.fields,
+        unsure: checked.unsure,
+        duplicateOf: await takenBy(supabase, checked.fields.provider ?? chosen.code, checked.fields.reference),
+        concerns: checked.concerns,
+        scanId: null,
+        demo: false,
+      };
     } else {
       outcome = checked.kind;
       reading = { problems: checked.problems };
@@ -234,6 +268,20 @@ export async function scanReceipt(form: FormData): Promise<ScanResult> {
   return result;
 }
 
+/** The standing sale already carrying this reference, so the cashier hears it before Charge. */
+async function takenBy(supabase: Awaited<ReturnType<typeof requireStaff>>["supabase"], provider: string, reference: string | null) {
+  if (!reference) return null;
+  const { data } = await supabase
+    .from("sale_payments")
+    .select("sale:sales!sale_payments_sale_id_fkey (receipt_number)")
+    .eq("provider", provider)
+    .eq("reference", reference)
+    .is("voided_at", null)
+    .limit(1)
+    .maybeSingle();
+  return (data as { sale: { receipt_number: string } | null } | null)?.sale?.receipt_number ?? null;
+}
+
 /** Each scan clears a few photos past their 90 days; the scan rows themselves stay. */
 async function deleteExpiredPhotos(supabase: Awaited<ReturnType<typeof requireStaff>>["supabase"]) {
   const cutoff = new Date(Date.now() - PHOTO_DAYS * 86_400_000).toISOString();
@@ -257,3 +305,86 @@ async function deleteExpiredPhotos(supabase: Awaited<ReturnType<typeof requireSt
       old.map((s) => s.id),
     );
 }
+
+export type OverrideRequest = {
+  provider: string;
+  reference: string;
+  amount: number;
+  receiptAmount: number | null;
+  reason: string;
+  /** The owner's sign-in, when the cashier isn't the owner. */
+  username?: string;
+  password?: string;
+};
+
+export type OverrideResult =
+  | { ok: true; id: string; approver: string }
+  | { ok: false; field?: "username" | "password" | "reason" | "form"; message: string };
+
+/**
+ * The owner approves an e-payment amount that differs from its receipt, for this cashier and this
+ * payment only (one use, 10 minutes). A staff cashier stays signed in: the owner's password is
+ * checked on a separate client that keeps no session, and the approval is written as the owner.
+ */
+export async function approveOverride(req: OverrideRequest): Promise<OverrideResult> {
+  const { supabase, profile } = await requireStaff();
+  const reason = typeof req?.reason === "string" ? req.reason.trim() : "";
+  const reference = typeof req?.reference === "string" ? cleanReference(req.reference) : "";
+  if (reason.length < 3) return { ok: false, field: "reason", message: "Say why the amount is different." };
+  if (reason.length > 300) return { ok: false, field: "reason", message: "Keep the reason under 300 characters." };
+  if (
+    typeof req.provider !== "string" ||
+    !/^[a-z][a-z0-9_]{1,31}$/.test(req.provider) ||
+    !/^[A-Z0-9]{1,60}$/.test(reference) ||
+    !amountOk(req.amount) ||
+    !(req.receiptAmount === null || amountOk(req.receiptAmount))
+  ) {
+    return { ok: false, field: "form", message: "This payment doesn’t look right. Check the reference and amount." };
+  }
+  const row = {
+    requested_by: profile.id,
+    provider: req.provider,
+    reference,
+    receipt_amount: req.receiptAmount,
+    amount: Math.round(req.amount * 100) / 100,
+    reason,
+  };
+
+  // The owner at the counter approves as themselves.
+  if (profile.role === "owner") {
+    const { data, error } = await supabase.from("payment_overrides").insert(row).select("id").single();
+    if (error || !data) return { ok: false, field: "form", message: overrideError(error?.code) };
+    return { ok: true, id: (data as { id: string }).id, approver: profile.full_name?.trim() || `@${profile.username}` };
+  }
+
+  const username = typeof req.username === "string" ? req.username.trim() : "";
+  const password = typeof req.password === "string" ? req.password : "";
+  if (!username) return { ok: false, field: "username", message: "Enter the owner’s username." };
+  if (!password) return { ok: false, field: "password", message: "Enter the owner’s password." };
+
+  const owner = createPlainClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  const signIn = await owner.auth.signInWithPassword({ email: usernameToEmail(username), password });
+  if (signIn.error || !signIn.data.user) {
+    if (signIn.error?.status === 429) return { ok: false, field: "form", message: "Too many tries. Wait a few minutes, then try again." };
+    if (signIn.error && !signIn.error.status) return { ok: false, field: "form", message: "We couldn’t reach the server. Check the connection and try again." };
+    return { ok: false, field: "password", message: "That username and password don’t match." };
+  }
+  try {
+    const { data: who } = await owner.from("profiles").select("role, username, full_name").eq("id", signIn.data.user.id).single();
+    const p = who as { role: string; username: string; full_name: string | null } | null;
+    if (p?.role !== "owner") return { ok: false, field: "username", message: "Only the owner can approve this." };
+    const { data, error } = await owner.from("payment_overrides").insert(row).select("id").single();
+    if (error || !data) return { ok: false, field: "form", message: overrideError(error?.code) };
+    return { ok: true, id: (data as { id: string }).id, approver: p.full_name?.trim() || `@${p.username}` };
+  } finally {
+    // The owner's sign-in was only for this approval.
+    await owner.auth.signOut({ scope: "local" });
+  }
+}
+
+const overrideError = (code?: string) =>
+  code === "PGRST205" || code === "42P01"
+    ? "Approvals need the latest database update (supabase/migrations/20261018000000_e_payment_checks.sql)."
+    : "We couldn’t save the approval. Try again.";

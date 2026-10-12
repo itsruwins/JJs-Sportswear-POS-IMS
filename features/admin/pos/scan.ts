@@ -67,7 +67,12 @@ export type EPayment = {
   read: ReceiptFields | null;
   /** The scan this payment came from, when it was read from a photo. */
   scanId?: string | null;
+  /** The owner's approval for an amount different from the receipt. */
+  approval?: Approval | null;
 };
+
+/** The owner's OK for one payment: this provider, reference, and amount only. */
+export type Approval = { id: string; approver: string; reason: string; provider: string; reference: string; amount: number };
 
 export const STATUS_LABEL: Record<ReceiptStatus, string> = {
   successful: "Successful",

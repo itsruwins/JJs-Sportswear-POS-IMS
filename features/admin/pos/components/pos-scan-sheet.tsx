@@ -1,18 +1,19 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ArrowLeft, Camera, Check, ImageUp, LoaderCircle, PenLine, X } from "lucide-react";
+import { ArrowLeft, Camera, Check, ImageUp, LoaderCircle, PenLine, ShieldCheck, X } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { cleanReference, digitsOnly, formatReference, referenceFits, referenceLength, type PaymentProvider } from "@/features/shared/payments/model";
 import { parseAmount, roundPeso } from "@/features/admin/pos/amounts";
-import { scanReceipt } from "@/features/admin/pos/actions";
+import { approveOverride, scanReceipt } from "@/features/admin/pos/actions";
 import {
   blocks,
   formatReceiptDate,
   needsConfirm,
   reviewNotices,
   STATUS_LABEL,
+  type Approval,
   type EPayment,
   type ReceiptField,
   type ReceiptFields,
@@ -54,6 +55,7 @@ const FAILURE: Record<ScanFailure, { title: string; next: string; retake: boolea
 export function PosScanSheet({
   session,
   reader,
+  isOwner,
   providers,
   due,
   others,
@@ -66,6 +68,8 @@ export function PosScanSheet({
   session: ScanSession | null;
   /** Whether the receipt reader (Gemini) is connected on the server. */
   reader: boolean;
+  /** The owner is the cashier: approvals need only a reason. */
+  isOwner: boolean;
   providers: PaymentProvider[];
   /** Still owed without this payment. */
   due: number;
@@ -96,6 +100,7 @@ export function PosScanSheet({
   const [duplicateOf, setDuplicateOf] = useState<string | null>(null);
   const [concerns, setConcerns] = useState<ScanConcern[]>([]);
   const [scanId, setScanId] = useState<string | null>(null);
+  const [approval, setApproval] = useState<Approval | null>(null);
   const [demo, setDemo] = useState(false);
   const [failure, setFailure] = useState<{ kind: ScanFailure; detail?: string } | null>(null);
   const [reference, setReference] = useState("");
@@ -117,6 +122,7 @@ export function PosScanSheet({
     setDuplicateOf(null);
     setConcerns([]);
     setScanId(e?.scanId ?? null);
+    setApproval(e?.approval ?? null);
     setDemo(false);
     setFailure(null);
     setReference(e?.reference ?? "");
@@ -181,6 +187,7 @@ export function PosScanSheet({
     setDuplicateOf(result.duplicateOf);
     setConcerns(result.concerns);
     setScanId(result.scanId);
+    setApproval(null);
     setReference(result.fields.reference ?? "");
     // An amount the receipt doesn't show is left for the cashier to type, never guessed from the total.
     setAmount(result.fields.amount !== null ? String(result.fields.amount) : "");
@@ -230,6 +237,7 @@ export function PosScanSheet({
     setDuplicateOf(null);
     setConcerns([]);
     setScanId(null);
+    setApproval(null);
     setDemo(false);
     setFailure(null);
     setReference("");
@@ -259,7 +267,11 @@ export function PosScanSheet({
   const numeric = digitsOnly(provider);
   const typed = cleanReference(reference).length;
   const amountOk = value > 0 && value < 10_000_000;
-  const canAdd = fits && amountOk && !stopped && waiting.length === 0;
+  // A real scan whose amount was changed needs the owner's OK for exactly this payment (the database checks it too).
+  const needsApproval = !!scanId && read?.amount != null && amountOk && roundPeso(read.amount) !== roundPeso(value);
+  const approved =
+    !!approval && approval.amount === roundPeso(value) && approval.reference === cleanReference(reference) && approval.provider === provider.code;
+  const canAdd = fits && amountOk && !stopped && waiting.length === 0 && (!needsApproval || approved);
   const why = !typed
     ? `Enter the ${provider.name} reference number.`
     : !fits
@@ -274,7 +286,9 @@ export function PosScanSheet({
             ? "A failed payment can’t be taken."
             : waiting.length
               ? "Tick the notes above to continue."
-              : "";
+              : needsApproval && !approved
+                ? "The owner needs to approve the changed amount."
+                : "";
 
   const add = () => {
     if (!canAdd || !shown) return;
@@ -287,6 +301,7 @@ export function PosScanSheet({
         source: read ? "scan" : (editing?.source ?? "manual"),
         read: read ?? editing?.read ?? null,
         scanId: read ? scanId : (editing?.scanId ?? null),
+        approval: needsApproval && approved ? approval : null,
       },
       photo,
     );
@@ -629,6 +644,29 @@ export function PosScanSheet({
               }}
             />
 
+            {needsApproval && read?.amount != null && (
+              <OwnerApproval
+                key={`${provider.code}:${cleanReference(reference)}:${roundPeso(value)}`}
+                isOwner={isOwner}
+                approval={approved ? approval : null}
+                receiptAmount={read.amount}
+                amount={roundPeso(value)}
+                canAsk={fits}
+                onAsk={async (form) => {
+                  const r = await approveOverride({
+                    provider: provider.code,
+                    reference: cleanReference(reference),
+                    amount: roundPeso(value),
+                    receiptAmount: read.amount,
+                    ...form,
+                  });
+                  if (r.ok) setApproval({ id: r.id, approver: r.approver, reason: form.reason.trim(), provider: provider.code, reference: cleanReference(reference), amount: roundPeso(value) });
+                  return r;
+                }}
+                onClear={() => setApproval(null)}
+              />
+            )}
+
             <button type="submit" disabled={!canAdd} className={`${green} mt-5`}>
               <span>
                 {editing ? "Save payment" : `Add ${provider.name} payment`}
@@ -812,5 +850,161 @@ function Confirm({
         </label>
       </span>
     </>
+  );
+}
+
+/**
+ * The owner's OK for an amount that differs from the receipt. A staff cashier hands the device to
+ * the owner, who signs in here (the cashier stays signed in); the owner at the counter gives a reason.
+ */
+function OwnerApproval({
+  isOwner,
+  approval,
+  receiptAmount,
+  amount,
+  canAsk,
+  onAsk,
+  onClear,
+}: {
+  isOwner: boolean;
+  approval: Approval | null;
+  receiptAmount: number;
+  amount: number;
+  canAsk: boolean;
+  onAsk: (form: { reason: string; username?: string; password?: string }) => Promise<Awaited<ReturnType<typeof approveOverride>>>;
+  onClear: () => void;
+}) {
+  const ids = { user: useId(), pass: useId(), reason: useId() };
+  const [open, setOpen] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<{ field?: string; message: string } | null>(null);
+
+  if (approval) {
+    return (
+      <div className="mt-4 flex items-start gap-3 rounded-2xl bg-ground-2 px-4 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
+        <ShieldCheck aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-board-text" />
+        <div className="min-w-0 flex-1 text-[0.9375rem] leading-snug text-ink">
+          <p>
+            <b className="font-semibold">Approved by {approval.approver}</b> for <span className="tabular">{formatPeso(approval.amount)}</span>.
+          </p>
+          <p className="mt-0.5 text-ink-2">“{approval.reason}”</p>
+        </div>
+        <button type="button" onClick={onClear} className="press -mr-1 h-9 shrink-0 rounded-full px-2.5 text-[0.875rem] font-semibold text-ink-2 hover:text-ink">
+          Change
+        </button>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button type="button" disabled={!canAsk} onClick={() => setOpen(true)} className={`${outlined} mt-4 h-12 text-[0.9375rem]`}>
+        <ShieldCheck aria-hidden="true" className="size-5" />
+        Ask the owner to approve
+      </button>
+    );
+  }
+
+  const ask = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await onAsk(isOwner ? { reason } : { reason, username, password });
+      if (!r.ok) setError({ field: r.field, message: r.message });
+    } catch {
+      setError({ message: "We couldn’t reach the server. Check the connection and try again." });
+    } finally {
+      setPassword("");
+      setBusy(false);
+    }
+  };
+  const ring = (field: string) => (error?.field === field ? "shadow-[inset_0_0_0_2px_var(--ink)]" : "");
+  // Enter approves here instead of submitting the payment form around it.
+  const enter = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      ask();
+    }
+  };
+
+  return (
+    <fieldset className="mt-4 rounded-2xl bg-ground-2 p-4 shadow-[inset_0_0_0_1px_var(--line)]" disabled={busy}>
+      <legend className="sr-only">Owner approval</legend>
+      <p className="flex items-center gap-2 text-[0.9375rem] font-semibold text-ink">
+        <ShieldCheck aria-hidden="true" className="size-5 text-board-text" />
+        Owner approval
+      </p>
+      <p className="mt-1 text-[0.875rem] leading-snug text-ink-2">
+        <span className="tabular">{formatPeso(receiptAmount)}</span> on the receipt, <span className="tabular">{formatPeso(amount)}</span> taken.{" "}
+        {isOwner ? "Say why, for the record." : "Hand the device to the owner to sign in here; you stay signed in."}
+      </p>
+      {!isOwner && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor={ids.user} className="text-[0.8125rem] font-semibold text-ink">
+              Owner’s username
+            </label>
+            <input
+              id={ids.user}
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              onKeyDown={enter}
+              className={`auth-input mt-1 bg-ground px-3.5 text-[1rem] ${ring("username")}`}
+            />
+          </div>
+          <div>
+            <label htmlFor={ids.pass} className="text-[0.8125rem] font-semibold text-ink">
+              Password
+            </label>
+            <input
+              id={ids.pass}
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={enter}
+              className={`auth-input mt-1 bg-ground px-3.5 text-[1rem] ${ring("password")}`}
+            />
+          </div>
+        </div>
+      )}
+      <label htmlFor={ids.reason} className="mt-3 block text-[0.8125rem] font-semibold text-ink">
+        Why is it different?
+      </label>
+      <input
+        id={ids.reason}
+        maxLength={300}
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        onKeyDown={enter}
+        placeholder="For example: paid in two transfers"
+        className={`auth-input mt-1 bg-ground px-3.5 text-[1rem] ${ring("reason")}`}
+      />
+      {error && (
+        <p role="alert" className="mt-2 text-[0.875rem] font-semibold text-ink">
+          {error.message}
+        </p>
+      )}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={ask}
+          className="press inline-flex h-11 items-center gap-2 rounded-full bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-50"
+        >
+          {busy && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
+          Approve
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="press h-11 rounded-full px-3 text-[0.9375rem] font-semibold text-ink-2 hover:text-ink">
+          Cancel
+        </button>
+      </div>
+    </fieldset>
   );
 }

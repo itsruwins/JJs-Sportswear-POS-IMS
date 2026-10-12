@@ -1,7 +1,7 @@
 "use server";
 
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { PAYMENTS_MIGRATION, type PayMethod } from "./data";
+import { COUNTER_MIGRATION, PAYMENTS_MIGRATION, type PayMethod } from "./data";
 import { requireStaff } from "@/features/admin/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -121,4 +121,19 @@ export async function overrideRule(orderId: string, kind: "production" | "pickup
     ok: true,
     message: kind === "production" ? "Exception saved. Production can start; tick the first step." : "Exception saved. The order can be picked up now.",
   };
+}
+
+/** Owner: a counter e-payment found in the shop's account, not found or wrong (with a reason), or back to be checked. */
+export async function checkCounterPayment(id: string, status: "matched" | "disputed" | "cashier_confirmed", note = ""): Promise<PayResult> {
+  const { supabase, profile } = await requireStaff();
+  if (profile.role !== "owner") return { ok: false, message: "Only the owner can check counter e-payments." };
+  if (!validId(id) || !["matched", "disputed", "cashier_confirmed"].includes(status)) return { ok: false, message: "That payment doesn’t exist." };
+  const reason = textOf(note);
+  if (status === "disputed" && reason.length < 3) return { ok: false, message: "Say what’s wrong with the payment." };
+  const { error } = await supabase.rpc("check_sale_payment", { p_payment_id: id, p_status: status, p_note: reason || null });
+  if (error) {
+    if (error.code === "PGRST202") return { ok: false, message: `Checking needs the latest database update (${COUNTER_MIGRATION}).` };
+    return explain(error, "We couldn’t save that. Try again.");
+  }
+  return { ok: true, message: status === "matched" ? "Marked as matched." : status === "disputed" ? "Marked as disputed." : "Back on the list to check." };
 }

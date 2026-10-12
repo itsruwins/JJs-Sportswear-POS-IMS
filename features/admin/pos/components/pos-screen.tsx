@@ -56,12 +56,15 @@ export function PosScreen({
   products,
   providers,
   reader,
+  isOwner,
   header,
 }: {
   products: PosProduct[];
   providers: PaymentProvider[];
   /** Whether receipt photos can be read (the Gemini key is set on the server). */
   reader: boolean;
+  /** The owner is ringing up the sale (approvals need only a reason). */
+  isOwner: boolean;
   header?: React.ReactNode;
 }) {
   const router = useRouter();
@@ -241,7 +244,14 @@ export function PosScreen({
     setBusy(true);
     setError(null);
     const payments: PaymentPart[] = [
-      ...ePayments.map((p) => ({ method: "e_payment" as const, provider: p.provider, reference: p.reference, amount: p.amount })),
+      ...ePayments.map((p) => ({
+        method: "e_payment" as const,
+        provider: p.provider,
+        reference: p.reference,
+        amount: p.amount,
+        scanId: p.scanId ?? null,
+        overrideId: p.approval?.id ?? null,
+      })),
       ...(received > 0 ? [{ method: "cash" as const, amount: received }] : []),
     ];
     try {
@@ -463,6 +473,7 @@ export function PosScreen({
       <PosScanSheet
         session={session}
         reader={reader}
+        isOwner={isOwner}
         providers={providers}
         due={dueFor(session?.editing?.id ?? null)}
         others={ePayments}

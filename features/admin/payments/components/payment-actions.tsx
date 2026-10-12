@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, ImagePlus, LoaderCircle, Plus, X } from "lucide-react";
-import { overrideRule, recordPayment, recordRefund, rejectPayment, verifyPayment } from "@/features/admin/payments/actions";
+import { checkCounterPayment, overrideRule, recordPayment, recordRefund, rejectPayment, verifyPayment } from "@/features/admin/payments/actions";
 import { Outcome, ReasonDialog, useAction } from "@/features/admin/orders/components/order-actions";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { formatPeso } from "@/features/shared/catalog/catalog";
@@ -457,6 +457,44 @@ export function PaymentException({ orderId, kind }: { orderId: string; kind: "pr
         maxLength={300}
         onClose={() => setOpen(false)}
         onConfirm={(reason) => run("override", () => overrideRule(orderId, kind, reason), { quiet: true })}
+      />
+    </div>
+  );
+}
+
+/** Owner: check a counter e-payment against the shop's account, or undo a check. */
+export function CheckCounterPayment({ paymentId, status }: { paymentId: string; status: "cashier_confirmed" | "matched" | "disputed" }) {
+  const { busy, result, run } = useAction(paymentId);
+  const [disputing, setDisputing] = useState(false);
+  return (
+    <div>
+      {status === "cashier_confirmed" ? (
+        <div className="flex flex-wrap gap-2">
+          <button type="button" aria-disabled={!!busy} onClick={() => run("match", () => checkCounterPayment(paymentId, "matched"))} className={green}>
+            {busy === "match" ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : <Check aria-hidden="true" className="size-4" strokeWidth={2.5} />}
+            Matched
+          </button>
+          <button type="button" aria-disabled={!!busy} onClick={() => !busy && setDisputing(true)} className={outline}>
+            Disputed
+          </button>
+        </div>
+      ) : (
+        <button type="button" aria-disabled={!!busy} onClick={() => run("undo", () => checkCounterPayment(paymentId, "cashier_confirmed"))} className={outline}>
+          {busy === "undo" && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
+          Undo
+        </button>
+      )}
+      <Outcome result={result} />
+      <ReasonDialog
+        open={disputing}
+        title="Dispute this payment?"
+        body="It stays on the sale, marked disputed, with your reason. Void the sale separately if the money never came in."
+        label="What’s wrong with it?"
+        placeholder="For example: not in our GCash history for that day."
+        confirm="Mark disputed"
+        maxLength={300}
+        onClose={() => setDisputing(false)}
+        onConfirm={(reason) => run("dispute", () => checkCounterPayment(paymentId, "disputed", reason), { quiet: true })}
       />
     </div>
   );
