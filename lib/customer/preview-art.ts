@@ -8,7 +8,7 @@ import { sampleFileFor, type DesignPicks } from "./design-studio";
 // Preview designs, used until the shop's FLUX key is added: the shop's sample garment
 // illustration in the chosen colors, front and back side by side, with the team name,
 // player name, and number set in Archivo. Clearly marked as a preview in the image itself.
-// Lettering is drawn as outlines from the bundled font files (lib/customer/fonts, SIL OFL),
+// Lettering is drawn as outlines from the bundled font files (assets/fonts, SIL OFL),
 // so it looks the same on any server, whatever fonts it has installed.
 
 const W = 1536;
@@ -22,7 +22,7 @@ const SHADE = ["#e4e6e3"];
 let fonts: Promise<{ board: Font; label: Font }> | null = null;
 function loadFonts() {
   const load = async (file: string) => {
-    const buf = await readFile(path.join(process.cwd(), "lib", "customer", "fonts", file));
+    const buf = await readFile(path.join(process.cwd(), "assets", "fonts", file));
     return parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer);
   };
   fonts ??= Promise.all([load("archivo-extracondensed-800.ttf"), load("archivo-semicondensed-650.ttf")]).then(([board, label]) => ({ board, label }));
