@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -38,7 +39,7 @@ const STORE = "jj-pos-sale";
 const variantName = (v: Pick<PosVariant, "size" | "color">) => [v.size, v.color].filter(Boolean).join(" · ") || "One size";
 const outline =
   "press inline-flex items-center justify-center gap-1.5 rounded-xl font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 disabled:opacity-50";
-const newKey = () => crypto.randomUUID();
+const newKey = () => uuid();
 
 /** Each word must match the product (name, tag) or one and the same variant (color, SKU, exact size). */
 function matches(p: PosProduct, tokens: string[]) {
@@ -430,10 +431,10 @@ export function PosScreen({
                   setError(null);
                 }}
                 ePayments={ePayments}
-                onNew={(code) => setSession({ id: crypto.randomUUID(), provider: code, editing: null })}
+                onNew={(code) => setSession({ id: uuid(), provider: code, editing: null })}
                 onEdit={(id) => {
                   const p = ePayments.find((x) => x.id === id);
-                  if (p) setSession({ id: crypto.randomUUID(), provider: p.provider, editing: p });
+                  if (p) setSession({ id: uuid(), provider: p.provider, editing: p });
                 }}
                 onRemove={(id) => {
                   setEPayments((all) => all.filter((p) => p.id !== id));

@@ -252,7 +252,7 @@ export async function scanReceipt(form: FormData): Promise<ScanResult> {
     const kind = e instanceof GeminiError ? e.kind : "failed";
     outcome = kind === "quota" ? "quota" : "failed";
     // The kind only: never the photo, the reply, or the key.
-    console.error(`scanReceipt: reader ${kind}`);
+    console.error(kind === "key" ? "scanReceipt: Google refused GEMINI_API_KEY (deleted, disabled, or mistyped); put a working key in the environment" : `scanReceipt: reader ${kind}`);
     result = kind === "quota" ? fail("quota", "Receipt reading has reached its limit for now.") : fail("unavailable", "Receipt reading isn’t available right now.");
   }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ImagePlus, LoaderCircle } from "lucide-react";
@@ -40,7 +41,7 @@ function AccountRow({ provider: p }: { provider: PaymentProvider & { qrPath: str
     setSaid(null);
     try {
       const { blob, ext, type } = await prepareForUpload(file);
-      const path = `${p.code}/${crypto.randomUUID()}.${ext}`;
+      const path = `${p.code}/${uuid()}.${ext}`;
       const supabase = createClient();
       const { error } = await supabase.storage.from("shop-accounts").upload(path, blob, { contentType: type });
       if (error) throw new Error("The QR image didn’t upload. Try again.");

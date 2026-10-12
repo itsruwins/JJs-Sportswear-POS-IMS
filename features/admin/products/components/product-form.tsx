@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -55,7 +56,7 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
   const router = useRouter();
   const isNew = !product;
 
-  const [id] = useState(() => product?.id ?? crypto.randomUUID());
+  const [id] = useState(() => product?.id ?? uuid());
   const [name, setName] = useState(product?.name ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
   const [basePrice, setBasePrice] = useState(product ? formatMoneyInput(product.base_price) : "");
@@ -248,7 +249,7 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
         setStatus(`Uploading photos (${i + 1} of ${pending.length})…`);
         try {
           const { blob, ext, type } = await prepareForUpload(p.file!);
-          const path = `${id}/${crypto.randomUUID()}.${ext}`;
+          const path = `${id}/${uuid()}.${ext}`;
           const { error } = await storage.upload(path, blob, { contentType: type, upsert: false });
           if (error) {
             const denied = /row-level security|unauthorized|403/i.test(`${error.message} ${(error as { statusCode?: string }).statusCode ?? ""}`);
@@ -380,7 +381,7 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
             onAdd={(files) => {
               setPhotos((ps) => {
                 const added = files.map((file, i) => ({
-                  key: `new-${crypto.randomUUID()}`,
+                  key: `new-${uuid()}`,
                   url: URL.createObjectURL(file),
                   file,
                   is_primary: ps.length === 0 && i === 0,

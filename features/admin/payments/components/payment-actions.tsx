@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, ImagePlus, LoaderCircle, Plus, X } from "lucide-react";
@@ -141,7 +142,7 @@ export function RecordPayment({
     if (method === "e_payment" && file) {
       try {
         const { blob, ext, type } = await prepareForUpload(file);
-        proofPath = `${customerId}/${orderId}/${crypto.randomUUID()}.${ext}`;
+        proofPath = `${customerId}/${orderId}/${uuid()}.${ext}`;
         const { error: upErr } = await createClient().storage.from("payment-proofs").upload(proofPath, blob, { contentType: type, upsert: false });
         if (upErr) throw new Error("The screenshot didn’t upload. Try again, or record the payment without it.");
       } catch (e) {

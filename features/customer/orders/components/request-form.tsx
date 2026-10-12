@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, ChevronDown, ImagePlus, LoaderCircle, Plus, Trash2, X } from "lucide-react";
@@ -134,7 +135,7 @@ export function RequestForm({
       setUploading((n) => n + 1);
       try {
         const { blob, ext, type } = await prepareForUpload(file);
-        const path = `${uid}/${crypto.randomUUID()}.${ext}`;
+        const path = `${uid}/${uuid()}.${ext}`;
         const { error } = await supabase.storage.from("order-references").upload(path, blob, { contentType: type });
         if (error) throw new Error(migrated ? "That picture didn’t upload. Check your connection and try again." : "Picture uploads need the latest database update.");
         const url = URL.createObjectURL(blob);

@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, ImagePlus, LoaderCircle, X } from "lucide-react";
@@ -93,7 +94,7 @@ export function PayModal({
     setUploading(true);
     try {
       const { blob, ext, type } = await prepareForUpload(file);
-      const path = `${uid}/${orderId}/${crypto.randomUUID()}.${ext}`;
+      const path = `${uid}/${orderId}/${uuid()}.${ext}`;
       const { error } = await createClient().storage.from("payment-proofs").upload(path, blob, { contentType: type });
       if (error) throw new Error("The screenshot didn’t upload. Check your connection and try again.");
       setProof({ path, url: URL.createObjectURL(blob) });

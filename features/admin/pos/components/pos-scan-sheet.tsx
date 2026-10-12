@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useEffect, useId, useRef, useState } from "react";
 import { ArrowLeft, Camera, Check, ImageUp, LoaderCircle, PenLine, ShieldCheck, X } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
@@ -294,7 +295,7 @@ export function PosScanSheet({
     if (!canAdd || !shown) return;
     onAdd(
       {
-        id: editing?.id ?? crypto.randomUUID(),
+        id: editing?.id ?? uuid(),
         provider: provider.code,
         reference: cleanReference(reference),
         amount: roundPeso(value),

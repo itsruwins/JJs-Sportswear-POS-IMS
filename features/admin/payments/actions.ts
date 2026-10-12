@@ -225,7 +225,7 @@ export async function readPaymentScreenshot(paymentId: string, again = false): P
   } catch (e) {
     const kind = e instanceof GeminiError ? e.kind : "failed";
     outcome = kind === "quota" ? "quota" : "failed";
-    console.error(`readPaymentScreenshot: reader ${kind}`);
+    console.error(kind === "key" ? "readPaymentScreenshot: Google refused GEMINI_API_KEY (deleted, disabled, or mistyped); put a working key in the environment" : `readPaymentScreenshot: reader ${kind}`);
     result = kind === "quota" ? fail("quota", "The reader has reached its limit for now.") : fail("unavailable", "The reader isn’t available right now.");
   }
   const { error: logError } = await supabase.from("receipt_scans").insert({

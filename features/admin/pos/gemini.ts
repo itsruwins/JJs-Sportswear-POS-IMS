@@ -21,8 +21,8 @@ function models() {
 export class GeminiError extends Error {
   constructor(
     message: string,
-    /** quota: over the key's limit; busy: overloaded, down, or too slow; failed: refused or unusable. */
-    readonly kind: "quota" | "busy" | "failed",
+    /** quota: over the key's limit; busy: overloaded, down, or too slow; key: Google refused the key; failed: refused or unusable. */
+    readonly kind: "quota" | "busy" | "key" | "failed",
   ) {
     super(message);
   }
@@ -95,6 +95,8 @@ async function ask(model: string, key: string, body: unknown, wait: number): Pro
     throw new GeminiError("The receipt reader didn’t answer in time.", "busy");
   }
   if (res.status === 429) throw new GeminiError("The receipt reader is over its limit.", "quota");
+  // A deleted, disabled, or mistyped key: the other model would refuse it too.
+  if (res.status === 401 || res.status === 403) throw new GeminiError("The receipt reader’s key was refused.", "key");
   if (res.status >= 500) throw new GeminiError("The receipt reader is busy.", "busy");
   if (!res.ok) throw new GeminiError("The receipt reader refused the photo.", "failed");
 
@@ -143,7 +145,7 @@ export async function readReceiptImage(
   try {
     return { raw: await ask(first, key, body, FIRST_WAIT_MS), model: first };
   } catch (e) {
-    if (!fallback || !(e instanceof GeminiError)) throw e;
+    if (!fallback || !(e instanceof GeminiError) || e.kind === "key") throw e;
     return { raw: await ask(fallback, key, body, FALLBACK_WAIT_MS), model: fallback };
   }
 }

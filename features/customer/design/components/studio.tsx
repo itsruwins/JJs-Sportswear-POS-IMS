@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -149,7 +150,7 @@ export function Studio({
     setError(null);
     try {
       const { blob, ext, type } = await prepareForUpload(file);
-      const path = `${uid}/logos/${crypto.randomUUID()}.${ext}`;
+      const path = `${uid}/logos/${uuid()}.${ext}`;
       const { error: upErr } = await createClient().storage.from("ai-designs").upload(path, blob, { contentType: type });
       if (upErr) throw new Error("The logo didn’t upload. Check your connection and try again.");
       patch({ logoPath: path });

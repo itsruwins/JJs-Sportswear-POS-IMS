@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ImagePlus, LoaderCircle, RotateCcw, Trash2, X } from "lucide-react";
@@ -470,7 +471,7 @@ export function PhotoManager({ id, photos, canEdit }: { id: string; photos: { id
         } catch (e) {
           return fail(e instanceof Error && e.message ? e.message : "That file couldn’t be read. Use a JPG, PNG, or WebP photo.");
         }
-        const path = `${id}/${crypto.randomUUID()}.${prepared.ext}`;
+        const path = `${id}/${uuid()}.${prepared.ext}`;
         const { error } = await supabase.storage.from("order-photos").upload(path, prepared.blob, { contentType: prepared.type, upsert: false });
         if (error) return fail("A photo didn’t upload. Check the file (JPG, PNG, or WebP up to 10 MB) and try again.");
         const r = await addPhoto(id, path);

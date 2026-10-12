@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -199,7 +200,7 @@ export function ChatWidget({ uid, firstName, initialUnread, hours }: { uid: stri
     let path: string | null = null;
     try {
       if (withPhoto) {
-        path = `${uid}/${crypto.randomUUID()}.${withPhoto.ext}`;
+        path = `${uid}/${uuid()}.${withPhoto.ext}`;
         const up = await supabase.storage.from("chat-photos").upload(path, withPhoto.blob, { contentType: withPhoto.type });
         if (up.error) {
           path = null;
