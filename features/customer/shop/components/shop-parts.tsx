@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { CATEGORIES, inCategory, leadColor, type ShopProduct } from "@/lib/customer/catalog";
+import { CATEGORIES, inCategory, leadColor, type ShopProduct } from "@/features/customer/shop/model";
 import { GarmentArt } from "./garment-art";
 
 export function priceLabel(p: Pick<ShopProduct, "priceMin" | "priceMax">) {

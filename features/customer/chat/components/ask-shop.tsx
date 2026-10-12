@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import { openChat, type OpenChatDetail } from "@/lib/customer/chat";
+import { openChat, type OpenChatDetail } from "@/features/customer/chat/data";
 
 /** Opens the chat bubble's panel from a page: tagged with an order, or started with a product's name. */
 export function AskShop({ label, detail, className = "" }: { label: string; detail: OpenChatDetail; className?: string }) {

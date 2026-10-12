@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DesignPicks } from "./design-studio";
+import type { DesignPicks } from "./model";
 
 /** The file to run in Supabase for studio details, refinements, previews, and the daily limit. */
 export const STUDIO_MIGRATION = "supabase/migrations/20261014000000_ai_design_studio.sql";

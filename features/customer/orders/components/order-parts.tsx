@@ -1,4 +1,4 @@
-import { STATUS_TEXT, type OrderStatus } from "@/lib/customer/orders";
+import { STATUS_TEXT, type OrderStatus } from "@/features/customer/orders/model";
 
 /**
  * Status in the admin's pill language: moving orders are outlined ink, Ready is solid ink,

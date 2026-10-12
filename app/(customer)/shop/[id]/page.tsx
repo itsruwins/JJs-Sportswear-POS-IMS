@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { pageShell } from "@/components/customer/page-parts";
-import { ProductView } from "@/components/customer/shop/product-view";
-import { fetchShop } from "@/lib/customer/shop-data";
-import { requireCustomer } from "@/lib/customer/session";
+import { pageShell } from "@/features/customer/shell/components/page-parts";
+import { ProductView } from "@/features/customer/shop/components/product-view";
+import { fetchShop } from "@/features/customer/shop/data";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

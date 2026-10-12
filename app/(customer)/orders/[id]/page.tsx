@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
-import { OrderDetailView } from "@/components/customer/orders/order-detail";
-import { pageShell } from "@/components/customer/page-parts";
+import { OrderDetailView } from "@/features/customer/orders/components/order-detail";
+import { pageShell } from "@/features/customer/shell/components/page-parts";
 import { SHOP } from "@/lib/shop";
 import { ORDER_TABLES } from "@/features/shared/orders/tables";
-import { fetchMyOrder } from "@/lib/customer/order-data";
-import { requireCustomer } from "@/lib/customer/session";
+import { fetchMyOrder } from "@/features/customer/orders/data";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = { title: "Order · J&J Sportswear" };
 

@@ -8,7 +8,7 @@ import { NotificationBell } from "@/features/shared/ui/notification-bell";
 import { usePopoverOpen } from "@/features/shared/ui/use-popover-open";
 import { Wordmark } from "@/features/shared/ui/wordmark";
 import { ThemeButton } from "@/features/shared/ui/theme-button";
-import { CUSTOMER_HOME, CUSTOMER_TABS, isActiveTab } from "./nav";
+import { CUSTOMER_HOME, CUSTOMER_TABS, isActiveTab } from "@/features/customer/shell/nav";
 import { Avatar } from "./avatar";
 import { useLogOut } from "./log-out-button";
 

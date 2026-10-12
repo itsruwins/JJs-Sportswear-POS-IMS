@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, ImagePlus, LoaderCircle, Sparkles, X } from "lucide-react";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { garmentColor } from "@/features/shared/catalog/colors";
-import type { MyDesign } from "@/lib/customer/design-data";
+import type { MyDesign } from "@/features/customer/design/data";
 import {
   blankPicks,
   DESIGNS_PER_DAY,
@@ -18,10 +18,10 @@ import {
   STUDIO_SPORTS,
   STUDIO_STYLES,
   type DesignPicks,
-} from "@/lib/customer/design-studio";
-import { COLOR_SUGGESTIONS } from "@/lib/customer/orders";
+} from "@/features/customer/design/model";
+import { COLOR_SUGGESTIONS } from "@/features/customer/orders/model";
 import { createClient } from "@/lib/supabase/client";
-import { generateDesign, refineDesign } from "@/app/(customer)/design/actions";
+import { generateDesign, refineDesign } from "@/features/customer/design/actions";
 
 const label = "text-[0.9375rem] font-semibold text-ink";
 const COLOR_ROLES = ["Main", "Second", "Accent"];

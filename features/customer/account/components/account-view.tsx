@@ -3,12 +3,12 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Check, Eye, EyeOff, LoaderCircle } from "lucide-react";
-import { changePassword, removePhoto, saveDetails, setPhoto } from "@/app/(customer)/account/actions";
-import { AVATAR_SIZE, checkDetails, checkPassword, NAME_MAX, type DetailsDraft, type DetailsErrors, type PasswordDraft, type PasswordErrors } from "@/lib/customer/account";
+import { changePassword, removePhoto, saveDetails, setPhoto } from "@/features/customer/account/actions";
+import { AVATAR_SIZE, checkDetails, checkPassword, NAME_MAX, type DetailsDraft, type DetailsErrors, type PasswordDraft, type PasswordErrors } from "@/features/customer/account/validation";
 import { createClient } from "@/lib/supabase/client";
-import { Avatar } from "../avatar";
-import { LogOutButton } from "../log-out-button";
-import { PageHeader, pageShell } from "../page-parts";
+import { Avatar } from "@/features/customer/shell/components/avatar";
+import { LogOutButton } from "@/features/customer/shell/components/log-out-button";
+import { PageHeader, pageShell } from "@/features/customer/shell/components/page-parts";
 
 const label = "text-[0.9375rem] font-semibold text-ink";
 const hint = "mt-1.5 text-[0.8125rem] leading-relaxed text-ink-2";

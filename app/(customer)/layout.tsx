@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { ChatWidget } from "@/components/customer/chat/chat-widget";
-import { CustomerDock } from "@/components/customer/customer-dock";
-import { CustomerTopBar } from "@/components/customer/customer-top-bar";
+import { ChatWidget } from "@/features/customer/chat/components/chat-widget";
+import { CustomerDock } from "@/features/customer/shell/components/customer-dock";
+import { CustomerTopBar } from "@/features/customer/shell/components/customer-top-bar";
 import { SHOP } from "@/lib/shop";
-import { fetchChatUnread } from "@/lib/customer/chat";
-import { initials, requireCustomer } from "@/lib/customer/session";
+import { fetchChatUnread } from "@/features/customer/chat/data";
+import { initials, requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = {
   title: "J&J Sportswear",

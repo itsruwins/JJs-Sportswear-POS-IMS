@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { RequestForm } from "@/components/customer/orders/request-form";
-import { pageShell } from "@/components/customer/page-parts";
-import { fetchMyDesign } from "@/lib/customer/design-data";
-import { picksSummary } from "@/lib/customer/design-studio";
-import { requestsReady } from "@/lib/customer/order-data";
-import { blankGarment, garmentForProduct, type AttachedDesign, type RequestDraft } from "@/lib/customer/orders";
-import { requireCustomer } from "@/lib/customer/session";
+import { RequestForm } from "@/features/customer/orders/components/request-form";
+import { pageShell } from "@/features/customer/shell/components/page-parts";
+import { fetchMyDesign } from "@/features/customer/design/data";
+import { picksSummary } from "@/features/customer/design/model";
+import { requestsReady } from "@/features/customer/orders/data";
+import { blankGarment, garmentForProduct, type AttachedDesign, type RequestDraft } from "@/features/customer/orders/model";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = { title: "Request a custom order · J&J Sportswear" };
 

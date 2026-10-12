@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
-import { RequestForm } from "@/components/customer/orders/request-form";
-import { pageShell } from "@/components/customer/page-parts";
-import { fetchMyOrder } from "@/lib/customer/order-data";
-import { fromLines, type RequestDraft } from "@/lib/customer/orders";
-import { requireCustomer } from "@/lib/customer/session";
+import { RequestForm } from "@/features/customer/orders/components/request-form";
+import { pageShell } from "@/features/customer/shell/components/page-parts";
+import { fetchMyOrder } from "@/features/customer/orders/data";
+import { fromLines, type RequestDraft } from "@/features/customer/orders/model";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = { title: "Edit request · J&J Sportswear" };
 

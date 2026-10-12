@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Studio, TriesLeft } from "@/components/customer/design/studio";
-import { pageShell } from "@/components/customer/page-parts";
-import { DESIGNS_PER_DAY, STUDIO_SAMPLE_FILES } from "@/lib/customer/design-studio";
-import { fetchMyDesigns, STUDIO_MIGRATION } from "@/lib/customer/design-data";
-import { fluxConfigured } from "@/lib/customer/flux";
-import { sampleArt } from "@/lib/customer/sample-art";
-import { requireCustomer } from "@/lib/customer/session";
+import { Studio, TriesLeft } from "@/features/customer/design/components/studio";
+import { pageShell } from "@/features/customer/shell/components/page-parts";
+import { DESIGNS_PER_DAY, STUDIO_SAMPLE_FILES } from "@/features/customer/design/model";
+import { fetchMyDesigns, STUDIO_MIGRATION } from "@/features/customer/design/data";
+import { fluxConfigured } from "@/features/customer/design/flux";
+import { sampleArt } from "@/features/customer/design/sample-art";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = { title: "Design · J&J Sportswear" };
 // A FLUX generation can take half a minute; give the studio's server actions room.

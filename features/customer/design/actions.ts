@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { manilaDay } from "@/lib/customer/design-data";
-import { buildPrompt, buildRefinePrompt, cleanPicks, DESIGNS_PER_DAY, type DesignPicks } from "@/lib/customer/design-studio";
-import { FluxError, fluxConfigured, fluxGenerate } from "@/lib/customer/flux";
-import { renderPreview } from "@/lib/customer/preview-art";
-import { requireCustomer } from "@/lib/customer/session";
+import { manilaDay } from "./data";
+import { buildPrompt, buildRefinePrompt, cleanPicks, DESIGNS_PER_DAY, type DesignPicks } from "./model";
+import { FluxError, fluxConfigured, fluxGenerate } from "./flux";
+import { renderPreview } from "./preview-art";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** FLUX fetches reference images itself, so they get short-lived links. */

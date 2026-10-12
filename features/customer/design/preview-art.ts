@@ -3,7 +3,7 @@ import path from "node:path";
 import { parse, type Font } from "opentype.js";
 import sharp from "sharp";
 import { garmentColor } from "@/features/shared/catalog/colors";
-import { sampleFileFor, type DesignPicks } from "./design-studio";
+import { sampleFileFor, type DesignPicks } from "./model";
 
 // Preview designs, used until the shop's FLUX key is added: the shop's sample garment
 // illustration in the chosen colors, front and back side by side, with the team name,

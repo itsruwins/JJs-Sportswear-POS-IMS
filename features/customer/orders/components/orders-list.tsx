@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { REQUESTS_MIGRATION, type MyOrderSummary } from "@/lib/customer/order-data";
-import { downPaymentOf, payAction } from "@/lib/customer/orders";
-import { pageShell } from "../page-parts";
+import { REQUESTS_MIGRATION, type MyOrderSummary } from "@/features/customer/orders/data";
+import { downPaymentOf, payAction } from "@/features/customer/orders/model";
+import { pageShell } from "@/features/customer/shell/components/page-parts";
 import { dayDate, shortDate, StageStrip, StatusPill } from "./order-parts";
 
 const newRequestButton =

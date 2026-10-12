@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { REQUESTS_MIGRATION } from "@/lib/customer/order-data";
+import { REQUESTS_MIGRATION } from "./data";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { MAX_REFERENCES, moneyOf, canPay, type MyPayment, type OrderLine, type OrderStatus } from "@/lib/customer/orders";
-import { requireCustomer } from "@/lib/customer/session";
+import { MAX_REFERENCES, moneyOf, canPay, type MyPayment, type OrderLine, type OrderStatus } from "./model";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const textOf = (s: unknown, max: number) => (typeof s === "string" ? s.trim().slice(0, max) : "");

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { moneyOf, type MyPayment, type OrderLine, type OrderStatus, type ReferenceImage, type Step } from "./orders";
+import { moneyOf, type MyPayment, type OrderLine, type OrderStatus, type ReferenceImage, type Step } from "./model";
 
 /** The file to run in Supabase for request fields, images, and editing. */
 export const REQUESTS_MIGRATION = "supabase/migrations/20261013000000_customer_order_requests.sql";

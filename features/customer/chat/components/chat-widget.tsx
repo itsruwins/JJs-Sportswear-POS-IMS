@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { ImagePlus, LoaderCircle, MessageCircle, SendHorizontal, X } from "lucide-react";
 import { clock, dayLabel, sameDay } from "@/features/shared/chat/format";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
-import { markChatRead, sendChatMessage } from "@/app/(customer)/chat/actions";
+import { markChatRead, sendChatMessage } from "@/features/customer/chat/actions";
 import {
   fetchChatOrders,
   fetchChatUnread,
@@ -17,8 +17,8 @@ import {
   QUICK_REPLIES,
   type ChatOrder,
   type MyChatMessage,
-} from "@/lib/customer/chat";
-import { STATUS_TEXT } from "@/lib/customer/orders";
+} from "@/features/customer/chat/data";
+import { STATUS_TEXT } from "@/features/customer/orders/model";
 import { createClient } from "@/lib/supabase/client";
 
 type Tag = { id: string; number: string };

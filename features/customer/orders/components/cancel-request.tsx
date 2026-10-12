@@ -3,7 +3,7 @@
 import { useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
-import { cancelRequest } from "@/app/(customer)/orders/actions";
+import { cancelRequest } from "@/features/customer/orders/actions";
 
 /** Cancel a request the shop hasn't accepted yet, with an optional reason the shop reads. */
 export function CancelRequest({ orderId, orderNumber }: { orderId: string; orderNumber: string }) {

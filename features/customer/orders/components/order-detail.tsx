@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Check, CircleCheck, ChevronLeft, MapPin, RotateCcw } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { garmentColor } from "@/features/shared/catalog/colors";
-import type { MyOrder } from "@/lib/customer/order-data";
+import type { MyOrder } from "@/features/customer/orders/data";
 import {
   canPay,
   fromLines,
@@ -15,9 +15,9 @@ import {
   STEPS,
   type Money,
   type MyPayment,
-} from "@/lib/customer/orders";
-import { AskShop } from "../chat/ask-shop";
-import { pageShell } from "../page-parts";
+} from "@/features/customer/orders/model";
+import { AskShop } from "@/features/customer/chat/components/ask-shop";
+import { pageShell } from "@/features/customer/shell/components/page-parts";
 import { CancelRequest } from "./cancel-request";
 import { dayDate, shortDate, StageStrip, StatusPill } from "./order-parts";
 import { PayModal, type GcashInfo } from "./pay-modal";

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, Search, X } from "lucide-react";
-import { SORTS, type ShopQuery } from "@/lib/customer/catalog";
+import { SORTS, type ShopQuery } from "@/features/customer/shop/model";
 
 type Chip = { id: string; label: string };
 

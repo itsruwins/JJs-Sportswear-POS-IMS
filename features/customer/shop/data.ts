@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fetchCatalog, isSample, sortColors, sortSizes, unique, type CatalogProduct } from "@/features/shared/catalog/catalog";
-import type { ShopProduct } from "./catalog";
-import { sampleArt } from "./sample-art";
+import type { ShopProduct } from "./model";
+import { sampleArt } from "@/features/customer/design/sample-art";
 
 // The customer shop reads the same catalog as the admin; RLS already hides archived
 // products and hidden sizes from customers, and the filters here repeat that for safety.

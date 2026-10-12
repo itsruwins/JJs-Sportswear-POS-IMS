@@ -1,7 +1,7 @@
 "use server";
 
-import { CHAT_PHOTO_PATH, CHAT_PHOTOS_MIGRATION, MESSAGE_MAX } from "@/lib/customer/chat";
-import { requireCustomer } from "@/lib/customer/session";
+import { CHAT_PHOTO_PATH, CHAT_PHOTOS_MIGRATION, MESSAGE_MAX } from "./data";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

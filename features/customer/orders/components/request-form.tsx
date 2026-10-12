@@ -27,9 +27,9 @@ import {
   type GarmentDraft,
   type ReferenceImage,
   type RequestDraft,
-} from "@/lib/customer/orders";
+} from "@/features/customer/orders/model";
 import { createClient } from "@/lib/supabase/client";
-import { submitRequest, updateRequest, type RequestPayload } from "@/app/(customer)/orders/actions";
+import { submitRequest, updateRequest, type RequestPayload } from "@/features/customer/orders/actions";
 
 const STEPS = ["Details", "Garments", "Review"] as const;
 type Step = 0 | 1 | 2;

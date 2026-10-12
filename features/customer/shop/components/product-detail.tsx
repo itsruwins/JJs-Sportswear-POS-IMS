@@ -5,8 +5,8 @@ import Link from "next/link";
 import { Store, X } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { garmentColor } from "@/features/shared/catalog/colors";
-import type { ShopProduct } from "@/lib/customer/catalog";
-import { AskShop } from "../chat/ask-shop";
+import type { ShopProduct } from "@/features/customer/shop/model";
+import { AskShop } from "@/features/customer/chat/components/ask-shop";
 import { GarmentArt } from "./garment-art";
 
 export type ShopInfo = { name: string; address: string | null; city: string; phone: string | null; hours: string | null };

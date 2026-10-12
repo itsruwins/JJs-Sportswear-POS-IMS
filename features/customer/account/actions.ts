@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { usernameToEmail } from "@/features/shared/auth/credentials";
-import { AVATAR_PATH, checkDetails, checkPassword, type DetailsDraft, type DetailsErrors, type PasswordDraft, type PasswordErrors } from "@/lib/customer/account";
-import { requireCustomer } from "@/lib/customer/session";
+import { AVATAR_PATH, checkDetails, checkPassword, type DetailsDraft, type DetailsErrors, type PasswordDraft, type PasswordErrors } from "./validation";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 export type DetailsResult = { ok: true } | { ok: false; errors: DetailsErrors & { form?: string } };
 export type PasswordResult = { ok: true } | { ok: false; errors: PasswordErrors };

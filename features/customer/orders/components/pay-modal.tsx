@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { Check, Copy, ImagePlus, LoaderCircle, X } from "lucide-react";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import type { Money } from "@/lib/customer/orders";
+import type { Money } from "@/features/customer/orders/model";
 import { createClient } from "@/lib/supabase/client";
-import { submitPayment } from "@/app/(customer)/orders/actions";
+import { submitPayment } from "@/features/customer/orders/actions";
 
 export type GcashInfo = { name: string | null; number: string | null; qr: string | null };
 

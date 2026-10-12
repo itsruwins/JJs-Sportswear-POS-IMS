@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CUSTOMER_TABS, isActiveTab } from "./nav";
+import { CUSTOMER_TABS, isActiveTab } from "@/features/customer/shell/nav";
 
 /**
  * The customer's tabs: the admin's dock, so both sides of the counter move the same way.

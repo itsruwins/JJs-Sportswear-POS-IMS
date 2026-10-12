@@ -1,7 +1,7 @@
 import { sortSizes, unique } from "@/features/shared/catalog/catalog";
 
 // The shop's product shape, categories, and URL filters. Safe for client components;
-// loading the catalog (which reads the sample illustrations from disk) is in shop-data.ts.
+// loading the catalog (which reads the sample illustrations from disk) is in data.ts.
 
 export type ShopVariant = {
   size: string;

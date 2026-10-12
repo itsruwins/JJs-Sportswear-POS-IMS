@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
-import { OrdersListView } from "@/components/customer/orders/order-views";
-import { fetchMyOrders } from "@/lib/customer/order-data";
-import { requireCustomer } from "@/lib/customer/session";
+import { OrdersListView } from "@/features/customer/orders/components/orders-list";
+import { fetchMyOrders } from "@/features/customer/orders/data";
+import { requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = { title: "Orders · J&J Sportswear" };
 

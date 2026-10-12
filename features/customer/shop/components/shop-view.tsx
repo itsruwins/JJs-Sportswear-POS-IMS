@@ -1,5 +1,5 @@
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
-import { pageShell } from "@/components/customer/page-parts";
+import { pageShell } from "@/features/customer/shell/components/page-parts";
 import {
   applyQuery,
   catalogSizes,
@@ -8,7 +8,7 @@ import {
   pickFeatured,
   type ShopProduct,
   type ShopQuery,
-} from "@/lib/customer/catalog";
+} from "@/features/customer/shop/model";
 import { ShopControls } from "./shop-controls";
 import { CategoryRail, FeaturedBand, ProductCard } from "./shop-parts";
 

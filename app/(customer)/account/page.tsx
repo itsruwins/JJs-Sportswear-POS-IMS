@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { AccountView } from "@/components/customer/account/account-view";
-import { initials, requireCustomer } from "@/lib/customer/session";
+import { AccountView } from "@/features/customer/account/components/account-view";
+import { initials, requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = { title: "Account · J&J Sportswear" };
 
