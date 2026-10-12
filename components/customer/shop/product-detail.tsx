@@ -3,8 +3,8 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { Store, X } from "lucide-react";
-import { formatPeso } from "@/lib/admin/catalog";
-import { garmentColor } from "@/lib/customer/colors";
+import { formatPeso } from "@/features/shared/catalog/catalog";
+import { garmentColor } from "@/features/shared/catalog/colors";
 import type { ShopProduct } from "@/lib/customer/catalog";
 import { AskShop } from "../chat/ask-shop";
 import { GarmentArt } from "./garment-art";

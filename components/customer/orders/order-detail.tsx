@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Check, CircleCheck, ChevronLeft, MapPin, RotateCcw } from "lucide-react";
-import { formatPeso } from "@/lib/admin/catalog";
-import { garmentColor } from "@/lib/customer/colors";
+import { formatPeso } from "@/features/shared/catalog/catalog";
+import { garmentColor } from "@/features/shared/catalog/colors";
 import type { MyOrder } from "@/lib/customer/order-data";
 import {
   canPay,

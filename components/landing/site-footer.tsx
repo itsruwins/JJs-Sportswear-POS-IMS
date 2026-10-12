@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { AuthButton } from "@/components/auth/auth-provider";
-import { Wordmark } from "./wordmark";
+import { AuthButton } from "@/features/shared/auth/components/auth-provider";
+import { Wordmark } from "@/features/shared/ui/wordmark";
 
 // Shop details are placeholders until the owner confirms them.
 const SHOP_DETAILS = [

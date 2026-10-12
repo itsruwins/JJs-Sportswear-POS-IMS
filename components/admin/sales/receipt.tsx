@@ -1,6 +1,6 @@
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { formatGcashRef, METHOD_LABEL, personName, type SaleDetail } from "@/lib/admin/sales";
-import { SHOP } from "@/lib/admin/shop";
+import { SHOP } from "@/lib/shop";
 
 const when = (iso: string) =>
   new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(iso));

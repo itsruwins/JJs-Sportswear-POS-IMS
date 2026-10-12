@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { FlipText } from "./flip-text";
+import { FlipText } from "@/features/shared/ui/flip-text";
 import { UsernameForm } from "./username-form";
 import { ORDER_STAGES, PERIODS, SAMPLE_ORDER } from "./data";
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { ReportPeriod } from "@/components/admin/reports/report-controls";
 import { SalesFigures, SalesList } from "@/components/admin/sales/sales-list";
 import { historyBounds, manilaToday, parseHistoryFilters, shiftDate } from "@/lib/admin/history";

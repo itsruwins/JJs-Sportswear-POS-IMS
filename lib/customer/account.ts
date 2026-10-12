@@ -1,7 +1,7 @@
 // The customer's own details on the Account page: what they can change and the rules for it.
 // The username can't change (it's how they log in). Safe for client components.
 
-import { PASSWORD_MIN } from "@/lib/auth";
+import { PASSWORD_MIN } from "@/features/shared/auth/credentials";
 
 export type DetailsDraft = { fullName: string; phone: string; email: string };
 export type DetailsErrors = Partial<Record<keyof DetailsDraft, string>>;

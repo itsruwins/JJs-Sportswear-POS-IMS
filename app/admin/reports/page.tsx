@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { PrintButton, ReportPeriod } from "@/components/admin/reports/report-controls";
 import { CsvLink, MovementTable, ReportSection, RestockTable, StockTable } from "@/components/admin/reports/report-tables";
 import { SalesReportView } from "@/components/admin/reports/sales-report";
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { historyBounds, parseHistoryFilters, type HistoryFilters } from "@/lib/admin/history";
 import { fetchMovements, fetchStockRows, groupByProduct, needsRestock, stockSummary } from "@/lib/admin/inventory";
 import { fetchSalesReport } from "@/lib/admin/sales-report";

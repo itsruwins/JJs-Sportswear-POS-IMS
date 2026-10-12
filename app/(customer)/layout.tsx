@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ChatWidget } from "@/components/customer/chat/chat-widget";
 import { CustomerDock } from "@/components/customer/customer-dock";
 import { CustomerTopBar } from "@/components/customer/customer-top-bar";
-import { SHOP } from "@/lib/admin/shop";
+import { SHOP } from "@/lib/shop";
 import { fetchChatUnread } from "@/lib/customer/chat";
 import { initials, requireCustomer } from "@/lib/customer/session";
 

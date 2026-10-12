@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { REQUESTS_MIGRATION } from "@/lib/customer/order-data";
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { MAX_REFERENCES, moneyOf, canPay, type MyPayment, type OrderLine, type OrderStatus } from "@/lib/customer/orders";
 import { requireCustomer } from "@/lib/customer/session";
 

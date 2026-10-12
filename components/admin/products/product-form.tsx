@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, LoaderCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { saveProduct } from "@/app/admin/products/actions";
-import { SIZE_GROUPS, STANDARD_SIZES, UPCHARGE_SIZES } from "@/lib/admin/sizes";
+import { SIZE_GROUPS, STANDARD_SIZES, UPCHARGE_SIZES } from "@/features/shared/catalog/sizes";
 import { suggestSku } from "@/lib/admin/sku";
-import { formatPeso, sortSizes, unique, variantState, type CatalogProduct } from "@/lib/admin/catalog";
+import { formatPeso, sortSizes, unique, variantState, type CatalogProduct } from "@/features/shared/catalog/catalog";
 import {
   LIMITS,
   formatMoneyInput,
@@ -18,7 +18,8 @@ import {
   type ProductInput,
 } from "@/lib/admin/product-input";
 import { ChipInput } from "./chip-input";
-import { PhotoPicker, prepareForUpload, type PhotoItem } from "./photo-picker";
+import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
+import { PhotoPicker, type PhotoItem } from "./photo-picker";
 
 type Props = {
   /** The product being edited, or null to create one. */

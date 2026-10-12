@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, ReceiptText } from "lucide-react";
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { METHOD_LABEL, personName, type SaleSummary, type SalesTotals } from "@/lib/admin/sales";
 
 /** The owner's figures for the period: standing sales only, voids noted apart. */

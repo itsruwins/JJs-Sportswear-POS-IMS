@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { RecentMoves } from "@/components/admin/stock/recent-moves";
 import { StockBrowser } from "@/components/admin/stock/stock-browser";
-import { fetchCatalog, fetchRecentMoves } from "@/lib/admin/catalog";
+import { fetchCatalog, fetchRecentMoves } from "@/features/shared/catalog/catalog";
 import { requireOwner } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "Stock · J&J Sportswear Admin" };

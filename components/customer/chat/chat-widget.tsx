@@ -4,8 +4,8 @@ import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useSta
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ImagePlus, LoaderCircle, MessageCircle, SendHorizontal, X } from "lucide-react";
-import { clock, dayLabel, sameDay } from "@/components/admin/chat/chat-bits";
-import { prepareForUpload } from "@/components/admin/products/photo-picker";
+import { clock, dayLabel, sameDay } from "@/features/shared/chat/format";
+import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { markChatRead, sendChatMessage } from "@/app/(customer)/chat/actions";
 import {
   fetchChatOrders,

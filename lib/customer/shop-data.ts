@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { fetchCatalog, isSample, sortColors, sortSizes, unique, type CatalogProduct } from "@/lib/admin/catalog";
+import { fetchCatalog, isSample, sortColors, sortSizes, unique, type CatalogProduct } from "@/features/shared/catalog/catalog";
 import type { ShopProduct } from "./catalog";
 import { sampleArt } from "./sample-art";
 

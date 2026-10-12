@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Check, ChevronRight, Shirt } from "lucide-react";
-import { formatPeso, type StockMove } from "@/lib/admin/catalog";
+import { formatPeso, type StockMove } from "@/features/shared/catalog/catalog";
 import type { StaffRole } from "@/lib/admin/session";
 import { RecentMoves } from "./stock/recent-moves";
 import { DOCK_SECTIONS, MORE_SECTIONS, ROLE_LABEL, visibleTo } from "./nav";

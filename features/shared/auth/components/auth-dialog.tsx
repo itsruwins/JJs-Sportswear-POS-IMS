@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { ChevronDown, Eye, EyeOff, LoaderCircle, X } from "lucide-react";
-import { CUSTOMER_HOME } from "@/lib/customer/paths";
+import { CUSTOMER_HOME } from "@/lib/paths";
 import { createClient } from "@/lib/supabase/client";
 import {
   PASSWORD_MIN,
@@ -12,8 +12,8 @@ import {
   describeSignUpError,
   usernameToEmail,
   type AuthFailure,
-} from "@/lib/auth";
-import { FlipText } from "@/components/landing/flip-text";
+} from "@/features/shared/auth/credentials";
+import { FlipText } from "@/features/shared/ui/flip-text";
 
 export type AuthMode = "signup" | "login";
 

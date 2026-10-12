@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { StockMove } from "@/lib/admin/catalog";
+import type { StockMove } from "@/features/shared/catalog/catalog";
 
 const LABEL: Record<StockMove["transaction_type"], string> = {
   restock: "Restock",

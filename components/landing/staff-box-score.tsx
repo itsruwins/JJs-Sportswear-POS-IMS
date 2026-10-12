@@ -1,4 +1,4 @@
-import { AuthButton } from "@/components/auth/auth-provider";
+import { AuthButton } from "@/features/shared/auth/components/auth-provider";
 import { ArrowRight, BadgeCheck, BellRing, Boxes, ChartColumn, ClipboardList, ScanBarcode } from "lucide-react";
 
 const ROWS = [

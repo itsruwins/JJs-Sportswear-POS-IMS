@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import type { Bucket, SeriesPoint } from "@/lib/admin/sales-report";
 
 /** Clean axis steps: 1, 2, or 5 × a power of ten, about four of them. */

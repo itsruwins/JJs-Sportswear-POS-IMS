@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { ago } from "@/components/admin/orders/order-bits";
 import { OrdersList } from "@/components/admin/orders/orders-list";
-import { fetchOrders, ORDER_TABLES, PRODUCTION_MIGRATION, VIEWS, type OrderView } from "@/lib/admin/orders";
+import { fetchOrders, PRODUCTION_MIGRATION, VIEWS, type OrderView } from "@/lib/admin/orders";
+import { ORDER_TABLES } from "@/features/shared/orders/tables";
 import { requireStaff } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "Custom orders · J&J Sportswear Admin" };

@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { STAFF_HOME } from "@/components/admin/nav";
-import { CUSTOMER_HOME } from "@/lib/customer/paths";
+import { CUSTOMER_HOME } from "@/lib/paths";
 import { createClient } from "@/lib/supabase/server";
 
 export { STAFF_HOME };

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { OrdersListView } from "@/components/customer/orders/order-views";
 import { fetchMyOrders } from "@/lib/customer/order-data";
 import { requireCustomer } from "@/lib/customer/session";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FlipText } from "@/components/landing/flip-text";
+import { FlipText } from "@/features/shared/ui/flip-text";
 
 export type Readout = { label: string; value: number; note: string; alert?: boolean };
 

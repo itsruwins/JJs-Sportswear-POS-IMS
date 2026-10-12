@@ -3,10 +3,10 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { OrderFlash } from "@/components/admin/orders/order-actions";
 import { personName, when } from "@/components/admin/orders/order-bits";
 import { PrintButtons } from "@/components/admin/sales/receipt-actions";
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { methodLine, PAY_TYPE_LABEL, type PaymentDetail } from "@/lib/admin/payments";
 import { formatGcashRef } from "@/lib/admin/sales";
-import { SHOP } from "@/lib/admin/shop";
+import { SHOP } from "@/lib/shop";
 import { ReviewPayment } from "./payment-actions";
 import { PayPill } from "./payment-bits";
 

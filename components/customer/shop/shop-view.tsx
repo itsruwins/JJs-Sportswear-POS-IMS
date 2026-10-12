@@ -1,4 +1,4 @@
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { pageShell } from "@/components/customer/page-parts";
 import {
   applyQuery,

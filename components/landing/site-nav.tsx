@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAuth } from "@/components/auth/auth-provider";
-import { CUSTOMER_HOME } from "@/lib/customer/paths";
-import { ThemeButton } from "@/components/theme-button";
-import { Wordmark } from "./wordmark";
+import { useAuth } from "@/features/shared/auth/components/auth-provider";
+import { CUSTOMER_HOME } from "@/lib/paths";
+import { ThemeButton } from "@/features/shared/ui/theme-button";
+import { Wordmark } from "@/features/shared/ui/wordmark";
 
 const LINKS = [
   { href: "#orders", label: "Custom orders" },

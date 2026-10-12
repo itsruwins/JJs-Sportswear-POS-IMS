@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CircleCheck } from "lucide-react";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { ProductActions } from "@/components/admin/products/product-actions";
 import { AdjustStockButton } from "@/components/admin/stock/adjust-button";
 import { RecentMoves } from "@/components/admin/stock/recent-moves";
@@ -18,7 +18,7 @@ import {
   sortColors,
   unique,
   variantState,
-} from "@/lib/admin/catalog";
+} from "@/features/shared/catalog/catalog";
 import { requireStaff } from "@/lib/admin/session";
 import { hasStockHistory } from "@/lib/admin/stock";
 

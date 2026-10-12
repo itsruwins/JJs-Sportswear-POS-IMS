@@ -1,6 +1,6 @@
 "use server";
 
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { PAYMENTS_MIGRATION, type PayMethod } from "@/lib/admin/payments";
 import { requireStaff } from "@/lib/admin/session";
 

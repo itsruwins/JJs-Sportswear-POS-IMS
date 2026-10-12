@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { CATEGORIES, inCategory, leadColor, type ShopProduct } from "@/lib/customer/catalog";
 import { GarmentArt } from "./garment-art";
 

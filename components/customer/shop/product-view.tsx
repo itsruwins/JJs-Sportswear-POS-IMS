@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { pageShell } from "@/components/customer/page-parts";
-import { SHOP } from "@/lib/admin/shop";
+import { SHOP } from "@/lib/shop";
 import { CATEGORIES, inCategory, type ShopProduct } from "@/lib/customer/catalog";
 import { ProductDetail } from "./product-detail";
 import { ProductCard } from "./shop-parts";

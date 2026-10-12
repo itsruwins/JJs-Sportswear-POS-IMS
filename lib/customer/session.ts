@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { CUSTOMER_HOME } from "@/lib/customer/paths";
+import { CUSTOMER_HOME } from "@/lib/paths";
 
 export type CustomerProfile = {
   id: string;

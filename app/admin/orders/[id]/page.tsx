@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { OrderView } from "@/components/admin/orders/order-view";
-import { fetchOrder, ORDER_TABLES, VIEWS, type OrderView as OrdersTab } from "@/lib/admin/orders";
+import { fetchOrder, VIEWS, type OrderView as OrdersTab } from "@/lib/admin/orders";
+import { ORDER_TABLES } from "@/features/shared/orders/tables";
 import { fetchOrderMessages } from "@/lib/admin/chat";
 import { fetchOrderMoney } from "@/lib/admin/payments";
 import { requireStaff } from "@/lib/admin/session";

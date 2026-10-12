@@ -1,7 +1,7 @@
 import { AdminHomeView, type RestockRow } from "@/components/admin/admin-home";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import type { Readout } from "@/components/admin/readout-board";
-import { fetchRecentMoves } from "@/lib/admin/catalog";
+import { fetchRecentMoves } from "@/features/shared/catalog/catalog";
 import { historyBounds, manilaToday, shiftDate } from "@/lib/admin/history";
 import { fetchMovements, fetchStockRows, needsRestock, stockSummary } from "@/lib/admin/inventory";
 import { firstName, requireOwner } from "@/lib/admin/session";

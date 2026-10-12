@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { StockMove } from "./catalog";
+import type { StockMove } from "@/features/shared/catalog/catalog";
 
 export type HistoryRange = "today" | "7d" | "30d" | "all" | "custom";
 export type HistoryType = "all" | "restock" | "return" | "damage" | "adjustment" | "sale";

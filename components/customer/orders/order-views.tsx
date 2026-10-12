@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ChevronRight, Plus } from "lucide-react";
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { REQUESTS_MIGRATION, type MyOrderSummary } from "@/lib/customer/order-data";
 import { downPaymentOf, payAction } from "@/lib/customer/orders";
 import { pageShell } from "../page-parts";

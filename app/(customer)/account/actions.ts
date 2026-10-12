@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient as createPlainClient } from "@supabase/supabase-js";
-import { usernameToEmail } from "@/lib/auth";
+import { usernameToEmail } from "@/features/shared/auth/credentials";
 import { AVATAR_PATH, checkDetails, checkPassword, type DetailsDraft, type DetailsErrors, type PasswordDraft, type PasswordErrors } from "@/lib/customer/account";
 import { requireCustomer } from "@/lib/customer/session";
 

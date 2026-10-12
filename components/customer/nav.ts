@@ -1,6 +1,6 @@
 import { CircleUserRound, ClipboardList, Palette, Shirt, type LucideIcon } from "lucide-react";
 
-export { CUSTOMER_HOME } from "@/lib/customer/paths";
+export { CUSTOMER_HOME } from "@/lib/paths";
 
 export type CustomerTab = {
   label: string;

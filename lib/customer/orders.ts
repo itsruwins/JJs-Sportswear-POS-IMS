@@ -3,7 +3,7 @@
 // order lines the database stores (one line per garment, color, and size).
 // Safe for client components.
 
-import { SIZE_GROUPS } from "@/lib/admin/sizes";
+import { SIZE_GROUPS } from "@/features/shared/catalog/sizes";
 
 export type OrderStatus = "pending" | "accepted" | "in_progress" | "ready" | "completed" | "declined" | "cancelled";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId } from "react";
-import { garmentColor } from "@/lib/customer/colors";
+import { garmentColor } from "@/features/shared/catalog/colors";
 
 /**
  * A product on the photo backdrop: the sample illustration recolored to `color`, or the

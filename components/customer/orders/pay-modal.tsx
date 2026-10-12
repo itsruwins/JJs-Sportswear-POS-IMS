@@ -3,8 +3,8 @@
 import { useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, ImagePlus, LoaderCircle, X } from "lucide-react";
-import { prepareForUpload } from "@/components/admin/products/photo-picker";
-import { formatPeso } from "@/lib/admin/catalog";
+import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import type { Money } from "@/lib/customer/orders";
 import { createClient } from "@/lib/supabase/client";
 import { submitPayment } from "@/app/(customer)/orders/actions";

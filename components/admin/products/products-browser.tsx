@@ -11,7 +11,7 @@ import {
   sortColors,
   unique,
   type CatalogProduct,
-} from "@/lib/admin/catalog";
+} from "@/features/shared/catalog/catalog";
 import { Pill, ProductThumb, SizeRail } from "./product-bits";
 
 export type Filter = "active" | "low" | "out" | "archived";

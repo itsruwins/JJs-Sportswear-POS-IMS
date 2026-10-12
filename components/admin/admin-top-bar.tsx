@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, LogOut, Store } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { StaffRole } from "@/lib/admin/session";
-import { Wordmark } from "@/components/landing/wordmark";
-import { ThemeButton } from "@/components/theme-button";
+import { Wordmark } from "@/features/shared/ui/wordmark";
+import { ThemeButton } from "@/features/shared/ui/theme-button";
 import { ROLE_LABEL, STAFF_HOME } from "./nav";
-import { NotificationBell } from "./notification-bell";
-import { usePopoverOpen } from "./use-popover-open";
+import { NotificationBell } from "@/features/shared/ui/notification-bell";
+import { usePopoverOpen } from "@/features/shared/ui/use-popover-open";
 
 type Props = { userId: string; username: string; fullName: string | null; role: StaffRole };
 

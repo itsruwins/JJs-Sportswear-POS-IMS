@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ChatShell } from "@/components/admin/chat/chat-shell";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { CHAT_MIGRATION, fetchInbox } from "@/lib/admin/chat";
 import { requireStaff, STAFF_HOME } from "@/lib/admin/session";
 

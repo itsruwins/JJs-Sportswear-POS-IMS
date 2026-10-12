@@ -4,7 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, LoaderCircle, X } from "lucide-react";
 import { adjustStock, type EntryResult } from "@/app/admin/stock/actions";
-import { sortColors, sortSizes, unique, type CatalogProduct } from "@/lib/admin/catalog";
+import { sortColors, sortSizes, unique, type CatalogProduct } from "@/features/shared/catalog/catalog";
 import { MAX_AMOUNT, MAX_NOTE, STOCK_ACTIONS, stockAction, type StockAction } from "@/lib/admin/stock-types";
 
 type Props = {

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, Mail, MessageCircle, Phone } from "lucide-react";
-import { clock, dayLabel, firstNameOf } from "@/components/admin/chat/chat-bits";
+import { clock, dayLabel, firstNameOf } from "@/features/shared/chat/format";
 import { unreadFor, type ChatMessage } from "@/lib/admin/chat";
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { downPayment, PRODUCTION_MIGRATION, STATUS_LABEL, STEPS, VIEWS, type OrderDetail, type OrderStatus, type OrderView } from "@/lib/admin/orders";
 import { CancelOrderButton, HandoverPanel, OrderFlash, PhotoManager, ProductionChecklist, ReviewPanel } from "./order-actions";
 import { PaymentException, RecordPayment, RecordRefund } from "@/components/admin/payments/payment-actions";

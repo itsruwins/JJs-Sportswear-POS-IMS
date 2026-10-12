@@ -3,7 +3,7 @@
 import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, ClipboardList, Search, X } from "lucide-react";
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import type { OrderSummary, OrderView } from "@/lib/admin/orders";
 import { personName, StatusPill } from "./order-bits";
 

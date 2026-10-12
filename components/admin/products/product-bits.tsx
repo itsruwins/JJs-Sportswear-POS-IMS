@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Shirt } from "lucide-react";
-import type { SizeSummary } from "@/lib/admin/catalog";
+import type { SizeSummary } from "@/features/shared/catalog/catalog";
 
 /** A product's primary photo on a neutral tile, or a garment glyph when it has none. */
 export function ProductThumb({ src, name, size = "md" }: { src: string | null; name: string; size?: "md" | "lg" }) {

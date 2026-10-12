@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, Wallet } from "lucide-react";
 import { ago, personName } from "@/components/admin/orders/order-bits";
-import { formatPeso } from "@/lib/admin/catalog";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { methodLine, PAY_TYPE_LABEL, QUEUE_VIEWS, type QueueRow, type QueueView } from "@/lib/admin/payments";
 import { PayPill } from "./payment-bits";
 

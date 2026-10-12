@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductForm } from "@/components/admin/products/product-form";
-import { fetchCatalog, fetchProductImages, formContext } from "@/lib/admin/catalog";
+import { fetchCatalog, fetchProductImages, formContext } from "@/features/shared/catalog/catalog";
 import { requireOwner } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "Edit product · J&J Sportswear Admin" };

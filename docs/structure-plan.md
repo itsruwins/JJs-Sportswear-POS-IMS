@@ -68,7 +68,7 @@ Routes in `app/` stay where they are; only their imports change. Every `app/**/a
 | `ui/live-refresh.tsx` | `components/admin/live-refresh.tsx` |
 | `ui/notification-bell.tsx` | `components/admin/notification-bell.tsx` |
 | `ui/use-popover-open.ts` | `components/admin/use-popover-open.ts` |
-| `ui/photo-picker.tsx` | `components/admin/products/photo-picker.tsx` ¹ |
+| `photos/prepare-upload.ts` | `prepareForUpload()` pulled out of `components/admin/products/photo-picker.tsx` ¹ |
 | `ui/theme-button.tsx` | `components/theme-button.tsx` |
 | `ui/wordmark.tsx` | `components/landing/wordmark.tsx` |
 | `ui/flip-text.tsx` | `components/landing/flip-text.tsx` |
@@ -81,7 +81,7 @@ Routes in `app/` stay where they are; only their imports change. Every `app/**/a
 | `chat/format.ts` | `components/admin/chat/chat-bits.ts` |
 | `orders/tables.ts` | `ORDER_TABLES` pulled out of `lib/admin/orders.ts` ² |
 
-¹ `photo-picker` imports `LIMITS` from `lib/admin/product-input`. Move the photo limits it needs into the picker (or `shared/ui`) so shared doesn't import admin.
+¹ Only the product form uses the `PhotoPicker` component; the other 7 files only use its `prepareForUpload()` helper. So only the helper is shared. The picker stays with admin products (`products/components/photo-picker.tsx` in S3).
 ² The customer order page imports `ORDER_TABLES` from admin orders. It's the only thing it needs from there.
 
 ### lib and assets
@@ -116,7 +116,7 @@ Routes in `app/` stay where they are; only their imports change. Every `app/**/a
 | `payments/components/payment-parts.tsx` | `components/admin/payments/payment-bits.tsx` |
 | `payments/actions.ts` · `payments/data.ts` | `app/admin/payments/actions.ts` · `lib/admin/payments.ts` |
 | `pos/components/pos-screen.tsx` · `pos/actions.ts` | `components/admin/pos/` · `app/admin/pos/actions.ts` |
-| `products/components/{chip-input,product-actions,product-form,products-browser}.tsx` | `components/admin/products/` |
+| `products/components/{chip-input,photo-picker,product-actions,product-form,products-browser}.tsx` | `components/admin/products/` |
 | `products/components/product-parts.tsx` | `components/admin/products/product-bits.tsx` |
 | `products/actions.ts` | `app/admin/products/actions.ts` |
 | `products/validation.ts` · `products/sku.ts` | `lib/admin/product-input.ts` · `lib/admin/sku.ts` |
@@ -167,7 +167,7 @@ Each phase ends with `npx tsc --noEmit`, `npm run lint` and `npm run build` pass
 click-through of the touched screens. Use `git mv` so file history follows the move.
 
 - **S1 — Housekeeping.** ✅ Done 2026-10-12. Deleted the 5 starter SVGs. Moved fonts to `assets/fonts/` and fixed the path in `preview-art.ts`. tsc, lint and build pass, and a test preview rendered with the moved fonts.
-- **S2 — Shared + lib.** Build `features/shared/` and the `lib/` moves above. This removes every customer → admin import.
+- **S2 — Shared + lib.** ✅ Done 2026-10-12. Built `features/shared/` and made the `lib/` moves above: 15 files moved with `git mv`, two helpers pulled out, and 106 imports rewritten. No customer → admin, admin → customer, or shared → side imports remain. tsc, lint and build pass; the landing page and login redirects were smoke-tested on `next start`.
 - **S3 — Admin.** Move all admin features + shell + home. Move `app/admin/**/actions.ts`.
 - **S4 — Customer.** Move all customer features + shell. Move `app/(customer)/**/actions.ts`.
 - **S5 — Landing + wrap-up.** Move landing, delete empty folders, update the old paths in

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ReceiptText } from "lucide-react";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { PosScreen, type PosProduct } from "@/components/admin/pos/pos-screen";
-import { fetchCatalog, sortColors, sortSizes } from "@/lib/admin/catalog";
+import { fetchCatalog, sortColors, sortSizes } from "@/features/shared/catalog/catalog";
 import { requireStaff } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "Point of sale · J&J Sportswear Admin" };

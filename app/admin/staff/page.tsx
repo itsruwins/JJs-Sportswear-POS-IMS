@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { StaffScreen } from "@/components/admin/staff/staff-screen";
 import { requireStaff, STAFF_HOME } from "@/lib/admin/session";
 import { fetchTeam } from "@/lib/admin/staff";

@@ -2,8 +2,8 @@
 
 import { useId, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { useAuth } from "@/components/auth/auth-provider";
-import { USERNAME_HINT, USERNAME_PATTERN } from "@/lib/auth";
+import { useAuth } from "@/features/shared/auth/components/auth-provider";
+import { USERNAME_HINT, USERNAME_PATTERN } from "@/features/shared/auth/credentials";
 
 type UsernameFormProps = {
   tone?: "board" | "ground";

@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, ChevronDown, LoaderCircle, Minus, Plus, Search, Trash2, X } from "lucide-react";
 import { createSale, type LineProblem } from "@/app/admin/pos/actions";
 import { ProductThumb } from "@/components/admin/products/product-bits";
-import { FlipText } from "@/components/landing/flip-text";
-import { formatPeso } from "@/lib/admin/catalog";
+import { FlipText } from "@/features/shared/ui/flip-text";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { formatGcashRef, type PaymentMethod } from "@/lib/admin/sales";
 
 export type PosVariant = {

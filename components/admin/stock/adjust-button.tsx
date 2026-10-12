@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PackagePlus } from "lucide-react";
-import type { CatalogProduct } from "@/lib/admin/catalog";
+import type { CatalogProduct } from "@/features/shared/catalog/catalog";
 import { AdjustSheet } from "./adjust-sheet";
 
 /** Opens the adjust-stock sheet for one product. */

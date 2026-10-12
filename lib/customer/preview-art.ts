@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { parse, type Font } from "opentype.js";
 import sharp from "sharp";
-import { garmentColor } from "./colors";
+import { garmentColor } from "@/features/shared/catalog/colors";
 import { sampleFileFor, type DesignPicks } from "./design-studio";
 
 // Preview designs, used until the shop's FLUX key is added: the shop's sample garment

@@ -4,7 +4,7 @@ import { History } from "lucide-react";
 import { HistoryFilters } from "@/components/admin/history/history-filters";
 import { CsvLink } from "@/components/admin/reports/report-tables";
 import { HistoryList } from "@/components/admin/history/history-list";
-import { LiveRefresh } from "@/components/admin/live-refresh";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { fetchHistory, fetchHistoryOptions, HISTORY_STEP, MAX_SHOW, manilaToday, parseHistoryFilters, shiftDate } from "@/lib/admin/history";
 import { requireOwner } from "@/lib/admin/session";
 

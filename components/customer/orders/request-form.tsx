@@ -3,8 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, ChevronDown, ImagePlus, LoaderCircle, Plus, Trash2, X } from "lucide-react";
-import { prepareForUpload } from "@/components/admin/products/photo-picker";
-import { garmentColor } from "@/lib/customer/colors";
+import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
+import { garmentColor } from "@/features/shared/catalog/colors";
 import {
   blankGarment,
   checkDetails,

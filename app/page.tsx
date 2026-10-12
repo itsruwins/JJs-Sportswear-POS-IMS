@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AuthButton, AuthProvider } from "@/components/auth/auth-provider";
+import { AuthButton, AuthProvider } from "@/features/shared/auth/components/auth-provider";
 import { AiStudio } from "@/components/landing/ai-studio";
 import { OrderBand } from "@/components/landing/order-band";
 import { Scoreboard } from "@/components/landing/scoreboard";

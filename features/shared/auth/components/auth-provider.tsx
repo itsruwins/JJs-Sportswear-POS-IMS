@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { CUSTOMER_HOME, isCustomerPath } from "@/lib/customer/paths";
+import { CUSTOMER_HOME, isCustomerPath } from "@/lib/paths";
 import { createClient } from "@/lib/supabase/client";
 import { AuthDialog, type AuthMode } from "./auth-dialog";
 

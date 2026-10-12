@@ -17,8 +17,8 @@ import {
   setStep,
   type OrderResult,
 } from "@/app/admin/orders/actions";
-import { prepareForUpload } from "@/components/admin/products/photo-picker";
-import { formatPeso } from "@/lib/admin/catalog";
+import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
+import { formatPeso } from "@/features/shared/catalog/catalog";
 import { downPayment, STEPS, type OrderStatus, type Step } from "@/lib/admin/orders";
 import { createClient } from "@/lib/supabase/client";
 

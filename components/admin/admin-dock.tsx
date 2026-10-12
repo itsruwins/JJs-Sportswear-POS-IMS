@@ -8,7 +8,7 @@ import { fetchUnreadChats } from "@/lib/admin/chat";
 import { createClient } from "@/lib/supabase/client";
 import type { StaffRole } from "@/lib/admin/session";
 import { navFor, type AdminSection } from "./nav";
-import { usePopoverOpen } from "./use-popover-open";
+import { usePopoverOpen } from "@/features/shared/ui/use-popover-open";
 
 function DockIcon({ section, soon = false }: { section: AdminSection; soon?: boolean }) {
   const Icon = section.icon;

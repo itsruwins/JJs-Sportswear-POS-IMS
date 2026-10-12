@@ -7,7 +7,7 @@ import { markThreadRead, sendMessage } from "@/app/admin/chat/actions";
 import { MESSAGE_MAX, type CustomerOrder } from "@/lib/admin/chat";
 import { STATUS_LABEL } from "@/lib/admin/orders";
 import { createClient } from "@/lib/supabase/client";
-import { prepareForUpload } from "@/components/admin/products/photo-picker";
+import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 
 /** Opening a conversation reads it; runs again when a new message lands while it's open. */
 export function MarkRead({ customerId, unread, latest }: { customerId: string; unread: number; latest: string }) {

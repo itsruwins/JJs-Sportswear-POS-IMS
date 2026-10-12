@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { Pill } from "@/components/admin/products/product-bits";
-import { formatPeso, type StockState } from "@/lib/admin/catalog";
+import { formatPeso, type StockState } from "@/features/shared/catalog/catalog";
 import { variantLabel, type Movement, type ProductGroup, type StockRow } from "@/lib/admin/inventory";
 
 const th = "voice-label border-b border-line py-2.5 pr-4 text-[0.8125rem] font-semibold text-ink-2";

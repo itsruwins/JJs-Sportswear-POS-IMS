@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { sortColors, sortSizes, variantState, type StockState } from "./catalog";
+import { sortColors, sortSizes, variantState, type StockState } from "@/features/shared/catalog/catalog";
 
 // Reads page after the last id seen until a page comes back empty: correct whatever the API's
 // per-response cap is, and rows added mid-read can't shift a page and be counted twice.

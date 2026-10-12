@@ -4,8 +4,8 @@ import { useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, ImagePlus, LoaderCircle, Sparkles, X } from "lucide-react";
-import { prepareForUpload } from "@/components/admin/products/photo-picker";
-import { garmentColor } from "@/lib/customer/colors";
+import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
+import { garmentColor } from "@/features/shared/catalog/colors";
 import type { MyDesign } from "@/lib/customer/design-data";
 import {
   blankPicks,
