@@ -1,5 +1,5 @@
 import { MessageCircle } from "lucide-react";
-import { ORDER_STAGES, SAMPLE_ORDER } from "./data";
+import { ORDER_STAGES, SAMPLE_ORDER } from "@/features/landing/sample-data";
 
 /** The custom-order lifecycle as one continuous ruled band, stamped like the order's status history. */
 export function OrderBand() {

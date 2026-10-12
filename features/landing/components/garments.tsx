@@ -1,5 +1,5 @@
 import { useId } from "react";
-import type { Garment } from "./data";
+import type { Garment } from "@/features/landing/sample-data";
 
 export type JerseyDesign = {
   body: string;

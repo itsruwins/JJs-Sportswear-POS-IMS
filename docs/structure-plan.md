@@ -2,6 +2,8 @@
 
 Audit date: 2026-10-12. Goal: one folder per feature, holding everything that feature needs.
 
+**Status: complete (S1–S5 done 2026-10-12).** The rules live in `CLAUDE.md`. The audit below describes the layout *before* the restructure.
+
 ## Audit — what's wrong today
 
 1. **Features are split by file type, not by feature.** Admin orders lives in three places:
@@ -170,8 +172,7 @@ click-through of the touched screens. Use `git mv` so file history follows the m
 - **S2 — Shared + lib.** ✅ Done 2026-10-12. Built `features/shared/` and made the `lib/` moves above: 15 files moved with `git mv`, two helpers pulled out, and 106 imports rewritten. No customer → admin, admin → customer, or shared → side imports remain. tsc, lint and build pass; the landing page and login redirects were smoke-tested on `next start`.
 - **S3 — Admin.** ✅ Done 2026-10-12. Moved all admin features, shell and home into `features/admin/` (58 files, 165 imports rewritten), including the 7 `app/admin/**/actions.ts` files. Merged `lib/admin/stock.ts` (`hasStockHistory`) into `stock/data.ts`. `app/admin/` now holds only route files; `components/admin/` and `lib/admin/` are gone. tsc, lint and build pass; admin routes were smoke-tested on `next start`.
 - **S4 — Customer.** ✅ Done 2026-10-12. Moved all customer features and shell into `features/customer/` (38 files, 97 imports rewritten), including the 4 `app/(customer)/**/actions.ts` files. `app/(customer)/` now holds only route files; `components/customer/` and `lib/customer/` are gone. tsc, lint and build pass; customer routes were smoke-tested on `next start`, and an AI preview rendered from the moved `design/preview-art.ts`.
-- **S5 — Landing + wrap-up.** Move landing, delete empty folders, update the old paths in
-  `docs/customer-plan.md` (16 mentions) and `docs/admin-plan.md` (2), and add the rules above to `CLAUDE.md`.
+- **S5 — Landing + wrap-up.** ✅ Done 2026-10-12. Moved landing into `features/landing/` (10 files; `data.ts` → `sample-data.ts`) and deleted the empty `components/`. Updated the old paths in `docs/customer-plan.md` (20) and `docs/admin-plan.md` (2), and added the folder rules to `CLAUDE.md`. All rules checked by grep: no cross-side, shared → side, lib → features or `../` imports, and no non-route files in `app/`. tsc, lint and build pass; the landing page was smoke-tested on `next start`.
 
 ## Not moved, but flagged (duplicates found while mapping)
 

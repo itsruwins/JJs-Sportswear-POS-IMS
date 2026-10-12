@@ -1,5 +1,5 @@
 import { GarmentIcon } from "./garments";
-import { LOW_STOCK_THRESHOLD, SAMPLE_PRODUCTS, stockState } from "./data";
+import { LOW_STOCK_THRESHOLD, SAMPLE_PRODUCTS, stockState } from "@/features/landing/sample-data";
 
 const SIZES = ["S", "M", "L", "XL", "2XL"];
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { FlipText } from "@/features/shared/ui/flip-text";
 import { UsernameForm } from "./username-form";
-import { ORDER_STAGES, PERIODS, SAMPLE_ORDER } from "./data";
+import { ORDER_STAGES, PERIODS, SAMPLE_ORDER } from "@/features/landing/sample-data";
 
 const ADVANCE_MS = 2600;
 const WORD_CELLS = Math.max(...ORDER_STAGES.map((s) => s.word.length));
