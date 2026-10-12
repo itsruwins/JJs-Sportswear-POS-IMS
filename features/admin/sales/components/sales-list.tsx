@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, ReceiptText } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { METHOD_LABEL, personName, type SaleSummary, type SalesTotals } from "@/features/admin/sales/data";
+import { paymentName, personName, type SaleSummary, type SalesTotals } from "@/features/admin/sales/data";
 
 /** The owner's figures for the period: standing sales only, voids noted apart. */
 export function SalesFigures({ totals }: { totals: SalesTotals }) {
@@ -11,8 +11,19 @@ export function SalesFigures({ totals }: { totals: SalesTotals }) {
         <Figure label="Sales" value={totals.count.toLocaleString("en-PH")} />
         <Figure label="Total" value={formatPeso(totals.total)} />
         <Figure label="Cash" value={formatPeso(totals.cash)} />
-        <Figure label="GCash" value={formatPeso(totals.gcash)} />
+        <Figure label="E-payment" value={formatPeso(totals.e_payment)} />
       </dl>
+      {totals.providers.length > 0 && (
+        <p className="-mt-3 mb-5 text-[0.875rem] text-ink-2">
+          <span className="sr-only">E-payments by provider: </span>
+          {totals.providers.map((p, i) => (
+            <span key={p.code}>
+              {i > 0 && " · "}
+              {p.name} <span className="tabular font-semibold text-ink">{formatPeso(p.amount)}</span>
+            </span>
+          ))}
+        </p>
+      )}
       {totals.voided > 0 && (
         <p className="-mt-3 mb-5 text-[0.875rem] text-ink-2">
           {totals.voided} voided {totals.voided === 1 ? "sale isn’t" : "sales aren’t"} counted.
@@ -102,8 +113,8 @@ export function SalesList({ sales, today, yesterday }: { sales: SaleSummary[]; t
                         <span className="inline-flex rounded-full px-2 py-0.5 text-[0.75rem] font-semibold text-ink shadow-[inset_0_0_0_1.5px_var(--ink)]">Voided</span>
                       ) : (
                         <>
-                          {METHOD_LABEL[s.payment_method]}
-                          {s.gcash_reference && <span className="tabular"> · {s.gcash_reference.slice(-4)}</span>}
+                          {paymentName(s.payments)}
+                          {s.payments.length === 1 && s.payments[0].reference && <span className="tabular"> · {s.payments[0].reference.slice(-4)}</span>}
                         </>
                       )}
                       <span className="lg:hidden"> · {personName(s.cashier)}</span>

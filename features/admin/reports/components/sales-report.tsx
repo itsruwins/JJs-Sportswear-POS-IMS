@@ -41,8 +41,19 @@ export function SalesReportView({ report: r, periodLabel, csv }: { report: Sales
           <Stat label="Average sale" value={formatPeso(average)} delta={p ? change(average, prevAverage) : null} />
           <Stat label="Pieces sold" value={t.pieces.toLocaleString("en-PH")} delta={p ? change(t.pieces, p.pieces) : null} />
           <Stat label="Cash" value={formatPeso(t.cash)} note={share(t.cash, t.revenue)} />
-          <Stat label="GCash" value={formatPeso(t.gcash)} note={share(t.gcash, t.revenue)} />
+          <Stat label="E-payment" value={formatPeso(t.e_payment)} note={share(t.e_payment, t.revenue)} />
         </dl>
+        {t.providers.length > 0 && (
+          <p className="mb-3 text-[0.875rem] text-ink-2">
+            <span className="sr-only">E-payments by provider: </span>
+            {t.providers.map((x, i) => (
+              <span key={x.code}>
+                {i > 0 && " · "}
+                {x.name} <span className="tabular font-semibold text-ink">{formatPeso(x.revenue)}</span> ({share(x.revenue, t.revenue)})
+              </span>
+            ))}
+          </p>
+        )}
         <p className="text-[0.875rem] text-ink-2">
           {r.previousLabel && p ? `Changes compare with ${r.previousLabel}. ` : ""}
           {t.voided > 0

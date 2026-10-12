@@ -1,5 +1,7 @@
+import { Fragment } from "react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { formatGcashRef, METHOD_LABEL, personName, type SaleDetail } from "@/features/admin/sales/data";
+import { formatReference } from "@/features/shared/payments/model";
+import { personName, type SaleDetail } from "@/features/admin/sales/data";
 import { SHOP } from "@/lib/shop";
 
 const when = (iso: string) =>
@@ -54,16 +56,20 @@ export function Receipt({ sale }: { sale: SaleDetail }) {
           <span className="voice-board tabular text-[1.75rem] leading-none">{formatPeso(sale.subtotal)}</span>
         </div>
         <dl className="tabular mt-2 grid grid-cols-[1fr_auto] gap-x-4 gap-y-0.5">
-          <dt>{METHOD_LABEL[sale.payment_method]}</dt>
-          <dd className="text-right">{formatPeso(sale.amount_paid)}</dd>
-          {sale.payment_method === "gcash" ? (
-            sale.gcash_reference && (
-              <>
-                <dt className="opacity-70">Ref. no.</dt>
-                <dd className="text-right">{formatGcashRef(sale.gcash_reference)}</dd>
-              </>
-            )
-          ) : (
+          {sale.payments.map((p, i) => (
+            <Fragment key={i}>
+              <dt>{p.method === "cash" ? "Cash" : (p.providerName ?? "E-payment")}</dt>
+              <dd className="text-right">{formatPeso(p.amount)}</dd>
+              {p.reference && (
+                <>
+                  <dt className="opacity-70">Ref. no.</dt>
+                  <dd className="text-right">{formatReference(p.provider, p.reference)}</dd>
+                </>
+              )}
+            </Fragment>
+          ))}
+          {/* Change is always cash: shown when cash was taken, or when an e-payment ran over. */}
+          {(sale.change_amount > 0 || sale.payments.some((p) => p.method === "cash")) && (
             <>
               <dt>Change</dt>
               <dd className="text-right font-semibold">{formatPeso(sale.change_amount)}</dd>

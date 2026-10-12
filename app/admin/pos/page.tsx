@@ -4,14 +4,15 @@ import { ReceiptText } from "lucide-react";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { PosScreen, type PosProduct } from "@/features/admin/pos/components/pos-screen";
 import { fetchCatalog, sortColors, sortSizes } from "@/features/shared/catalog/catalog";
+import { fetchProviders } from "@/features/shared/payments/data";
 import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Point of sale · J&J Sportswear Admin" };
 
-/** The counter: find an item, pick its size and color, take cash or GCash, and print the receipt. */
+/** The counter: find an item, pick its size and color, take cash or an e-payment, and print the receipt. */
 export default async function PosPage() {
   const { supabase } = await requireStaff();
-  const { products, error } = await fetchCatalog(supabase);
+  const [{ products, error }, { providers }] = await Promise.all([fetchCatalog(supabase), fetchProviders(supabase)]);
 
   // Only what can be sold: products in the catalog and their visible sizes and colors.
   const forSale: PosProduct[] = products
@@ -70,7 +71,7 @@ export default async function PosPage() {
           </p>
         </>
       ) : (
-        <PosScreen products={forSale} header={header} />
+        <PosScreen products={forSale} providers={providers.filter((p) => p.isActive)} header={header} />
       )}
     </div>
   );

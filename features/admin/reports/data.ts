@@ -3,7 +3,10 @@ import { historyBounds, manilaToday, shiftDate, type HistoryFilters } from "@/fe
 
 export type Bucket = "hour" | "day" | "month";
 
-export type ReportTotals = { sales: number; revenue: number; pieces: number; cash: number; gcash: number; voided: number; voided_revenue: number };
+type Figures = { sales: number; revenue: number; pieces: number; cash: number; e_payment: number; voided: number; voided_revenue: number };
+/** E-payments received through one provider. */
+export type ProviderLine = { code: string; name: string; revenue: number };
+export type ReportTotals = Figures & { providers: ProviderLine[] };
 export type SeriesPoint = { bucket: string; label: string; sales: number; revenue: number };
 export type ProductLine = { product_id: string; name: string; pieces: number; revenue: number };
 export type VariantLine = ProductLine & { size: string | null; color: string | null };
@@ -22,7 +25,7 @@ export type SalesReport = {
 };
 
 const MIGRATION = "supabase/migrations/20261008000000_sales_report.sql";
-const EMPTY: ReportTotals = { sales: 0, revenue: 0, pieces: 0, cash: 0, gcash: 0, voided: 0, voided_revenue: 0 };
+const EMPTY: Figures = { sales: 0, revenue: 0, pieces: 0, cash: 0, e_payment: 0, voided: 0, voided_revenue: 0 };
 
 const daysBetween = (from: string, to: string) =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000) + 1;
@@ -77,8 +80,21 @@ function fillSeries(bucket: Bucket, raw: { bucket: string; sales: number; revenu
   return out;
 }
 
-const toTotals = (t: Partial<Record<keyof ReportTotals, number | string>> | null | undefined): ReportTotals =>
-  Object.fromEntries(Object.keys(EMPTY).map((k) => [k, Number(t?.[k as keyof ReportTotals] ?? 0)])) as ReportTotals;
+type RawTotals = Partial<Record<keyof Figures | "gcash", number | string>> & { providers?: { code: string; name: string; revenue: number | string }[] };
+
+/**
+ * Totals as numbers. A database from before the e-payment update reports GCash alone
+ * (`gcash`, no `e_payment`), which is read as e-payments through GCash.
+ */
+function toTotals(t: RawTotals | null | undefined): ReportTotals {
+  const figures = Object.fromEntries(Object.keys(EMPTY).map((k) => [k, Number(t?.[k as keyof Figures] ?? 0)])) as Figures;
+  if (t && t.e_payment === undefined && t.gcash !== undefined) {
+    figures.e_payment = Number(t.gcash);
+    const providers = figures.e_payment ? [{ code: "gcash", name: "GCash", revenue: figures.e_payment }] : [];
+    return { ...figures, providers };
+  }
+  return { ...figures, providers: (t?.providers ?? []).map((p) => ({ code: p.code, name: p.name, revenue: Number(p.revenue) })) };
+}
 
 /** The period just before this one, the same length (none for "All time"). */
 export function previousPeriod(f: Pick<HistoryFilters, "range" | "from" | "to">) {
@@ -123,7 +139,7 @@ export async function fetchSalesReport(
   }
 
   type Raw = {
-    totals: Record<string, number | string>;
+    totals: RawTotals;
     series: { bucket: string; sales: number; revenue: number | string }[];
     products: (Omit<ProductLine, "pieces" | "revenue"> & { pieces: number | string; revenue: number | string })[];
     variants: (Omit<VariantLine, "pieces" | "revenue"> & { pieces: number | string; revenue: number | string })[];

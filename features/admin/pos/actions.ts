@@ -1,13 +1,16 @@
 "use server";
 
 import { requireStaff } from "@/features/admin/shell/session";
-import type { PaymentMethod } from "@/features/admin/sales/data";
+import { cleanReference, GCASH } from "@/features/shared/payments/model";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-// The final sale function arrives with this follow-up (after 20261007000000_pos_gcash_and_voids.sql).
-const MIGRATION = "supabase/migrations/20261007120000_pos_sale_key.sql";
+// The sale function with payment parts arrives with this update (after 20261016000000_e_payment_methods.sql).
+const MIGRATION = "supabase/migrations/20261016120000_e_payments.sql";
 
 export type CartItem = { variantId: string; quantity: number };
+
+/** One part of the payment: cash, or an e-payment through a provider with its reference number. */
+export type PaymentPart = { method: "cash"; amount: number } | { method: "e_payment"; provider: string; reference: string; amount: number };
 
 /** A refused item points back to its cart line, so the cart can offer the fix. */
 export type LineProblem = { variantId?: string; sku?: string; kind: "short"; available: number } | { variantId?: string; sku?: string; kind: "unavailable" };
@@ -15,12 +18,12 @@ export type LineProblem = { variantId?: string; sku?: string; kind: "short"; ava
 export type SaleResult = { ok: true; id: string } | { ok: false; message: string; problem?: LineProblem };
 export type VoidResult = { ok: true } | { ok: false; message: string };
 
-/** Records a counter sale through create_pos_sale; prices and stock are checked by the database. */
+const amountOk = (n: unknown) => typeof n === "number" && Number.isFinite(n) && n > 0 && n < 10_000_000;
+
+/** Records a counter sale through create_pos_sale; prices, stock, and references are checked by the database. */
 export async function createSale(
   items: CartItem[],
-  method: PaymentMethod,
-  amountPaid: number,
-  gcashRef: string,
+  payments: PaymentPart[],
   /** One key per sale from the register; a retried Charge with the same key returns the same sale. */
   requestId: string,
 ): Promise<SaleResult> {
@@ -32,35 +35,47 @@ export async function createSale(
     items.length > 0 &&
     items.length <= 200 &&
     items.every((i) => i && typeof i.variantId === "string" && UUID.test(i.variantId) && Number.isInteger(i.quantity) && i.quantity > 0 && i.quantity <= 9999) &&
-    (method === "cash" || method === "gcash") &&
-    typeof amountPaid === "number" &&
-    Number.isFinite(amountPaid) &&
-    amountPaid >= 0 &&
-    amountPaid < 10_000_000 &&
-    typeof gcashRef === "string" &&
+    Array.isArray(payments) &&
+    payments.length > 0 &&
+    payments.length <= 50 &&
+    payments.every(
+      (p) =>
+        p &&
+        amountOk(p.amount) &&
+        (p.method === "cash" ||
+          (p.method === "e_payment" &&
+            typeof p.provider === "string" &&
+            /^[a-z][a-z0-9_]{1,31}$/.test(p.provider) &&
+            typeof p.reference === "string" &&
+            p.reference.length <= 80)),
+    ) &&
     typeof requestId === "string" &&
     UUID.test(requestId);
   if (!valid) return { ok: false, message: "This sale doesn’t look right. Check the cart and try again." };
 
-  const ref = gcashRef.replace(/\D/g, "");
-  if (method === "gcash" && ref.length !== 13) return { ok: false, message: "Enter the 13-digit GCash reference number." };
+  const p_payments = payments.map((p) =>
+    p.method === "cash"
+      ? { method: "cash" as const, amount: Math.round(p.amount * 100) / 100 }
+      : { method: "e_payment" as const, provider: p.provider, reference: cleanReference(p.reference), amount: Math.round(p.amount * 100) / 100 },
+  );
+  if (p_payments.some((p) => p.method === "e_payment" && !p.reference)) return { ok: false, message: "Enter the reference number from the customer’s receipt." };
 
   const p_items = items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity }));
-  const p_amount_paid = Math.round(amountPaid * 100) / 100;
-  let { data, error } = await supabase.rpc("create_pos_sale", {
-    p_items,
-    p_amount_paid,
-    p_payment_method: method,
-    p_gcash_reference: method === "gcash" ? ref : null,
-    p_request_id: requestId,
-  });
-  // Before the migration runs, only the original three-argument function exists. Cash sales still
-  // work through it; GCash sales wait, since the reference would be lost.
+  let { data, error } = await supabase.rpc("create_pos_sale", { p_items, p_payments, p_request_id: requestId });
+  // Before the update runs, only the cash-or-GCash function exists. A sale paid in one go by cash
+  // or GCash still works through it; other providers and split payments wait.
   if (error?.code === "PGRST202") {
-    if (method === "gcash") {
-      return { ok: false, message: `GCash sales need the latest database update (${MIGRATION}). Cash sales work in the meantime.` };
+    const [only] = p_payments;
+    if (p_payments.length !== 1 || (only.method === "e_payment" && only.provider !== GCASH)) {
+      return { ok: false, message: `This payment needs the latest database update (${MIGRATION}). Cash and GCash work in the meantime.` };
     }
-    ({ data, error } = await supabase.rpc("create_pos_sale", { p_items, p_amount_paid, p_payment_method: method }));
+    ({ data, error } = await supabase.rpc("create_pos_sale", {
+      p_items,
+      p_amount_paid: only.amount,
+      p_payment_method: only.method === "cash" ? "cash" : "gcash",
+      p_gcash_reference: only.method === "cash" ? null : only.reference,
+      p_request_id: requestId,
+    }));
   }
 
   if (error) {
@@ -84,9 +99,31 @@ export async function createSale(
       const id = detail ? { variantId: detail[1] } : who(gone![1]);
       return { ok: false, message: "One item is no longer on sale. Remove it to continue.", problem: { ...id, kind: "unavailable" } };
     }
-    if (error.code === "23505") return { ok: false, message: "That GCash reference is already on another sale. Check the number on the customer’s screen." };
+    // A refused payment part: DETAIL is "payment:<n>:<problem>[:<receipt>]" (or "payment:short" for the whole sale).
+    const pay = (error.details ?? "").match(/^payment:(?:\d+:)?([a-z_]+)(?::(.+))?$/);
+    switch (pay?.[1]) {
+      case "reference":
+        return { ok: false, message: `${text.replace(/\.$/, "")}. Check it against the customer’s receipt.` };
+      case "duplicate":
+        return {
+          ok: false,
+          message: pay[2]
+            ? `That reference is already on sale ${pay[2]}. Check the number on the customer’s receipt.`
+            : "The same reference is in this sale twice. Check the numbers.",
+        };
+      case "provider":
+        return { ok: false, message: "That bank or e-wallet isn’t accepted anymore. Pick another one." };
+      case "cash_not_needed":
+        return { ok: false, message: "The e-payments already cover the total, so take no cash." };
+      case "cash_twice":
+        return { ok: false, message: "Put all the cash in one payment." };
+      case "amount":
+      case "method":
+        return { ok: false, message: "A payment doesn’t look right. Check the amounts and try again." };
+    }
+    if (error.code === "23505") return { ok: false, message: "That reference is already on another sale. Check the number on the customer’s receipt." };
     // A price can change between the last refresh and Charge; the database total is the real one.
-    if (/less than the total/i.test(text)) return { ok: false, message: "The cash received is less than the total. A price may have just changed; check the total." };
+    if (/less than the total/i.test(text)) return { ok: false, message: "The payment is less than the total. A price may have just changed; check the total." };
     if (/GCash reference/i.test(text)) return { ok: false, message: "Enter the 13-digit GCash reference number." };
     if (error.code === "42501") return { ok: false, message: "Your account isn’t allowed to record sales." };
     if (error.code === "P0002") return { ok: false, message: "An item in the sale doesn’t exist anymore. Remove it and try again." };
