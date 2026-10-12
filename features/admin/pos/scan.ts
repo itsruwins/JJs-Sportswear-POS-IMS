@@ -50,10 +50,8 @@ export type ScanResult =
       concerns: ScanConcern[];
       /** The scan log row (receipt_scans), for linking the sale to it. */
       scanId: string | null;
-      /** True for a sample result, not read from the photo (development only). */
-      demo: boolean;
     }
-  | { ok: false; kind: ScanFailure; message: string; demo: boolean };
+  | { ok: false; kind: ScanFailure; message: string };
 
 /** One e-payment part of the sale in progress, as the register keeps it. */
 export type EPayment = {
