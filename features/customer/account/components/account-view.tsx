@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Check, Eye, EyeOff, LoaderCircle } from "lucide-react";
@@ -81,7 +82,7 @@ function PhotoSection({ uid, username, initials, fullName, avatarUrl }: Props) {
     setError("");
     try {
       const blob = await squarePhoto(file);
-      const path = `${uid}/${crypto.randomUUID()}.webp`;
+      const path = `${uid}/${uuid()}.webp`;
       const up = await createClient().storage.from("avatars").upload(path, blob, { contentType: "image/webp" });
       if (up.error) throw new Error("The photo didn’t upload. Check your connection and try again.");
       const r = await setPhoto(path);

@@ -6,7 +6,7 @@ import { methodLine, PAY_TYPE_LABEL, QUEUE_VIEWS, type QueueRow, type QueueView 
 import { PayPill } from "./payment-parts";
 
 const EMPTY: Record<QueueView, string> = {
-  submitted: "Nothing to review. GCash payments customers send for their custom orders show up here.",
+  submitted: "Nothing to review. E-payments customers send for their custom orders show up here.",
   verified: "No verified payments yet.",
   rejected: "No rejected payments.",
   all: "No payments yet.",

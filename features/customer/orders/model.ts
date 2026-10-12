@@ -33,7 +33,10 @@ export type MyPayment = {
   id: string;
   payment_type: "down_payment" | "balance";
   amount: number;
-  method: "cash" | "gcash";
+  /** "gcash" only on payments read before providers. */
+  method: "cash" | "e_payment" | "gcash";
+  /** The e-wallet or bank, for e-payments. */
+  providerName: string | null;
   status: "pending" | "submitted" | "verified" | "rejected";
   last4: string | null;
   rejection_reason: string | null;
@@ -80,7 +83,7 @@ export function payAction(status: OrderStatus, money: Money | null): { kind: "do
   return null;
 }
 
-/** Whether the order can take a GCash payment from the customer now (the database's rule). */
+/** Whether the order can take an e-payment from the customer now (the database's rule). */
 export const canPay = (status: OrderStatus, money: Money | null) =>
   Boolean(money && money.left > 0 && ["accepted", "in_progress", "ready", "completed"].includes(status));
 

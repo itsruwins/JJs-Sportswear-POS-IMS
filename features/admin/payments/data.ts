@@ -1,8 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { downPayment, type OrderStatus } from "@/features/admin/orders/data";
+import { formatReference, GCASH } from "@/features/shared/payments/model";
 
 export type PayStatus = "pending" | "submitted" | "verified" | "rejected";
-export type PayMethod = "cash" | "gcash";
+/** How a custom-order payment was made: "gcash" only on payments read before providers. */
+export type PayMethod = "cash" | "e_payment" | "gcash";
+/** How a refund was given back (refunds keep their own method). */
+export type RefundMethod = "cash" | "gcash";
 export type PayType = "down_payment" | "balance";
 
 export const PAY_STATUS_LABEL: Record<PayStatus, string> = {
@@ -27,6 +31,9 @@ export type Payment = {
   method: PayMethod;
   status: PayStatus;
   gcash_reference: string | null;
+  provider: string | null;
+  providerName: string | null;
+  reference: string | null;
   proof_path: string | null;
   note: string | null;
   rejection_reason: string | null;
@@ -35,16 +42,33 @@ export type Payment = {
   verifier: { username: string; full_name: string | null } | null;
 };
 
+// Providers on payments arrive with supabase/migrations/20261019000000_custom_order_e_payments.sql; reads
+// before it fall back (withNote = false drops both the note and the providers).
 const PAYMENT_COLUMNS = (withNote: boolean) =>
-  `id, order_id, payment_type, amount, method, status, gcash_reference, gcash_screenshot_url, ${withNote ? "note, " : ""}rejection_reason, verified_at, created_at, verifier:profiles!payments_verified_by_fkey (username, full_name)`;
+  `id, order_id, payment_type, amount, method, status, gcash_reference, gcash_screenshot_url, ${
+    withNote ? "note, provider, reference, provider_row:payment_providers (name), " : ""
+  }rejection_reason, verified_at, created_at, verifier:profiles!payments_verified_by_fkey (username, full_name)`;
 
-type PaymentRow = Omit<Payment, "amount" | "proof_path" | "note"> & { amount: number | string; gcash_screenshot_url: string | null; note?: string | null };
-const toPayment = (r: PaymentRow): Payment => ({
-  ...r,
-  amount: Number(r.amount),
-  proof_path: r.gcash_screenshot_url,
-  note: r.note ?? null,
-});
+type PaymentRow = Omit<Payment, "amount" | "proof_path" | "note" | "provider" | "providerName" | "reference"> & {
+  amount: number | string;
+  gcash_screenshot_url: string | null;
+  note?: string | null;
+  provider?: string | null;
+  reference?: string | null;
+  provider_row?: { name: string } | null;
+};
+const toPayment = ({ provider_row, ...r }: PaymentRow): Payment => {
+  const legacy = r.method === "gcash" || (!r.provider && !!r.gcash_reference);
+  return {
+    ...r,
+    amount: Number(r.amount),
+    proof_path: r.gcash_screenshot_url,
+    note: r.note ?? null,
+    provider: r.provider ?? (legacy ? GCASH : null),
+    providerName: provider_row?.name ?? (legacy ? "GCash" : null),
+    reference: r.reference ?? r.gcash_reference ?? null,
+  };
+};
 
 /** An order's money: what's been paid (verified), what's waiting, refunds, and the owner's exceptions. */
 export type OrderMoney = {
@@ -59,7 +83,7 @@ export type OrderMoney = {
   downDue: number;
   downMet: boolean;
   payments: Payment[];
-  refunds: { id: string; amount: number; method: PayMethod; note: string; created_at: string; by: string }[];
+  refunds: { id: string; amount: number; method: RefundMethod; note: string; created_at: string; by: string }[];
   overrides: Partial<Record<"production" | "pickup", { reason: string; by: string; at: string }>>;
   /** False until the payments migration has run (recording, refunds, and exceptions need it). */
   migrated: boolean;
@@ -86,7 +110,7 @@ export async function fetchOrderMoney(supabase: SupabaseClient, orderId: string,
   const sent = payments.filter((p) => p.status === "submitted");
   const waiting = sum(sent);
   const waitingId = sent.length ? sent[sent.length - 1].id : null; // payments are newest first
-  type RefundRow = { id: string; amount: number | string; method: PayMethod; note: string; created_at: string; actor: { username: string; full_name: string | null } | null };
+  type RefundRow = { id: string; amount: number | string; method: RefundMethod; note: string; created_at: string; actor: { username: string; full_name: string | null } | null };
   const refunds = ((refRes.data ?? []) as unknown as RefundRow[]).map((r) => ({ id: r.id, amount: Number(r.amount), method: r.method, note: r.note, created_at: r.created_at, by: nameOf(r.actor) }));
   type OverrideRow = { kind: "production" | "pickup"; reason: string; created_at: string; actor: { username: string; full_name: string | null } | null };
   const overrides: OrderMoney["overrides"] = {};
@@ -197,10 +221,162 @@ export async function fetchPayment(supabase: SupabaseClient, id: string): Promis
   };
 }
 
-/** "Cash", or "GCash · 1234 567 890123". */
-export function methodLine(p: Pick<Payment, "method" | "gcash_reference">, short = false) {
+/** "Cash", or "GCash · 1234 567 890123" ("Maya · …9B04" when short). */
+export function methodLine(p: Pick<Payment, "method" | "provider" | "providerName" | "reference">, short = false) {
   if (p.method === "cash") return "Cash";
-  if (!p.gcash_reference) return "GCash";
-  const d = p.gcash_reference;
-  return short ? `GCash · ${d.slice(-4)}` : `GCash · ${[d.slice(0, 4), d.slice(4, 7), d.slice(7)].join(" ")}`;
+  const name = p.providerName ?? "E-payment";
+  if (!p.reference) return name;
+  return short ? `${name} · ${p.reference.slice(-4)}` : `${name} · ${formatReference(p.provider, p.reference)}`;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Counter e-payments: what the cashier took at the POS, waiting for the owner to match each one
+// against the shop's bank or e-wallet (supabase/migrations/20261018000000_e_payment_checks.sql).
+// ---------------------------------------------------------------------------------------------
+
+export const COUNTER_MIGRATION = "supabase/migrations/20261018000000_e_payment_checks.sql";
+
+export type CounterView = "cashier_confirmed" | "matched" | "disputed";
+export const COUNTER_VIEWS: { id: CounterView; label: string }[] = [
+  { id: "cashier_confirmed", label: "To check" },
+  { id: "matched", label: "Matched" },
+  { id: "disputed", label: "Disputed" },
+];
+
+/** Why a counter e-payment deserves a closer look, most telling first. */
+export type CounterFlag =
+  | { kind: "typed" }
+  | { kind: "amount_changed"; receipt: number; approver: string | null; reason: string | null }
+  | { kind: "reference_changed"; receipt: string }
+  | { kind: "suspicious" }
+  | { kind: "not_successful"; status: string }
+  | { kind: "old_receipt"; date: string }
+  | { kind: "photo_quality" };
+
+export type CounterPayment = {
+  id: string;
+  saleId: string;
+  receiptNumber: string;
+  saleAt: string;
+  cashier: { username: string; full_name: string | null } | null;
+  provider: string;
+  providerName: string;
+  reference: string | null;
+  amount: number;
+  check: CounterView;
+  checkedAt: string | null;
+  checkNote: string | null;
+  checker: { username: string; full_name: string | null } | null;
+  /** A signed link to the receipt photo while it's kept (90 days). */
+  photoUrl: string | null;
+  photoExpired: boolean;
+  recipient: string | null;
+  flags: CounterFlag[];
+};
+
+type PersonRow = { username: string; full_name: string | null } | null;
+type CounterRow = {
+  id: string;
+  provider: string;
+  reference: string | null;
+  amount: number | string;
+  entry: "scan" | "typed" | null;
+  receipt_amount: number | string | null;
+  receipt_reference: string | null;
+  check_status: CounterView;
+  checked_at: string | null;
+  check_note: string | null;
+  provider_row: { name: string } | null;
+  checker: PersonRow;
+  sale: { id: string; receipt_number: string; created_at: string; cashier: PersonRow } | null;
+  scan: { photo_path: string | null; photo_deleted_at: string | null; reading: { fields?: Record<string, unknown>; problems?: string[] } | null } | null;
+  override: { reason: string; approver: PersonRow } | null;
+};
+
+const manilaDay = (iso: string) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+const who = (p: PersonRow) => p?.full_name?.trim() || (p ? `@${p.username}` : null);
+
+function flagsOf(r: CounterRow): CounterFlag[] {
+  const out: CounterFlag[] = [];
+  const fields = r.scan?.reading?.fields ?? {};
+  const problems = r.scan?.reading?.problems ?? [];
+  if (r.entry !== "scan") out.push({ kind: "typed" });
+  if (r.receipt_amount !== null && Number(r.receipt_amount) !== Number(r.amount)) {
+    out.push({ kind: "amount_changed", receipt: Number(r.receipt_amount), approver: who(r.override?.approver ?? null), reason: r.override?.reason ?? null });
+  }
+  if (r.receipt_reference && r.reference && r.receipt_reference !== r.reference) out.push({ kind: "reference_changed", receipt: r.receipt_reference });
+  if (problems.includes("looks_edited") || problems.includes("instructions_in_image")) out.push({ kind: "suspicious" });
+  if (typeof fields.status === "string" && fields.status !== "successful") out.push({ kind: "not_successful", status: fields.status });
+  if (typeof fields.date === "string" && r.sale && fields.date !== manilaDay(r.sale.created_at)) out.push({ kind: "old_receipt", date: fields.date });
+  if (problems.some((p) => p === "blurry" || p === "glare" || p === "cropped")) out.push({ kind: "photo_quality" });
+  return out;
+}
+
+/**
+ * Counter e-payments for the owner's checks, with what each scan showed. To check lists the ones
+ * with something to look at first, then the oldest; the checked views list the latest first.
+ */
+export async function fetchCounterPayments(supabase: SupabaseClient, view: CounterView) {
+  const [res, ...tallies] = await Promise.all([
+    supabase
+      .from("sale_payments")
+      .select(
+        `id, provider, reference, amount, entry, receipt_amount, receipt_reference, check_status, checked_at, check_note,
+         provider_row:payment_providers (name),
+         checker:profiles!sale_payments_checked_by_fkey (username, full_name),
+         sale:sales!sale_payments_sale_id_fkey (id, receipt_number, created_at, cashier:profiles!sales_cashier_id_fkey (username, full_name)),
+         scan:receipt_scans!sale_payments_scan_id_fkey (photo_path, photo_deleted_at, reading),
+         override:payment_overrides!sale_payments_override_id_fkey (reason, approver:profiles!payment_overrides_approved_by_fkey (username, full_name))`,
+      )
+      .eq("method", "e_payment")
+      .eq("check_status", view)
+      .is("voided_at", null)
+      .order(view === "cashier_confirmed" ? "created_at" : "checked_at", { ascending: view === "cashier_confirmed" })
+      .limit(201),
+    ...COUNTER_VIEWS.map((v) =>
+      supabase.from("sale_payments").select("id", { count: "exact", head: true }).eq("method", "e_payment").eq("check_status", v.id).is("voided_at", null),
+    ),
+  ]);
+  const counts = Object.fromEntries(COUNTER_VIEWS.map((v, i) => [v.id, tallies[i].count ?? 0])) as Record<CounterView, number>;
+  if (res.error) return { rows: [] as CounterPayment[], counts, more: false, error: res.error, outdated: notMigrated(res.error) };
+
+  const raw = (res.data ?? []) as unknown as CounterRow[];
+  const paths = raw.map((r) => (r.scan?.photo_path && !r.scan.photo_deleted_at ? r.scan.photo_path : null)).filter((p): p is string => !!p);
+  const signed = paths.length ? await supabase.storage.from("pos-receipts").createSignedUrls(paths, 60 * 60) : { data: [] };
+  const urls = new Map((signed.data ?? []).map((s) => [s.path, s.signedUrl]));
+
+  let rows: CounterPayment[] = raw.slice(0, 200).map((r) => ({
+    id: r.id,
+    saleId: r.sale?.id ?? "",
+    receiptNumber: r.sale?.receipt_number ?? "Unknown sale",
+    saleAt: r.sale?.created_at ?? "",
+    cashier: r.sale?.cashier ?? null,
+    provider: r.provider,
+    providerName: r.provider_row?.name ?? r.provider,
+    reference: r.reference,
+    amount: Number(r.amount),
+    check: r.check_status,
+    checkedAt: r.checked_at,
+    checkNote: r.check_note,
+    checker: r.checker,
+    photoUrl: r.scan?.photo_path ? (urls.get(r.scan.photo_path) ?? null) : null,
+    photoExpired: !!r.scan?.photo_deleted_at,
+    recipient: typeof r.scan?.reading?.fields?.recipient === "string" ? (r.scan.reading.fields.recipient as string) : null,
+    flags: flagsOf(r),
+  }));
+  // Something to look at first; otherwise the order the database gave (oldest first).
+  if (view === "cashier_confirmed") rows = rows.map((r, i) => ({ r, i })).sort((a, b) => Number(b.r.flags.length > 0) - Number(a.r.flags.length > 0) || a.i - b.i).map((x) => x.r);
+  return { rows, counts, more: raw.length > 200, error: null, outdated: false };
+}
+
+/** How many counter e-payments wait for the owner's check (0 before the update). */
+export async function countCounterToCheck(supabase: SupabaseClient) {
+  const { count } = await supabase
+    .from("sale_payments")
+    .select("id", { count: "exact", head: true })
+    .eq("method", "e_payment")
+    .eq("check_status", "cashier_confirmed")
+    .is("voided_at", null);
+  return count ?? 0;
 }

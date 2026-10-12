@@ -101,16 +101,19 @@ export async function fetchMyOrder(supabase: SupabaseClient, id: string): Promis
     custom_order_items (garment, color, size, quantity, notes, created_at),
     ai_design:ai_designs (id, prompt, generated_image_url),
     order_status_history (id, status, note, created_at, changed_by),
-    payments (id, payment_type, amount, method, status, gcash_reference, rejection_reason, created_at, verified_at)`;
-  const run = (full: boolean) =>
+    payments (id, payment_type, amount, method, status, gcash_reference, rejection_reason, created_at, verified_at`;
+  // Providers on payments arrive with supabase/migrations/20261019000000_custom_order_e_payments.sql.
+  const PROVIDER = ", provider, reference, provider_row:payment_providers (name)";
+  const run = (full: boolean, providers: boolean) =>
     supabase
       .from("custom_orders")
-      .select(full ? `${base}, team_name, needed_by, reference_images` : base)
+      .select(`${base}${providers ? PROVIDER : ""})${full ? ", team_name, needed_by, reference_images" : ""}`)
       .eq("id", id)
       .maybeSingle();
-  let res = await run(true);
+  let res = await run(true, true);
+  if (missingColumn(res.error) || res.error?.code === "PGRST200") res = await run(true, false);
   const migrated = !missingColumn(res.error);
-  if (!migrated) res = await run(false);
+  if (!migrated) res = await run(false, false);
   if (res.error) return { order: null, error: true };
   if (!res.data) return { order: null, error: false };
 
@@ -132,7 +135,14 @@ export async function fetchMyOrder(supabase: SupabaseClient, id: string): Promis
     reference_images?: string[] | null;
     custom_order_items: (OrderLine & { created_at: string })[] | null;
     order_status_history: { id: string; status: OrderStatus; note: string | null; created_at: string; changed_by: string }[] | null;
-    payments: (Omit<MyPayment, "amount" | "last4"> & { amount: number | string; gcash_reference: string | null })[] | null;
+    payments:
+      | (Omit<MyPayment, "amount" | "last4" | "providerName"> & {
+          amount: number | string;
+          gcash_reference: string | null;
+          reference?: string | null;
+          provider_row?: { name: string } | null;
+        })[]
+      | null;
     ai_design: { id: string; prompt: string; generated_image_url: string | null } | null;
   };
   const r = res.data as unknown as Row;
@@ -189,7 +199,15 @@ export async function fetchMyOrder(supabase: SupabaseClient, id: string): Promis
         .map((h) => ({ id: h.id, status: h.status, note: h.note, created_at: h.created_at, byCustomer: h.changed_by === r.customer_id }))
         .sort((a, b) => a.created_at.localeCompare(b.created_at)),
       payments: (r.payments ?? [])
-        .map(({ gcash_reference, amount, ...p }) => ({ ...p, amount: Number(amount), last4: gcash_reference ? gcash_reference.slice(-4) : null }))
+        .map(({ gcash_reference, reference, provider_row, amount, ...p }) => {
+          const ref = reference ?? gcash_reference;
+          return {
+            ...p,
+            amount: Number(amount),
+            providerName: provider_row?.name ?? (p.method === "gcash" || gcash_reference ? "GCash" : null),
+            last4: ref ? ref.slice(-4) : null,
+          };
+        })
         .sort((a, b) => b.created_at.localeCompare(a.created_at)),
       refunded: ((refundsRes.data ?? []) as { amount: number | string }[]).reduce((sum, f) => sum + Number(f.amount), 0),
       design: r.ai_design ? { id: r.ai_design.id, url: designUrl, label: "Design from the studio" } : null,

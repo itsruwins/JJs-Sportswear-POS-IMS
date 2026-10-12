@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { REQUESTS_MIGRATION } from "./data";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { MAX_REFERENCES, moneyOf, canPay, type MyPayment, type OrderLine, type OrderStatus } from "./model";
+import { fetchProviders } from "@/features/shared/payments/data";
+import { cleanReference, referenceFits, referenceLength } from "@/features/shared/payments/model";
 import { requireCustomer } from "@/features/customer/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -94,15 +96,26 @@ export type PayResult = { ok: true } | { ok: false; message: string; field?: "am
  * and the screenshot already uploaded to payment-proofs/{customer}/{order}/. It's saved as
  * "submitted" for the shop to verify; RLS allows only that, and only on accepted orders.
  */
-export async function submitPayment(orderId: string, amount: number, reference: string, proofPath: string): Promise<PayResult> {
+export async function submitPayment(orderId: string, amount: number, provider: string, reference: string, proofPath: string): Promise<PayResult> {
   if (typeof orderId !== "string" || !UUID.test(orderId)) return { ok: false, message: "That order doesn’t exist anymore." };
   const { supabase, profile } = await requireCustomer();
 
-  const ref = typeof reference === "string" ? reference.replace(/\D/g, "") : "";
-  if (ref.length !== 13) return { ok: false, field: "reference", message: "Enter the 13-digit reference number from your GCash receipt." };
+  // Only a provider the shop takes online, and a reference in that provider's form.
+  const { providers } = await fetchProviders(supabase);
+  const chosen = providers.find((p) => p.code === provider && p.isActive && p.acceptsOnline);
+  if (!chosen) return { ok: false, message: "That way of paying isn’t available anymore. Refresh the page and pick another." };
+  const ref = typeof reference === "string" ? cleanReference(reference) : "";
+  if (!referenceFits(chosen, ref)) {
+    const length = referenceLength(chosen);
+    return {
+      ok: false,
+      field: "reference",
+      message: length ? `Enter the ${length}-digit reference number from your ${chosen.name} receipt.` : `Enter the reference number from your ${chosen.name} receipt.`,
+    };
+  }
   const ownProof = new RegExp(`^${profile.id}/${orderId}/[0-9a-f-]{36}\\.(webp|jpe?g|png)$`, "i");
   if (typeof proofPath !== "string" || !ownProof.test(proofPath)) {
-    return { ok: false, field: "proof", message: "Add a screenshot of your GCash receipt." };
+    return { ok: false, field: "proof", message: "Add a screenshot of your receipt." };
   }
   const value = typeof amount === "number" && Number.isFinite(amount) ? Math.round(amount * 100) / 100 : 0;
   if (value <= 0) return { ok: false, field: "amount", message: "Enter how much you sent." };
@@ -129,15 +142,17 @@ export async function submitPayment(orderId: string, amount: number, reference: 
     order_id: orderId,
     payment_type: money.paid + money.waiting < money.down ? "down_payment" : "balance",
     amount: value,
-    method: "gcash",
+    method: "e_payment",
     status: "submitted",
-    gcash_reference: ref,
+    provider: chosen.code,
+    reference: ref,
     gcash_screenshot_url: proofPath,
   });
   if (error) {
     if (error.code === "23505") {
       return { ok: false, field: "reference", message: "That reference number is already on another payment. Check the number on your receipt." };
     }
+    if (error.details === "payment:reference") return { ok: false, field: "reference", message: `That doesn’t look like a ${chosen.name} reference number. Check your receipt.` };
     if (error.code === "42501") return { ok: false, message: "This order isn’t taking payments right now. Refresh the page to see where it is." };
     return { ok: false, message: "We couldn’t send that just now. Check your connection and try again." };
   }

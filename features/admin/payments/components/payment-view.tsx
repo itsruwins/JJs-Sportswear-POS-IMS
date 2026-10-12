@@ -5,9 +5,9 @@ import { personName, when } from "@/features/admin/orders/components/order-parts
 import { PrintButtons } from "@/features/admin/sales/components/receipt-actions";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { methodLine, PAY_TYPE_LABEL, type PaymentDetail } from "@/features/admin/payments/data";
-import { formatGcashRef } from "@/features/admin/sales/data";
+import { formatReference } from "@/features/shared/payments/model";
 import { SHOP } from "@/lib/shop";
-import { ReviewPayment } from "./payment-actions";
+import { PaymentReading, ReviewPayment } from "./payment-actions";
 import { PayPill } from "./payment-parts";
 
 const round = (n: number) => Math.round(n * 100) / 100;
@@ -15,8 +15,8 @@ const round = (n: number) => Math.round(n * 100) / 100;
 const atCounter = (p: PaymentDetail) => !!p.verified_at && Math.abs(Date.parse(p.verified_at) - Date.parse(p.created_at)) < 1000;
 const verifierName = (v: PaymentDetail["verifier"]) => v?.full_name?.trim() || (v ? `@${v.username}` : "Someone");
 
-/** One payment: check a customer's GCash payment, or print the slip for a verified one. */
-export function PaymentView({ payment: p }: { payment: PaymentDetail }) {
+/** One payment: check a customer's e-payment, or print the slip for a verified one. */
+export function PaymentView({ payment: p, providers = [] }: { payment: PaymentDetail; providers?: { code: string; name: string }[] }) {
   const total = p.order.total_price ?? 0;
   const due = round(total - p.paidBefore);
   const after = round(total - p.paidBefore - (p.status === "verified" ? p.amount : 0));
@@ -24,8 +24,9 @@ export function PaymentView({ payment: p }: { payment: PaymentDetail }) {
   // A new or declined order never took money. A cancelled one can, so it counts toward the refund.
   const orderTakesMoney = p.order.status !== "pending" && p.order.status !== "declined";
   const cancelled = p.order.status === "cancelled";
-  // Only a GCash payment the customer sent, with its reference, can be verified.
-  const verifiable = p.status === "submitted" && p.method === "gcash" && !!p.gcash_reference;
+  // Only an e-payment the customer sent, with its reference, can be verified.
+  const verifiable = p.status === "submitted" && p.method !== "cash" && !!p.reference;
+  const via = p.providerName ?? "e-wallet or bank";
   const over = waiting && orderTakesMoney && p.amount > due;
 
   return (
@@ -58,11 +59,11 @@ export function PaymentView({ payment: p }: { payment: PaymentDetail }) {
             <section data-print="hide">
               <h2 className="voice-display border-b border-line pb-3 text-[1.5rem]">Check it</h2>
               <p className="mt-4 max-w-[60ch] text-[0.9375rem] text-ink-2">
-                Find this reference in the shop’s GCash history and check the amount. Verifying counts it toward the order; rejecting tells the customer why.
+                Find this reference in the shop’s {via} history and check the amount. Verifying counts it toward the order; rejecting tells the customer why.
               </p>
               <dl className="mt-4 grid max-w-[28rem] grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-[0.9375rem]">
-                <dt className="text-ink-2">GCash reference</dt>
-                <dd className="tabular text-right font-semibold text-ink">{p.gcash_reference ? formatGcashRef(p.gcash_reference) : "None given"}</dd>
+                <dt className="text-ink-2">{p.providerName ?? "E-payment"} reference</dt>
+                <dd className="tabular text-right font-semibold text-ink">{p.reference ? formatReference(p.provider, p.reference) : "None given"}</dd>
                 <dt className="text-ink-2">Order total</dt>
                 <dd className="tabular text-right text-ink">{formatPeso(total)}</dd>
                 <dt className="text-ink-2">Paid before this</dt>
@@ -82,13 +83,16 @@ export function PaymentView({ payment: p }: { payment: PaymentDetail }) {
               )}
               {waiting && !verifiable && orderTakesMoney && (
                 <p className="auth-alert mt-4 max-w-[36rem] rounded-xl px-4 py-3 text-[0.9375rem]">
-                  This payment wasn’t sent with a GCash reference, so it can’t be verified. Reject it and ask the customer to send it again.
+                  This payment wasn’t sent with a reference number, so it can’t be verified. Reject it and ask the customer to send it again.
                 </p>
               )}
               {over && (
                 <p className="auth-alert mt-4 max-w-[36rem] rounded-xl px-4 py-3 text-[0.9375rem]">
                   This is more than the {formatPeso(due)} still due, so it can’t be verified as is. Reject it and ask the customer to check the amount.
                 </p>
+              )}
+              {p.proof_path && (
+                <PaymentReading paymentId={p.id} amount={p.amount} reference={p.reference} provider={p.provider} providers={providers} />
               )}
               <div className="mt-5">
                 <ReviewPayment paymentId={p.id} canVerify={orderTakesMoney && verifiable && !over} />
@@ -126,7 +130,7 @@ export function PaymentView({ payment: p }: { payment: PaymentDetail }) {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={p.proofUrl}
-                    alt={`GCash screenshot for ${formatPeso(p.amount)}`}
+                    alt={`Screenshot for ${formatPeso(p.amount)}`}
                     className="max-h-[32rem] w-full rounded-2xl bg-[var(--photo-bg)] object-contain shadow-[inset_0_0_0_1px_var(--line)]"
                   />
                   <span className="mt-2 inline-flex items-center gap-1.5 text-[0.875rem] font-semibold text-ink group-hover:underline">

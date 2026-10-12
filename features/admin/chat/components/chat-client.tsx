@@ -1,5 +1,6 @@
 "use client";
 
+import { uuid } from "@/lib/uuid";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, LoaderCircle, SendHorizontal, X } from "lucide-react";
@@ -124,7 +125,7 @@ export function Composer({
     let path: string | null = null;
     try {
       if (photo) {
-        path = `${ownerId}/${crypto.randomUUID()}.${photo.ext}`;
+        path = `${ownerId}/${uuid()}.${photo.ext}`;
         const up = await storage.upload(path, photo.blob, { contentType: photo.type });
         if (up.error) {
           path = null;
