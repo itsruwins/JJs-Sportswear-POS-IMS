@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { LiveRefresh } from "@/components/admin/live-refresh";
-import { ProductsBrowser, type Filter, type Sort } from "@/components/admin/products/products-browser";
-import { fetchCatalog } from "@/lib/admin/catalog";
-import { requireStaff } from "@/lib/admin/session";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
+import { ProductsBrowser, type Filter, type Sort } from "@/features/admin/products/components/products-browser";
+import { fetchCatalog } from "@/features/shared/catalog/catalog";
+import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Products · J&J Sportswear Admin" };
 

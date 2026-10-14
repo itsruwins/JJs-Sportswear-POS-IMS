@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { AdminDock } from "@/components/admin/admin-dock";
-import { AdminTopBar } from "@/components/admin/admin-top-bar";
-import { fetchUnreadChats } from "@/lib/admin/chat";
-import { requireStaff } from "@/lib/admin/session";
+import { AdminDock } from "@/features/admin/shell/components/admin-dock";
+import { AdminTopBar } from "@/features/admin/shell/components/admin-top-bar";
+import { fetchUnreadChats } from "@/features/admin/chat/data";
+import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = {
   title: "Admin · J&J Sportswear",

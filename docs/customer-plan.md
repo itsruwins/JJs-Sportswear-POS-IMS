@@ -45,7 +45,7 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
 - **Done when:** a customer signs up, lands in the shop on phone, tablet, and desktop, and a logged-out visitor can't open any customer page.
 - **Built 2026-10-07:**
   - Routes live in `app/(customer)`: `/shop`, `/orders`, `/design`, `/chat`, `/account`.
-  - `requireCustomer()` in `lib/customer/session.ts` guards every page. Staff and owners who open a customer page go to `/admin`; customers who open `/admin` go to `/shop`.
+  - `requireCustomer()` in `features/customer/shell/session.ts` guards every page. Staff and owners who open a customer page go to `/admin`; customers who open `/admin` go to `/shop`.
   - `proxy.ts` sends logged-out visitors to the login sheet with `next=<page>` and brings them back after login.
   - The dock reuses the admin's dock styles. Desktop (1024px and up) moves Shop, Orders, Design, and Chat into the top bar, and Account into the avatar menu.
   - Unbuilt tabs say plainly what they'll hold. Shop shows a live count of products on the rack, and Account shows the profile read-only with Log out.
@@ -65,13 +65,13 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
   - **Shop tab:** opens on a featured product, then a "Shop by sport" rail, then the full grid.
   - **Cards:** photo first, with name, category and color count, and price. Stock appears on the product page, as exact pieces left.
   - **Filters:** search, sport chips, size (products with that size in stock), in stock only, and sort, all kept in the URL.
-  - **Product page:** "Buy at the shop" opens a sheet with the chosen size and color and the shop details. The details are marked placeholders from `lib/admin/shop.ts`. "Make a custom version" is wired in C3.
+  - **Product page:** "Buy at the shop" opens a sheet with the chosen size and color and the shop details. The details are marked placeholders from `lib/shop.ts`. "Make a custom version" is wired in C3.
   - **Images:** sample illustrations are recolored to each variant's color.
   - **Featured product:** the owner tags a product "featured" in the admin; otherwise the first jersey in stock leads.
 - **Built 2026-10-07:**
-  - Routes `/shop` and `/shop/[id]`, with views in `components/customer/shop/`.
-  - `lib/customer/catalog.ts` holds the client-safe filters and categories. `lib/customer/shop-data.ts` loads the catalog on the server.
-  - `lib/customer/sample-art.ts` turns the sample SVGs into recolorable art.
+  - Routes `/shop` and `/shop/[id]`, with views in `features/customer/shop/components/`.
+  - `features/customer/shop/model.ts` holds the client-safe filters and categories. `features/customer/shop/data.ts` loads the catalog on the server.
+  - `features/customer/design/sample-art.ts` turns the sample SVGs into recolorable art.
   - Stock updates live through Realtime on products and variants.
 
 ### Phase C3: Request a custom order
@@ -111,6 +111,18 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
 - Live updates as the shop moves the order.
 - **Done when:** a customer follows a sample order from quote to pickup and submits a GCash down payment that the owner can verify in the admin.
 
+- **Decided 2026-10-07:**
+  - **GCash details:** marked placeholders in `lib/shop.ts`: name, number, and an optional QR image.
+  - **Paying:** a modal (bottom sheet on phones) with amount chips, an amount up to what's due, a 13-digit reference, and a required screenshot.
+  - **Tracking:** production steps, status history, finished photos, and a payment summary.
+  - **Amber:** only for "action needed" (the down payment after acceptance, the balance when ready).
+  - **Reprints:** shown plainly.
+- **Built 2026-10-07:**
+  - `/orders/[id]` gets an action notice, Production (with reprint events), Finished photos, Price and payments (with pay button), Pickup, and History. It updates live from the order tables.
+  - The `/orders` list splits into "In progress" and "Past orders", with amber pay pills.
+  - Customers send GCash payments through `submitPayment` (server action, re-checks what's due), saved as "submitted" for the shop to verify.
+  - **Seed:** `supabase/seed/sample-customer-orders.sql` (username at the top), removed with `remove-sample-customer-orders.sql`. It was run for `c3.test`, and one test GCash payment was submitted on its "Mayon Blazers (sample)" order.
+
 ### Phase C5: AI design studio (simulated)
 - Write a prompt, generate, and see the result. Every attempt is saved to `ai_designs` with its attempt number for the day.
 - A gallery of past designs.
@@ -118,10 +130,50 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
 - Sample design images ship in `public/`, marked for replacement by a real provider.
 - **Done when:** a design goes from prompt to an attached custom order request.
 
+- **Decided 2026-10-07:**
+  - **AI:** FLUX.2 [pro] from Black Forest Labs (research: `docs/ai-design-studio-model-research.pdf`).
+  - **Limit:** 3 designs per customer per day; refines count, failed generations don't.
+  - **Input:** guided picks plus free text, and an optional logo as a FLUX reference.
+  - **Image:** front and back side by side.
+  - **Refine:** allowed, and it counts toward the limit.
+  - **"Use this design":** starts a request with the design attached.
+  - **Until the key exists:** a labelled preview mode using the shop's sample art.
+- **Built 2026-10-07:**
+  - `/design` studio, at `features/customer/design/components/studio.tsx`.
+  - Server actions `generateDesign` and `refineDesign`.
+  - FLUX client in `features/customer/design/flux.ts`; it polls the result and copies it into the private `ai-designs` bucket.
+  - Preview renderer in `features/customer/design/preview-art.ts` (sharp, SVG to WebP).
+    - Lettering is drawn as Archivo outlines from `assets/fonts/` (SIL OFL, via the `opentype.js` package), so previews look the same on any server.
+  - Preview mode has no Refine: previews can't redraw from words, and the server refuses a refine until the FLUX key is set, so no try is spent.
+  - Before the first design, the stage shows the sample garment in the picked colors, and it recolors as you pick.
+  - The picks, including the logo, come back from the last design.
+  - Migrations:
+    - `20261014000000_ai_design_studio.sql`: details, parent_id, is_preview, and the 3/day trigger. The user has applied it.
+    - `20261014120000_ai_designs_keep.sql`: no deletes, so tries can't be refunded. Not applied yet; run it in Supabase.
+  - Requests carry `ai_design_id`, and the order page shows the design.
+- **Turning FLUX on:**
+  - Add `BFL_API_KEY=...` to `.env.local` (and to the hosting environment), then restart the server.
+  - Optional: `BFL_MODEL` picks the endpoint (default `flux-2-pro`).
+  - Preview designs made earlier stay marked "Preview".
+
 ### Phase C6: Chat
 - One general conversation with the shop, plus order-tagged messages, which can also be started from an order page or a product's "Ask about this".
 - Live messages, unread counts on the dock, and read receipts handled by the database.
 - **Done when:** a customer message shows in the admin chat inbox and the owner's reply appears live for the customer.
+
+- **Decided 2026-10-07:**
+  - **Placement:** a chat bubble floating bottom-right on every customer page (above the dock on phones), opening a chatbot-style panel. A person always answers. The Chat tab leaves the dock and top nav, so the dock is Shop, Orders, Design, Account.
+  - **Chatbot feel:** a greeting from J&J Sportswear with the shop's hours (placeholder 8am–6pm), and quick-reply chips ("Ask about my order", "Sizes and prices", "Custom order help") that send real messages to the shop.
+  - **Orders:** one conversation. "Ask about this order" (and the product page's "Ask about this") opens the panel with a removable tag on the next message; tagged messages show the order code.
+  - **Photos:** customers can send photo messages. This needs a migration (an attachment column and a private bucket) and photo support in the owner's admin inbox.
+- **Built 2026-10-07:**
+  - Chat widget at `features/customer/chat/components/chat-widget.tsx`, mounted in the customer layout. `/chat` now redirects to `/shop?chat=open`, which opens the panel.
+  - Server actions `sendChatMessage` and `markChatRead` in `features/customer/chat/actions.ts`; data helpers in `features/customer/chat/data.ts`. Live updates come from Realtime on `chat_messages`, with a check on tab focus and every minute as a fallback.
+  - "Ask about this order" on order pages and "Ask the shop about this" on product pages (`features/customer/chat/components/ask-shop.tsx`).
+  - The admin inbox shows and sends photos; a photo-only message reads "Sent a photo" in alerts and the inbox list.
+  - Migration `20261015000000_chat_photos.sql`: `chat_messages.image_path`, the private `chat-photos` bucket, and its policies. Not applied yet; run it in Supabase.
+  - The greeting uses `SHOP.hours` once it's filled in (`lib/shop.ts`); until then it says "usually the same day".
+  - Test cleanup: `supabase/seed/remove-c6-test-messages.sql` removes the messages the C6 checks sent as c3.test.
 
 ### Phase C7: Notifications + account
 - Bell with the customer's notifications: order status, payment verified or rejected, and new messages. Each one opens what it's about.
@@ -131,6 +183,19 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
   - Change password.
   - Log out.
 - **Done when:** every automatic notification reaches the customer and opens the right screen.
+
+- **Decided 2026-10-07:**
+  - **Bell:** in the top bar on every size, with an amber unread count. It opens a list (a sheet on phones) with "Mark all read", and new notifications pop up briefly in the corner as they arrive, like the admin's bell.
+  - **Chat:** shop messages stay in the chat bubble only; the bell covers orders, payments, and refunds.
+  - **Opens to:** a status notification opens its order page; a payment or refund notification opens it scrolled to "Price and payments". Tapping marks it read.
+  - **Account:** customers can edit name, phone, and email (the username stays fixed), add or remove a profile photo (cropped square), and change their password (current password first).
+  - **Photo for the shop:** the customer's photo also shows in the owner's chat inbox and order pages.
+- **Built 2026-10-07:**
+  - Bell: `features/shared/ui/notification-bell.tsx` gained `variant="customer"` (no chat alerts; status → `/orders/<id>`, payment and refund → `/orders/<id>#payments`), mounted in the customer top bar.
+  - Account page: `features/customer/account/components/account-view.tsx`, with server actions `saveDetails`, `changePassword`, `setPhoto`, and `removePhoto` in `features/customer/account/actions.ts` and the rules in `features/customer/account/validation.ts`. The current password is checked on a separate client that keeps no session.
+  - Profile photos: cropped to 512px square WebP in the public `avatars` bucket (older ones are cleared). They show in the top bar, on Account, and in the owner's chat inbox, conversation header, and order page.
+  - No migration needed.
+  - Sample notifications for trying the bell: `supabase/seed/sample-customer-notifications.sql` (remove with `remove-sample-customer-notifications.sql`).
 
 ## Left open for the phase where it matters
 

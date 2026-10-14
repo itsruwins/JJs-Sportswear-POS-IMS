@@ -82,7 +82,7 @@ One phase per session. Each phase ends finished, reviewed, and demoable before t
        - The sale lists items with quantities, the total, and Cash or GCash. Cash has Exact and quick amounts and shows the change. GCash needs the 13-digit reference.
        - Layout: side by side on desktop; on phones and tablets the sale is a second step behind a "Review sale" bar.
        - Stock clashes: if stock moves while a sale is open, the line is flagged with a fix ("Change to N" or "Remove"), and Charge waits until it's fixed. The database's own refusals at checkout point back to the line.
-     - **Receipts** (`/admin/sales/[id]`): a paper slip that prints on an 80 mm roll or A4. Shop details are placeholders in `lib/admin/shop.ts`, and the slip says "This is not an official receipt."
+     - **Receipts** (`/admin/sales/[id]`): a paper slip that prints on an 80 mm roll or A4. Shop details are placeholders in `lib/shop.ts`, and the slip says "This is not an official receipt."
      - **Voids:** the owner can void a sale with a reason. The stock goes back as a return, and the receipt is stamped VOIDED.
      - **`/admin/sales`:** staff see today's sales; the owner picks any period and sees totals (sales, total, cash, GCash; voids excluded).
      - **Migration `20261007000000_pos_gcash_and_voids.sql`:** adds the GCash reference (one live sale per reference) and voids. Until it runs, cash sales still work, but GCash sales and voids ask for the update. It also adds:
@@ -207,7 +207,7 @@ The manuscript (Importance of the Study; Scope and Delimitation) gives product m
 - **Owner only now:** Home dashboard, Stock (restock and adjust), History, adding, editing, archiving, and photographing products, and every custom-order action (price, accept, decline, production steps, reprint, back to production, hand over, cancel, finished photos). Reports, Staff, Chat, voids, refunds, and payment exceptions were already owner only.
 - **Navigation:** staff get their own five-tab dock (POS, Sales, Products, Orders, Payments) with no More. The wordmark takes them to the POS, and owner-only pages send them there (`STAFF_HOME`). Low-stock alerts still go to staff and the owner; a low-stock alert opens the product's read-only page.
 - **On screen:** staff don't see Add product, Edit, Archive, Adjust stock, or a product's Stock history. On an order they see where it stands and the production steps (no ticking), with a line saying the owner reviews new orders and completes pickups. Recording a payment stays.
-- **Server:** `requireOwner()` guards owner-only pages and `ownerSession()` guards owner-only server actions (`lib/admin/session.ts`).
+- **Server:** `requireOwner()` guards owner-only pages and `ownerSession()` guards owner-only server actions (`features/admin/shell/session.ts`).
 - **Migration `20261012000000_staff_pos_access.sql`:** `adjust_stock`, `set_production_step`, `reprint_custom_order`, `reopen_custom_order`, and `cancel_custom_order` check `is_owner()` (customers still cancel their own pending orders). The write policies on products, product images, tags, variants, custom orders, order items, and order photos, and on the `product-images` and `order-photos` buckets, move from staff to the owner. Reads, `create_pos_sale`, and the payment functions are unchanged. The app's own checks work before it's run; the migration makes the database refuse too.
 
 ## Hardening to consider (deferred on purpose)

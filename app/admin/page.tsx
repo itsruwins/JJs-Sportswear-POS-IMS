@@ -1,10 +1,10 @@
-import { AdminHomeView, type RestockRow } from "@/components/admin/admin-home";
-import { LiveRefresh } from "@/components/admin/live-refresh";
-import type { Readout } from "@/components/admin/readout-board";
-import { fetchRecentMoves } from "@/lib/admin/catalog";
-import { historyBounds, manilaToday, shiftDate } from "@/lib/admin/history";
-import { fetchMovements, fetchStockRows, needsRestock, stockSummary } from "@/lib/admin/inventory";
-import { firstName, requireOwner } from "@/lib/admin/session";
+import { AdminHomeView, type RestockRow } from "@/features/admin/home/components/admin-home";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
+import type { Readout } from "@/features/admin/home/components/readout-board";
+import { fetchRecentMoves } from "@/features/shared/catalog/catalog";
+import { historyBounds, manilaToday, shiftDate } from "@/features/admin/history/data";
+import { fetchMovements, fetchStockRows, needsRestock, stockSummary } from "@/features/admin/stock/data";
+import { firstName, requireOwner } from "@/features/admin/shell/session";
 
 const TZ = "Asia/Manila";
 

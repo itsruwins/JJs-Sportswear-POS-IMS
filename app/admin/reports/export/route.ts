@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
-import { csvResponse } from "@/lib/admin/csv";
-import { fetchHistoryForExport, historyBounds, manilaToday, parseHistoryFilters } from "@/lib/admin/history";
-import { fetchMovements, fetchStockRows, needsRestock, STATE_LABEL } from "@/lib/admin/inventory";
-import { fetchSalesReport } from "@/lib/admin/sales-report";
-import { requireStaff } from "@/lib/admin/session";
+import { csvResponse } from "@/features/admin/reports/csv";
+import { fetchHistoryForExport, historyBounds, manilaToday, parseHistoryFilters } from "@/features/admin/history/data";
+import { fetchMovements, fetchStockRows, needsRestock, STATE_LABEL } from "@/features/admin/stock/data";
+import { fetchSalesReport } from "@/features/admin/reports/data";
+import { requireStaff } from "@/features/admin/shell/session";
 
 const SALES_KINDS = ["sales-summary", "sales-series", "sales-products", "sales-variants", "sales-cashiers"];
 
@@ -82,7 +82,12 @@ export async function GET(request: NextRequest) {
       add("Average sale (PHP)", t.sales ? Math.round((t.revenue / t.sales) * 100) / 100 : 0, p?.sales ? Math.round((p.revenue / p.sales) * 100) / 100 : 0);
       add("Pieces sold", t.pieces, p?.pieces);
       add("Cash (PHP)", t.cash, p?.cash);
-      add("GCash (PHP)", t.gcash, p?.gcash);
+      add("E-payment (PHP)", t.e_payment, p?.e_payment);
+      // Each provider seen in either period, in this period's order.
+      const providers = [...t.providers, ...(p?.providers ?? []).filter((x) => !t.providers.some((y) => y.code === x.code))];
+      for (const x of providers) {
+        add(`E-payment: ${x.name} (PHP)`, t.providers.find((y) => y.code === x.code)?.revenue ?? 0, p ? (p.providers.find((y) => y.code === x.code)?.revenue ?? 0) : undefined);
+      }
       add("Voided sales (not counted)", t.voided, p?.voided);
       add("Voided total (PHP, not counted)", t.voided_revenue, p?.voided_revenue);
       return csvResponse(file("summary"), rows);

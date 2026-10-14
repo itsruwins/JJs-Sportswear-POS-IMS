@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PrintButton, ReportPeriod } from "@/components/admin/reports/report-controls";
-import { CsvLink, MovementTable, ReportSection, RestockTable, StockTable } from "@/components/admin/reports/report-tables";
-import { SalesReportView } from "@/components/admin/reports/sales-report";
-import { formatPeso } from "@/lib/admin/catalog";
-import { historyBounds, parseHistoryFilters, type HistoryFilters } from "@/lib/admin/history";
-import { fetchMovements, fetchStockRows, groupByProduct, needsRestock, stockSummary } from "@/lib/admin/inventory";
-import { fetchSalesReport } from "@/lib/admin/sales-report";
-import { requireStaff, STAFF_HOME } from "@/lib/admin/session";
+import { PrintButton, ReportPeriod } from "@/features/admin/reports/components/report-controls";
+import { CsvLink, MovementTable, ReportSection, RestockTable, StockTable } from "@/features/admin/reports/components/report-tables";
+import { SalesReportView } from "@/features/admin/reports/components/sales-report";
+import { formatPeso } from "@/features/shared/catalog/catalog";
+import { historyBounds, parseHistoryFilters, type HistoryFilters } from "@/features/admin/history/data";
+import { fetchMovements, fetchStockRows, groupByProduct, needsRestock, stockSummary } from "@/features/admin/stock/data";
+import { fetchSalesReport } from "@/features/admin/reports/data";
+import { requireStaff, STAFF_HOME } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Reports · J&J Sportswear Admin" };
 

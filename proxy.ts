@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isCustomerPath } from "@/lib/customer/paths";
+import { isCustomerPath } from "@/lib/paths";
 
 /**
  * Keeps the Supabase session fresh on every request, and sends visitors without a

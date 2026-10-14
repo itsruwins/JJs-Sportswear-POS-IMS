@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
-import { ChatThread } from "@/components/admin/chat/chat-thread";
-import { fetchThread, findCustomer } from "@/lib/admin/chat";
-import { requireStaff, STAFF_HOME } from "@/lib/admin/session";
+import { ChatThread } from "@/features/admin/chat/components/chat-thread";
+import { fetchThread, findCustomer } from "@/features/admin/chat/data";
+import { requireStaff, STAFF_HOME } from "@/features/admin/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -24,7 +24,7 @@ export default async function ChatThreadPage({ params, searchParams }: PageProps
     );
   }
 
-  const { messages, more, orders, error } = await fetchThread(supabase, customerId);
+  const { messages, more, orders, photos, error } = await fetchThread(supabase, customerId);
   const order = (await searchParams).order;
   return (
     <ChatThread
@@ -34,6 +34,7 @@ export default async function ChatThreadPage({ params, searchParams }: PageProps
       orders={orders}
       ownerId={profile.id}
       preselectOrder={typeof order === "string" ? order : null}
+      photos={photos}
       error={error}
       now={new Date()}
     />

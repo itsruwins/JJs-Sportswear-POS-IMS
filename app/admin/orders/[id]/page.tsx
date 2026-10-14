@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { LiveRefresh } from "@/components/admin/live-refresh";
-import { OrderView } from "@/components/admin/orders/order-view";
-import { fetchOrder, ORDER_TABLES, VIEWS, type OrderView as OrdersTab } from "@/lib/admin/orders";
-import { fetchOrderMessages } from "@/lib/admin/chat";
-import { fetchOrderMoney } from "@/lib/admin/payments";
-import { requireStaff } from "@/lib/admin/session";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
+import { OrderView } from "@/features/admin/orders/components/order-view";
+import { fetchProviders } from "@/features/shared/payments/data";
+import { fetchOrder, VIEWS, type OrderView as OrdersTab } from "@/features/admin/orders/data";
+import { ORDER_TABLES } from "@/features/shared/orders/tables";
+import { fetchOrderMessages } from "@/features/admin/chat/data";
+import { fetchOrderMoney } from "@/features/admin/payments/data";
+import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Custom order · J&J Sportswear Admin" };
 
@@ -15,7 +17,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/ad
   const { supabase, profile } = await requireStaff();
   const { id } = await params;
   if (!UUID.test(id)) notFound();
-  const { order, error } = await fetchOrder(supabase, id);
+  const [{ order, error }, { providers }] = await Promise.all([fetchOrder(supabase, id), fetchProviders(supabase)]);
   if (error) {
     return (
       <div className="mx-auto max-w-[80rem] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
@@ -36,7 +38,7 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/ad
   return (
     <>
       <LiveRefresh tables={isOwner ? [...ORDER_TABLES, "chat_messages"] : ORDER_TABLES} />
-      <OrderView order={order} money={money} chat={chat ? { ...chat, ownerId: profile.id } : undefined} isOwner={isOwner} backView={VIEWS.some((v) => v.id === from) ? (from as OrdersTab) : "open"} />
+      <OrderView order={order} money={money} chat={chat ? { ...chat, ownerId: profile.id } : undefined} isOwner={isOwner} providers={providers.filter((p) => p.isActive)} backView={VIEWS.some((v) => v.id === from) ? (from as OrdersTab) : "open"} />
     </>
   );
 }
