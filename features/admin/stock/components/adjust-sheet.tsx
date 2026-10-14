@@ -38,7 +38,7 @@ export function AdjustSheet({ product, open, onClose, initialAction = "restock",
 
   return (
     <dialog ref={ref} className="auth-dialog dialog-wide" aria-labelledby={titleId} onClose={onClose}>
-      <div className="auth-sheet">
+      <div className="auth-sheet overflow-x-hidden overflow-y-auto no-scrollbar">
         {product && open && (
           <SheetBody
             key={`${product.id}-${initialAction}`}

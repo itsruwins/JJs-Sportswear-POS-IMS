@@ -125,7 +125,7 @@ export function AuthDialog({ open, mode, prefill, nonce, username, isStaff, onSi
         if (e.target === e.currentTarget && pressedOnBackdrop.current) ref.current?.close();
       }}
     >
-      <div className="auth-sheet">
+      <div className="auth-sheet overflow-x-hidden overflow-y-auto no-scrollbar">
         <AuthPanel
           key={nonce}
           initialMode={mode}
