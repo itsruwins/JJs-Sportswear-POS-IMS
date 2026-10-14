@@ -1,11 +1,10 @@
-import { AdminHomeView, type RestockRow } from "@/components/admin/admin-home";
-import { LiveRefresh } from "@/components/admin/live-refresh";
-import type { Readout } from "@/components/admin/readout-board";
-import { firstName, requireStaff } from "@/lib/admin/session";
-
-type VariantRow = RestockRow & {
-  low_stock_threshold: number;
-};
+import { AdminHomeView, type RestockRow } from "@/features/admin/home/components/admin-home";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
+import type { Readout } from "@/features/admin/home/components/readout-board";
+import { fetchRecentMoves } from "@/features/shared/catalog/catalog";
+import { historyBounds, manilaToday, shiftDate } from "@/features/admin/history/data";
+import { fetchMovements, fetchStockRows, needsRestock, stockSummary } from "@/features/admin/stock/data";
+import { firstName, requireOwner } from "@/features/admin/shell/session";
 
 const TZ = "Asia/Manila";
 
@@ -17,32 +16,48 @@ function greeting(now: Date) {
 }
 
 export default async function AdminHome() {
-  const { supabase, profile } = await requireStaff();
+  const { supabase, profile } = await requireOwner();
   const now = new Date();
+  const today = manilaToday(now);
+  const week = historyBounds({ from: shiftDate(today, -6), to: today });
 
-  const [productsRes, variantsRes] = await Promise.all([
+  const [productsRes, stock, weekRes, recentRes] = await Promise.all([
     supabase.from("products").select("id", { count: "exact", head: true }).eq("is_active", true),
-    supabase
-      .from("product_variants")
-      .select("id, product_id, size, color, sku, stock_quantity, low_stock_threshold, product:products!inner(name)")
-      .eq("is_active", true)
-      .eq("products.is_active", true)
-      .returns<VariantRow[]>(),
+    fetchStockRows(supabase),
+    fetchMovements(supabase, week.fromIso, week.toIso),
+    fetchRecentMoves(supabase, 5),
   ]);
 
-  const loadFailed = Boolean(productsRes.error || variantsRes.error);
+  const loadFailed = Boolean(productsRes.error || stock.error);
   const productCount = productsRes.count ?? 0;
-  const variants = variantsRes.data ?? [];
-  const out = variants.filter((v) => v.stock_quantity <= 0);
-  const low = variants.filter((v) => v.stock_quantity > 0 && v.stock_quantity <= v.low_stock_threshold);
-  const needsRestock = [...out, ...low.sort((a, b) => a.stock_quantity - b.stock_quantity)].slice(0, 8);
+  const summary = stockSummary(stock.rows);
+  const restock = needsRestock(stock.rows);
+  const isOwner = profile.role === "owner";
 
   const readouts: Readout[] = [
     { label: "Products", value: productCount, note: "Active in the catalog" },
-    { label: "Variants", value: variants.length, note: "Sizes and colors on sale" },
-    { label: "Low stock", value: low.length, note: "At or below their alert level", alert: low.length > 0 },
-    { label: "Out of stock", value: out.length, note: "Sizes with none left", alert: out.length > 0 },
+    { label: "Variants", value: summary.variants, note: "Sizes and colors on sale" },
+    { label: "Low stock", value: summary.low, note: "At or below their alert level", alert: summary.low > 0 },
+    { label: "Out of stock", value: summary.out, note: "Sizes with none left", alert: summary.out > 0 },
   ];
+
+  const restockRows: RestockRow[] = restock.slice(0, 8).map((r) => ({
+    id: r.id,
+    product_id: r.productId,
+    size: r.size,
+    color: r.color,
+    sku: r.sku,
+    stock_quantity: r.stock,
+    product: { name: r.productName },
+  }));
+
+  const stockLine = {
+    pieces: summary.pieces,
+    // Peso values are for the owner only.
+    value: isOwner ? summary.value : null,
+    weekIn: weekRes.error ? null : weekRes.total.piecesIn,
+    weekOut: weekRes.error ? null : weekRes.total.piecesOut,
+  };
 
   const dateLine = new Intl.DateTimeFormat("en-PH", {
     weekday: "long",
@@ -55,16 +70,18 @@ export default async function AdminHome() {
     <>
       <LiveRefresh />
       <AdminHomeView
-      firstName={firstName(profile)}
-      username={profile.username}
-      role={profile.role}
-      greeting={greeting(now)}
-      dateLine={dateLine}
-      loadFailed={loadFailed}
-      readouts={readouts}
-      productCount={productCount}
-      needsRestock={needsRestock}
-      attentionCount={out.length + low.length}
+        firstName={firstName(profile)}
+        username={profile.username}
+        role={profile.role}
+        greeting={greeting(now)}
+        dateLine={dateLine}
+        loadFailed={loadFailed}
+        readouts={readouts}
+        productCount={productCount}
+        needsRestock={restockRows}
+        attentionCount={restock.length}
+        stockLine={stockLine}
+        recentMoves={recentRes.error ? null : recentRes.moves}
       />
     </>
   );

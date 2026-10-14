@@ -154,20 +154,29 @@ body {
   outline-offset: 3px;
   border-radius: 6px;
 }
+/* Headings that take focus from code (so screen readers announce a new step) aren't
+   controls; they never draw the keyboard ring. */
+h1[tabindex="-1"]:focus-visible,
+h2[tabindex="-1"]:focus-visible,
+h3[tabindex="-1"]:focus-visible {
+  outline: none;
+}
 
 a {
   text-underline-offset: 0.22em;
   text-decoration-thickness: 1px;
 }
 
+/* Only the wrapping style: the text-wrap shorthand would also reset the wrap mode and undo
+   `truncate` (white-space: nowrap) on any heading or paragraph. */
 h1,
 h2,
 h3 {
-  text-wrap: balance;
+  text-wrap-style: balance;
 }
 
 p {
-  text-wrap: pretty;
+  text-wrap-style: pretty;
 }
 
 html {
@@ -664,7 +673,53 @@ input.auth-input:focus-visible,
   }
 }
 
+/* Chat: the reply box sticks just above the dock while the conversation scrolls. */
+.chat-composer {
+  position: sticky;
+  z-index: calc(var(--z-sticky) - 1);
+  bottom: calc(env(safe-area-inset-bottom) + 4.75rem);
+  /* main's bottom padding (9rem) less the sticky offset, so it rests where it sticks. */
+  margin-bottom: -4.25rem;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 12px 32px -18px oklch(0.2 0.03 158 / 0.35);
+}
+/* The box shows focus for its text field, so the field itself doesn't draw a second ring. */
+.chat-composer:has(textarea:focus-visible) {
+  box-shadow:
+    0 0 0 2px var(--amber),
+    0 12px 32px -18px oklch(0.2 0.03 158 / 0.35);
+}
+.chat-composer textarea:focus-visible {
+  outline: none;
+}
+@media (min-width: 640px) {
+  .chat-composer {
+    bottom: calc(env(safe-area-inset-bottom) + 5.625rem);
+    margin-bottom: -4.375rem;
+  }
+}
+
 /* ---------- Admin: dock ---------- */
+
+/* Point of sale: the running sale, floating just above the dock on phones and tablets. */
+.pos-cartbar {
+  position: fixed;
+  z-index: var(--z-sticky);
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(env(safe-area-inset-bottom) + 4.75rem);
+}
+@media (min-width: 640px) {
+  .pos-cartbar {
+    left: 50%;
+    right: auto;
+    width: min(30rem, calc(100vw - 3rem));
+    transform: translateX(-50%);
+    bottom: calc(env(safe-area-inset-bottom) + 5.625rem);
+  }
+}
 
 /* A solid white bar that floats over the page. Inset padding and the pill's radius
    are paired (pill radius = bar radius − padding) so the corners stay concentric. */
@@ -713,13 +768,15 @@ button.admin-dock-item:not([aria-disabled="true"]):hover {
 }
 
 .admin-dock-item[aria-current="page"],
-.admin-dock-item[aria-expanded="true"] {
+.admin-dock-item[aria-expanded="true"],
+.admin-dock-item[data-current="true"] {
   background: var(--board);
   color: var(--board-ink);
 }
 
 a.admin-dock-item[aria-current="page"]:hover,
-button.admin-dock-item[aria-expanded="true"]:hover {
+button.admin-dock-item[aria-expanded="true"]:hover,
+button.admin-dock-item[data-current="true"]:hover {
   color: var(--board-ink);
 }
 
@@ -743,6 +800,22 @@ button.admin-dock-item[aria-expanded="true"]:hover {
   border-radius: 999px;
   background: var(--ink-2);
   box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* Unread customer messages behind More: a small amber dot on its icon. */
+.admin-unread-dot {
+  position: absolute;
+  top: -0.0625rem;
+  right: -0.25rem;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  border-radius: 999px;
+  background: var(--amber);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.admin-dock-item[aria-expanded="true"] .admin-unread-dot,
+.admin-dock-item[data-current="true"] .admin-unread-dot {
+  box-shadow: 0 0 0 2px var(--board);
 }
 
 /* "Coming soon" tooltip: on hover, keyboard focus, or a tap. */
@@ -799,6 +872,645 @@ button.admin-dock-item[aria-expanded="true"]:hover {
     transform: translate(-50%, 0);
     transition: opacity 120ms ease;
   }
+}
+
+/* ---------- Customer: tabs ---------- */
+
+/* The customer app reuses the admin's dock on phones and tablets; on desktop its tabs
+   move into the top bar as pills, with the same green pill for the current one. */
+@media (min-width: 1024px) {
+  .customer-dock {
+    display: none;
+  }
+}
+
+.customer-tab {
+  display: inline-flex;
+  align-items: center;
+  height: 2.25rem;
+  padding: 0 0.875rem;
+  border-radius: 999px;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition:
+    color 150ms var(--ease-out),
+    background-color 150ms var(--ease-out);
+}
+.customer-tab:hover {
+  color: var(--ink);
+  background: var(--ground-2);
+}
+.customer-tab[aria-current="page"] {
+  background: var(--board);
+  color: var(--board-ink);
+}
+
+/* On the Account page, the avatar button reads as the current tab. */
+.customer-avatar[data-current="true"] {
+  background: var(--ground-2);
+}
+
+/* ---------- Customer: shop ---------- */
+
+/* Garments sit on the light photo backdrop in both themes, the way product shots are lit. */
+.shop-tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.125rem;
+  background: var(--photo-bg);
+}
+.shop-featured {
+  border-radius: 2rem;
+}
+
+.garment-art,
+.garment-photo {
+  width: 100%;
+  height: 100%;
+}
+.garment-photo {
+  object-fit: cover;
+}
+.garment-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* The jersey cross-fade: a new color washes over the same garment. */
+.garment-art svg * {
+  transition:
+    fill 480ms var(--ease-out),
+    stroke 480ms var(--ease-out);
+}
+.shop-tile-art {
+  padding: 12%;
+  transition: transform 420ms var(--ease-out);
+}
+.shop-featured-art {
+  padding: 8% 12%;
+}
+.shop-detail-art {
+  padding: 10%;
+}
+.shop-thumb-art {
+  padding: 10%;
+}
+.garment-art.shop-featured-art svg,
+.garment-art.shop-detail-art svg {
+  filter: drop-shadow(0 18px 22px oklch(0.2 0.02 158 / 0.16));
+}
+@media (hover: hover) {
+  .shop-card:hover .shop-tile-art {
+    transform: scale(1.04);
+  }
+}
+.shop-tile[data-current="true"] {
+  box-shadow: inset 0 0 0 2px var(--card-ink);
+}
+
+/* Search */
+.shop-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 3rem;
+  padding: 0 0.75rem 0 1rem;
+  border-radius: 999px;
+  background: var(--ground-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: box-shadow 200ms var(--ease-out);
+}
+.shop-search:focus-within {
+  box-shadow: 0 0 0 2px var(--amber);
+}
+.shop-search input:focus-visible {
+  outline: none;
+}
+.shop-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* Sport chips scroll sideways on phones without a visible bar. */
+.shop-chips,
+.shop-rail {
+  scrollbar-width: none;
+}
+.shop-chips::-webkit-scrollbar,
+.shop-rail::-webkit-scrollbar {
+  display: none;
+}
+.shop-chip {
+  flex-shrink: 0;
+  height: 2.5rem;
+  padding: 0 1.125rem;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition:
+    background-color 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out);
+}
+.shop-chip:hover {
+  box-shadow: inset 0 0 0 1px var(--ink-2);
+}
+.shop-chip[aria-pressed="true"] {
+  background: var(--board);
+  color: var(--board-ink);
+  box-shadow: none;
+}
+
+/* Size and sort: native selects dressed as pills. */
+.shop-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 2.5rem;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.shop-select:focus-within {
+  box-shadow: 0 0 0 2px var(--amber);
+}
+.shop-select select {
+  appearance: none;
+  height: 100%;
+  padding: 0 2.25rem 0 1rem;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.shop-select select:focus-visible {
+  outline: none;
+}
+.shop-select svg {
+  position: absolute;
+  right: 0.875rem;
+  pointer-events: none;
+}
+
+/* In stock only: a small switch inside a pill. */
+.shop-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  height: 2.5rem;
+  padding: 0 1rem 0 0.75rem;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.shop-toggle-track {
+  position: relative;
+  width: 2rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background-color 200ms var(--ease-out);
+}
+.shop-toggle-thumb {
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.25);
+  transition: transform 240ms var(--ease-out);
+}
+.shop-toggle[aria-pressed="true"] .shop-toggle-track {
+  background: var(--board);
+}
+.shop-toggle[aria-pressed="true"] .shop-toggle-thumb {
+  transform: translateX(0.75rem);
+}
+
+/* Color swatches: the chosen one wears an ink ring. */
+/* A hairline edge keeps black on dark ground and white on light ground visible. */
+.shop-swatch {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: var(--swatch);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--ink) 18%, transparent),
+    0 0 0 3px var(--ground),
+    0 0 0 4px transparent;
+  transition: box-shadow 180ms var(--ease-out);
+}
+.shop-swatch:hover {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--ink) 18%, transparent),
+    0 0 0 3px var(--ground),
+    0 0 0 4px var(--line);
+}
+.shop-swatch[aria-pressed="true"] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklch, var(--ink) 18%, transparent),
+    0 0 0 3px var(--ground),
+    0 0 0 5px var(--ink);
+}
+/* A color sold out in every size: a diagonal rule across the swatch. */
+.shop-swatch[data-out="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 50% -2px auto;
+  height: 2px;
+  background: var(--ground);
+  transform: rotate(-45deg);
+  box-shadow: 0 0 0 1px var(--ink-2);
+}
+
+/* Size picker: each size shows the pieces left in the chosen color. */
+.shop-size {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  min-height: 3.75rem;
+  padding: 0.375rem 0.25rem;
+  border-radius: 0.875rem;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition:
+    background-color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out),
+    color 150ms var(--ease-out);
+}
+.shop-size:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 1px var(--ink-2);
+}
+.shop-size-left {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  color: var(--ink-2);
+  text-align: center;
+}
+.shop-size[data-low="true"] .shop-size-left::before {
+  content: "";
+  display: inline-block;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  margin-right: 0.3125rem;
+  border-radius: 999px;
+  background: var(--amber);
+  vertical-align: 0.0625rem;
+}
+.shop-size[aria-pressed="true"] {
+  background: var(--board);
+  color: var(--board-ink);
+  box-shadow: none;
+}
+.shop-size[aria-pressed="true"] .shop-size-left {
+  color: var(--board-ink-2);
+}
+/* Sold out: a hollow slot that recedes. A dashed hairline and the sold-out swatch's
+   diagonal rule, never a ring stronger than the sizes you can buy. */
+.shop-size:disabled {
+  cursor: not-allowed;
+  color: var(--ink-2);
+  background:
+    linear-gradient(
+      to top right,
+      transparent calc(50% - 0.5px),
+      color-mix(in oklch, var(--ink-2) 35%, transparent) calc(50% - 0.5px),
+      color-mix(in oklch, var(--ink-2) 35%, transparent) calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)
+    );
+  box-shadow: none;
+  outline: 1px dashed color-mix(in oklch, var(--ink-2) 55%, transparent);
+  outline-offset: -1px;
+}
+.shop-size:disabled > span {
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .garment-art svg *,
+  .shop-tile-art,
+  .shop-toggle-thumb {
+    transition-duration: 1ms;
+  }
+  .shop-card:hover .shop-tile-art {
+    transform: none;
+  }
+}
+
+/* ---------- Customer: custom-order requests ---------- */
+
+/* A size run: one quantity box per size, wrapping on phones. */
+.order-run {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.25rem, 1fr));
+  gap: 0.5rem;
+}
+.order-run-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem 0.375rem;
+  border-radius: 0.875rem;
+  background: var(--ground-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  cursor: text;
+  transition: box-shadow 160ms var(--ease-out);
+}
+.order-run-cell:focus-within {
+  box-shadow:
+    inset 0 0 0 1px var(--line),
+    0 0 0 2px var(--amber);
+}
+/* A size with pieces reads as filled in: an ink edge, never a new color. */
+.order-run-cell[data-filled="true"] {
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+.order-run-cell[data-filled="true"]:focus-within {
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    0 0 0 2px var(--amber);
+}
+.order-run-size {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+.order-run-cell input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+}
+.order-run-cell input::placeholder {
+  color: color-mix(in oklch, var(--ink-2) 55%, transparent);
+}
+
+/* ---------- Customer: order tracking ---------- */
+
+/* What the customer has to pay now: a raised neutral panel, edged in amber, with the live
+   lamp. Amber marks it as "now" without filling it, so it reads the same in light and dark. */
+.pay-notice {
+  background: var(--ground-2);
+  box-shadow: inset 0 0 0 1.5px oklch(0.82 0.165 78 / 0.75);
+}
+
+/* ---------- Customer: AI design studio ---------- */
+
+/* Color picks: the shop's swatches, numbered in the order they were picked. */
+.studio-swatch {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+.studio-swatch-rank {
+  display: grid;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 999px;
+  background: var(--ground);
+  color: var(--ink);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.25);
+}
+/* The design on the stage wears an ink ring in the gallery, outside the tile so the
+   picture can't cover it. */
+.studio-thumb .shop-tile {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color 160ms var(--ease-out);
+}
+.studio-thumb[aria-pressed="true"] .shop-tile {
+  outline-color: var(--ink);
+}
+@media (hover: hover) {
+  .studio-thumb:not([aria-pressed="true"]):hover .shop-tile {
+    outline-color: var(--line);
+  }
+}
+/* ---------- Customer: chat widget ---------- */
+
+/* The chat bubble: a small piece of the board, floating bottom-right. On phones it sits
+   just above the tab bar; on tablets beside the floating dock; on desktop in the corner. */
+.chat-fab {
+  --fab: 3.5rem;
+  --fab-bottom: calc(env(safe-area-inset-bottom) + 4rem + 0.75rem);
+  position: fixed;
+  z-index: var(--z-sticky);
+  right: 1rem;
+  bottom: var(--fab-bottom);
+  display: grid;
+  place-items: center;
+  width: var(--fab);
+  height: var(--fab);
+  border-radius: 999px;
+  color: var(--board-ink);
+}
+.chat-fab:hover {
+  background: var(--board-deep);
+}
+@media (min-width: 640px) {
+  .chat-fab {
+    --fab-bottom: calc(env(safe-area-inset-bottom) + 1.125rem);
+    right: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .chat-fab {
+    --fab-bottom: 1.5rem;
+    right: 2rem;
+  }
+}
+/* Unread from the shop: amber, because it's waiting on you now. */
+.chat-fab-badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.3125rem;
+  border-radius: 999px;
+  background: var(--amber);
+  color: var(--amber-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 0 0 2px var(--ground);
+}
+
+/* The panel rises out of the bubble and returns into it. */
+.chat-panel {
+  position: fixed;
+  z-index: calc(var(--z-sticky) + 2);
+  right: 1.5rem;
+  bottom: calc(env(safe-area-inset-bottom) + 1.125rem + 3.5rem + 0.75rem);
+  display: none;
+  flex-direction: column;
+  width: min(24rem, calc(100vw - 3rem));
+  height: min(40rem, calc(100dvh - 4rem - 1.125rem - 3.5rem - 1.75rem));
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: var(--ground);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 24px 60px -20px oklch(0.15 0.05 158 / 0.5);
+  opacity: 0;
+  transform: translateY(10px) scale(0.97);
+  transform-origin: 100% 100%;
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 280ms var(--ease-out),
+    display 280ms allow-discrete;
+}
+.chat-panel[data-open] {
+  display: flex;
+  opacity: 1;
+  transform: none;
+}
+@starting-style {
+  .chat-panel[data-open] {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+@media (min-width: 1024px) {
+  .chat-panel {
+    right: 2rem;
+    bottom: calc(1.5rem + 3.5rem + 0.75rem);
+    height: min(40rem, calc(100dvh - 4rem - 1.5rem - 3.5rem - 1.75rem));
+  }
+}
+/* Phones: the conversation takes the whole screen, over the tab bar, and the bubble steps aside. */
+@media (max-width: 639px) {
+  .chat-panel {
+    inset: 0;
+    width: auto;
+    height: 100dvh;
+    border-radius: 0;
+    transform: translateY(16px);
+    transform-origin: 50% 100%;
+  }
+  @starting-style {
+    .chat-panel[data-open] {
+      transform: translateY(16px);
+    }
+  }
+  .chat-fab[aria-expanded="true"] {
+    display: none;
+  }
+  html.chat-open {
+    overflow: hidden;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-panel,
+  .chat-panel[data-open] {
+    transform: none;
+    transition:
+      opacity 160ms ease,
+      display 160ms allow-discrete;
+  }
+  @starting-style {
+    .chat-panel[data-open] {
+      transform: none;
+    }
+  }
+}
+
+.chat-panel-head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  padding-top: max(0.875rem, env(safe-area-inset-top));
+  border-radius: 0;
+  box-shadow: none;
+}
+.chat-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+}
+.chat-panel-foot {
+  flex-shrink: 0;
+  padding: 0.625rem 0.75rem;
+  padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+/* The typing row: photo, text, send. Its ring shows focus for the text, like the inbox's reply box. */
+.chat-input {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 1.5rem;
+  background: var(--ground-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.chat-input:has(textarea:focus-visible) {
+  box-shadow: 0 0 0 2px var(--amber);
+}
+.chat-input textarea:focus-visible {
+  outline: none;
+}
+
+/* Messages: yours in ink on the right, the shop's on the ground on the left (as in the inbox). */
+.chat-bubble {
+  max-width: 85%;
+  padding: 0.5625rem 0.875rem;
+  border-radius: 1.125rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chat-bubble-mine {
+  border-bottom-right-radius: 0.375rem;
+  background: var(--ink);
+  color: var(--ground);
+}
+.chat-bubble-shop {
+  border-bottom-left-radius: 0.375rem;
+  background: var(--ground-2);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.chat-photo {
+  display: block;
+  max-width: 72%;
+  overflow: hidden;
+  border-radius: 1.125rem;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.chat-photo img {
+  display: block;
+  width: 100%;
+  max-height: 16rem;
+  object-fit: cover;
 }
 
 /* ---------- Admin: popovers (More, account) ---------- */
@@ -1012,4 +1724,325 @@ button.admin-dock-item[aria-expanded="true"]:hover {
   .jersey * {
     transition-duration: 1ms;
   }
+}
+
+/* -----------------------------------------------------------------------------
+   Print (the inventory report): light, no app chrome, tables that break cleanly. */
+.print-only {
+  display: none;
+}
+
+@media print {
+  :root,
+  :root:not([data-theme="light"]),
+  :root[data-theme="dark"] {
+    color-scheme: light;
+    --ground: oklch(1 0 0);
+    --ground-2: oklch(0.96 0.004 158);
+    --ink: oklch(0.15 0.012 158);
+    --ink-2: oklch(0.38 0.016 158);
+    --line: oklch(0.82 0.01 158);
+  }
+  @page {
+    size: A4;
+    margin: 14mm 12mm 16mm;
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 8pt;
+      color: oklch(0.38 0.016 158);
+    }
+  }
+  /* Each report names its own pages, so the footer says which report it is. */
+  @page sales-report {
+    @bottom-left {
+      content: "J&J Sportswear · Sales report";
+      font-size: 8pt;
+      color: oklch(0.38 0.016 158);
+    }
+  }
+  @page inventory-report {
+    @bottom-left {
+      content: "J&J Sportswear · Inventory report";
+      font-size: 8pt;
+      color: oklch(0.38 0.016 158);
+    }
+  }
+  [data-report="sales"] {
+    page: sales-report;
+  }
+  [data-report="inventory"] {
+    page: inventory-report;
+  }
+  body {
+    background: white;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .site-nav,
+  .admin-dock,
+  .admin-toasts,
+  [data-print="hide"] {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+  span.print-only {
+    display: inline;
+  }
+  main {
+    padding-bottom: 0 !important;
+  }
+  main > div {
+    padding-top: 0 !important;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .report-scroll {
+    overflow: visible;
+  }
+  .report-scroll table {
+    min-width: 0;
+    font-size: 10pt;
+  }
+  .report-scroll td,
+  .report-scroll th {
+    padding-top: 4pt;
+    padding-bottom: 4pt;
+  }
+  .report-section {
+    margin-top: 1.75rem;
+  }
+  /* A section's heading never sits alone at the foot of a page. */
+  .report-section > :first-child {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+  .report-section thead,
+  .report-section tbody:first-of-type tr:first-child {
+    break-before: avoid;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr,
+  .report-group {
+    break-inside: avoid;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Sales chart: one series in court green. Dark mode uses its own step (L 0.64),
+   validated against the dark ground, not the light green inverted. */
+.sales-bar {
+  background: oklch(0.43 0.105 158);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sales-bar {
+    background: oklch(0.64 0.125 156);
+  }
+}
+:root[data-theme="dark"] .sales-bar {
+  background: oklch(0.64 0.125 156);
+}
+@media print {
+  .sales-bar,
+  :root:not([data-theme="light"]) .sales-bar,
+  :root[data-theme="dark"] .sales-bar {
+    background: oklch(0.43 0.105 158);
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Receipts (point of sale): a slip of paper on screen, an 80 mm roll or A4 in print.
+   ReceiptActions sets html[data-paper] and the page size just before printing. */
+.receipt-rule {
+  border-top: 1px dashed color-mix(in oklch, var(--card-ink) 35%, transparent);
+}
+.receipt-void {
+  box-shadow: inset 0 0 0 1.5px var(--card-ink);
+}
+
+@media print {
+  html[data-paper="thermal"] {
+    font-size: 13px;
+  }
+  /* Thermal heads drop or dither grey, so everything prints in full black. */
+  html[data-paper] .receipt [class*="opacity-"] {
+    opacity: 1;
+  }
+  html[data-paper="a4"] {
+    font-size: 15px;
+  }
+  html[data-paper] .receipt {
+    max-width: none;
+    padding: 0;
+    background: white;
+    color: black;
+    box-shadow: none;
+  }
+  html[data-paper] main > div {
+    padding: 0 !important;
+    max-width: none;
+  }
+  html[data-paper="thermal"] .receipt {
+    width: 72mm;
+    margin: 0;
+  }
+  html[data-paper="a4"] .receipt {
+    width: 120mm;
+    margin: 0 auto;
+  }
+  html[data-paper] .receipt-rule {
+    border-top-color: black;
+  }
+  html[data-paper] .receipt-void {
+    box-shadow: inset 0 0 0 1.5px black;
+  }
+}
+
+/* ---------- Admin: point of sale, e-payment sheet ---------- */
+
+/* The receipt photo sits on the light photo backdrop, uncropped, the way it was taken. */
+.scan-photo {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 1.125rem;
+  background: var(--photo-bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.scan-photo img {
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  transition: opacity 220ms var(--ease-out), filter 220ms var(--ease-out);
+}
+.scan-photo[data-busy] img {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+.scan-reading {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ground);
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.scan-thumb {
+  width: 4.5rem;
+  height: 6rem;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: var(--photo-bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.scan-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* What the payment means for the sale. Quiet ground-2 when it's only information; an amber
+   edge (never a fill) while something needs the cashier now, like the pay notice. */
+.scan-notices {
+  display: grid;
+  gap: 0.75rem;
+  border-radius: 1rem;
+  background: var(--ground-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  padding: 0.875rem 1rem;
+}
+.scan-notices-urgent {
+  box-shadow: inset 0 0 0 1.5px var(--amber);
+}
+.scan-notices b {
+  font-weight: 650;
+}
+
+.scan-check {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  flex-shrink: 0;
+  border-radius: 0.375rem;
+  background: var(--ground);
+  box-shadow: inset 0 0 0 1.5px var(--ink-2);
+  transition: background-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+}
+.scan-check:checked {
+  background: var(--ink);
+  box-shadow: none;
+}
+.scan-check:checked::after {
+  content: "";
+  width: 0.4rem;
+  height: 0.7rem;
+  margin-top: -0.15rem;
+  border: solid var(--ground);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-photo img,
+  .scan-check {
+    transition: none;
+  }
+}
+
+/* A switch for on/off settings (the shop's accounts): a line track, green when on. */
+.account-switch {
+  appearance: none;
+  position: relative;
+  width: 2.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background-color 240ms var(--ease-out);
+}
+.account-switch::after {
+  content: "";
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 999px;
+  background: var(--ground);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.25);
+  transition: transform 240ms var(--ease-out);
+}
+.account-switch:checked {
+  background: var(--board);
+}
+.account-switch:checked::after {
+  transform: translateX(1rem);
+}
+@media (prefers-reduced-motion: reduce) {
+  .account-switch,
+  .account-switch::after {
+    transition: none;
+  }
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

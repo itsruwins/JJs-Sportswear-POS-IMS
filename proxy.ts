@@ -1,10 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isCustomerPath } from "@/lib/paths";
 
 /**
  * Keeps the Supabase session fresh on every request, and sends visitors without a
- * session away from /admin before any page work happens. This is only the optimistic
- * check: the admin layout verifies the role on the server.
+ * session away from /admin and the customer pages before any page work happens. This is
+ * only the optimistic check: each layout verifies the role on the server.
  */
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -30,10 +31,13 @@ export async function proxy(request: NextRequest) {
   // getClaims() verifies the token; don't run code between creating the client and this call.
   const { data } = await supabase.auth.getClaims();
 
-  if (!data?.claims && request.nextUrl.pathname.startsWith("/admin")) {
+  const path = request.nextUrl.pathname;
+  if (!data?.claims && (path.startsWith("/admin") || isCustomerPath(path))) {
+    // Customers come back to the page they asked for; staff to the admin.
+    const next = path.startsWith("/admin") ? "/admin" : path;
     const url = request.nextUrl.clone();
     url.pathname = "/";
-    url.search = "?auth=login&next=/admin";
+    url.search = `?auth=login&next=${encodeURIComponent(next)}`;
     return NextResponse.redirect(url);
   }
 

@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CircleCheck } from "lucide-react";
-import { LiveRefresh } from "@/components/admin/live-refresh";
-import { ProductActions } from "@/components/admin/products/product-actions";
-import { AdjustStockButton } from "@/components/admin/stock/adjust-button";
-import { RecentMoves } from "@/components/admin/stock/recent-moves";
-import { Pill, ProductThumb } from "@/components/admin/products/product-bits";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
+import { ProductActions } from "@/features/admin/products/components/product-actions";
+import { AdjustStockButton } from "@/features/admin/stock/components/adjust-button";
+import { RecentMoves } from "@/features/admin/stock/components/recent-moves";
+import { Pill, ProductThumb } from "@/features/admin/products/components/product-parts";
 import {
   fetchProduct,
   fetchRecentMoves,
@@ -18,9 +18,9 @@ import {
   sortColors,
   unique,
   variantState,
-} from "@/lib/admin/catalog";
-import { requireStaff } from "@/lib/admin/session";
-import { hasStockHistory } from "@/lib/admin/stock";
+} from "@/features/shared/catalog/catalog";
+import { requireStaff } from "@/features/admin/shell/session";
+import { hasStockHistory } from "@/features/admin/stock/data";
 
 export const metadata: Metadata = { title: "Product · J&J Sportswear Admin" };
 
@@ -38,13 +38,14 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   if (error) throw error;
   if (!product) notFound();
 
+  // Staff look stock up here; changing the product, its stock, and its history are the owner's.
+  const isOwner = profile.role === "owner";
   const variantIds = product.variants.map((v) => v.id);
-  const [history, stockHistory] = await Promise.all([
-    hasStockHistory(supabase, variantIds).catch(() => true),
-    fetchRecentMoves(supabase, 6, variantIds),
-  ]);
+  const [history, stockHistory] = isOwner
+    ? await Promise.all([hasStockHistory(supabase, variantIds).catch(() => true), fetchRecentMoves(supabase, 6, variantIds)])
+    : ([true, null] as const);
   // Only the owner deletes, and only products that never held stock; work that out before offering it.
-  const canDelete = profile.role === "owner" && !history;
+  const canDelete = isOwner && !history;
 
   const sizes = sortSizes(unique(product.variants.map((v) => v.size ?? "One size")));
   const colors = sortColors(unique(product.variants.map((v) => v.color ?? "—")));
@@ -80,7 +81,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
       )}
       {!product.is_active && (
         <p className="mt-4 rounded-xl bg-ground-2 px-4 py-3 text-[0.9375rem] text-ink shadow-[inset_0_0_0_1px_var(--line)]">
-          This product is archived. It’s hidden from the shop and the catalog list until you restore it.
+          This product is archived. It’s hidden from the shop and the catalog list until {isOwner ? "you restore" : "the owner restores"} it.
         </p>
       )}
 
@@ -125,15 +126,17 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
           </dl>
 
           <div className="mt-5">
-            <ProductActions
-              id={product.id}
-              name={product.name}
-              archived={!product.is_active}
-              isOwner={profile.role === "owner"}
-              canDelete={canDelete}
-              lead={product.is_active ? <AdjustStockButton product={product} /> : undefined}
-            />
-            <p className="mt-3 text-[0.8125rem] text-ink-2">Last updated {updated}</p>
+            {isOwner && (
+              <ProductActions
+                id={product.id}
+                name={product.name}
+                archived={!product.is_active}
+                isOwner
+                canDelete={canDelete}
+                lead={product.is_active ? <AdjustStockButton product={product} /> : undefined}
+              />
+            )}
+            <p className={`${isOwner ? "mt-3" : ""} text-[0.8125rem] text-ink-2`}>Last updated {updated}</p>
           </div>
         </div>
       </div>
@@ -205,28 +208,30 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
         )}
       </section>
 
-      {/* Latest stock changes for this product */}
-      <section aria-labelledby="history-title" className="mt-12 max-w-[44rem]">
-        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-line pb-3">
-          <h2 id="history-title" className="voice-display text-[1.75rem]">
-            Stock history
-          </h2>
-          {stockHistory.moves.length > 0 && (
-            <Link
-              href={`/admin/history?product=${product.id}&range=all`}
-              className="press inline-flex items-center gap-1.5 rounded-full py-1 text-[0.9375rem] font-semibold text-ink hover:underline"
-            >
-              Full history
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </Link>
+      {/* Latest stock changes for this product (the owner's; staff don't see History) */}
+      {stockHistory && (
+        <section aria-labelledby="history-title" className="mt-12 max-w-[44rem]">
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-line pb-3">
+            <h2 id="history-title" className="voice-display text-[1.75rem]">
+              Stock history
+            </h2>
+            {stockHistory.moves.length > 0 && (
+              <Link
+                href={`/admin/history?product=${product.id}&range=all`}
+                className="press inline-flex items-center gap-1.5 rounded-full py-1 text-[0.9375rem] font-semibold text-ink hover:underline"
+              >
+                Full history
+                <ArrowRight aria-hidden="true" className="size-4" />
+              </Link>
+            )}
+          </div>
+          {stockHistory.error ? (
+            <p className="py-6 text-[0.9375rem] text-ink-2">We couldn’t load this product’s stock history. Refresh to try again.</p>
+          ) : (
+            <RecentMoves moves={stockHistory.moves} withProduct={false} />
           )}
-        </div>
-        {stockHistory.error ? (
-          <p className="py-6 text-[0.9375rem] text-ink-2">We couldn’t load this product’s stock history. Refresh to try again.</p>
-        ) : (
-          <RecentMoves moves={stockHistory.moves} withProduct={false} />
-        )}
-      </section>
+        </section>
+      )}
 
       {/* Every variant */}
       {variants.length > 0 && (

@@ -39,3 +39,104 @@ Sample catalog via supabase/seed/sample-products.sql (cleanup: remove-sample-pro
 ## Phase 5 additions (History, alerts, live updates)
 
 Realtime: supabase/migrations/20261005000000_realtime_stock.sql adds products, product_variants, and inventory_transactions to the supabase_realtime publication (idempotent). LiveRefresh subscribes to those tables and refreshes server data (400 ms debounce), keeping the focus and 60 s fallback; Home, Products, Stock, History, and product pages all use it, so flip-card counts and grids move on their own. Top bar: a notification bell (amber unread count, popover list of the 20 latest with read/unread, tap marks read and opens the target — low-stock alerts open the product; "Mark all as read"); new notifications arrive over realtime (filtered to the signed-in user) and show a brief pop-up (top right, max 3, 6 s, paused on hover/focus, "View product"). /admin/history (dock item now live): filters in the URL — range (Today / 7 days default / 30 days / All time / Custom with dates, Manila time), kind of change, product, staff, Reset; a summary line (changes, pieces in, pieces out); entries grouped by Manila day (Today, Yesterday, then weekday dates) with time, product link + size · color, ± amount chip (outlined for in, filled for out), before → after, type · reason, and who; a table-like row on desktop, stacked rows on phones; "Show N more" adds 50 at a time. Product pages get a "Stock history" section (latest 6 for that product) with "Full history" linking to that product's all-time history; the history rows switch to the table layout at 1024px (stacked below); on phones the filters sit product first, then kind and staff side by side; the Stock page's Recent changes links to "See all history". Amber stays reserved for low stock/live; history uses ink only.
+
+## Phase 6 additions (Inventory dashboard + report)
+
+Home becomes the inventory dashboard: under the readout board, a line of board-numeral figures (Pieces on hand; Stock value at selling price — owner only; In, last 7 days; Out, last 7 days) with an owner-only "Inventory report" button; the two-column area keeps Needs restock (2/3) and adds Recent changes (latest 5, "See all history") above the owner's Getting set up / staff's Coming list. Counts come from paged reads (no 1,000-row cap). Reports (More panel, owner only; staff are redirected home) is now live at /admin/reports: "Inventory report" title, an "as of" line (values at selling price; archived products and hidden sizes excluded), green "Print report"; a six-figure summary (Stock value, Pieces on hand, Products, Sizes and colors, Low, Sold out); then sections on display-heading rules, each with an outlined CSV download — Needs restock (sold out first, then lowest), Stock movement for a period (shared RangePicker: Today / 7 / 30 default / All time / Custom; per product Restocked, Returned, Damaged (−), Recounts (±), Sold (−), Net — a row adds across to Net — then Entries set off by a rule, with a Total row; plus a CSV of every change in the period), and Stock on hand (grouped by product with pieces and value per product and a grand total). CSVs (UTF-8 BOM, formula-safe) come from /admin/reports/export (owner only); History gets an owner-only CSV of its current filters. Print: white page and dark ink regardless of theme, app chrome and controls hidden, the shop name folded into the "as of" sentence (no line above the title), a page footer "J&J Sportswear · Inventory report" / "Page N of M", A4 margins, repeating table headers, section headings kept with their tables, compact rows. On phones Needs restock stacks like Home's list; the movement and stock tables scroll sideways inside labeled, focusable regions with the first column pinned. Section CSV buttons read "CSV", "Summary CSV", and "All changes CSV". Amber stays limited to Low pills and the live lamps.
+
+## Phase 7 additions (Staff and roles)
+
+/admin/staff (More panel, owner only; staff are redirected home): "Staff" title with one line on what each role can do. Team, on a display-heading rule with "N owners · N staff" at the right: one row per person with a monogram tile (ground-2, hairline, board-voice initials), name, role pill (Owner filled ink, Staff neutral outlined), "You" on the owner's own row, @username · Joined date; contact (email and phone as mailto/tel links, or "No contact details"); "Last stock change" (Today/Yesterday with time, or a date) with "History →" to that person's all-time history, or "None yet"; actions in a fixed-width column on desktop — staff get "Remove from staff" (outlined) then a quiet "Make owner" text button, other owners "Change to staff", and the owner's own row reads "Another owner can change your role." Rows are one line on desktop, contact and last change side by side on tablet, and stacked on phones. Add staff: a note that new staff sign up on the shop site first, a search field (username, name, email, or phone; customer accounts only, 12 results) with idle, searching, no-match, and error states; each result has a green "Make staff". Every role change opens a native dialog (bottom sheet on phones) with what the change means; Cancel takes focus; making someone an owner needs their username typed before the ink "Make owner" enables, with a hint under the field ("Type it exactly as shown, without the @." → "Matches."). The sheet keeps its content while it animates out and stays open while a change is saving. Outcomes show in a dismissible line inside the section where the change happened (under Team's rule, or under the search field), which takes focus and scrolls into view. Long emails wrap after the @; phone search matches digits whatever spacing was stored. The More panel's built sections are links (chevron, panel closes on tap), and More stays lit on their pages.
+
+## Phase 8 additions (Point of sale)
+
+/admin/pos (More → Point of sale; staff and owner): the page header and a search field (name, SKU, size, color) head the left column; product rows (photo tile, name, price or range, "N in stock" or "Sold out") expand under a rotating chevron into a color-labelled row of stock cells per color, each cell showing size, pieces left after the current sale, and its price when sizes are priced differently; cells use the off-board cell states (lit, amber low, hollow ink-ring sold out) and sold-out cells are disabled. The sale is a hairline-edged panel on desktop (sticky, starts level with the title, item list scrolls, total/payment/Charge always above the dock): "Sale" display heading with Clear; lines with name, size · color · each, line total, a −/qty/+ stepper (+ stops at stock) and Remove; total in board numerals; Cash | GCash as an ink segmented control; cash received (₱ prefix, decimal keypad) with Exact and up to three rounded amounts, change in board numerals or "Short by ₱X"; GCash reference grouped 4-3-6 with a count hint; a full-width green "Charge ₱X" with a one-line reason when disabled. Phones and tablets: pick first, with a green floating "N pieces · ₱X  Review sale →" bar above the dock (an amber "Check items" chip when a line needs fixing), then the sale as its own step with "← Add more items". Stock clashes show as an alert strip under the line with one fix button. After Charge: the receipt page with "Sale recorded", green New sale, Print receipt (80 mm) and Print on A4. The receipt is a light paper slip in both themes (bg card, hairline, dashed tear rules, display-voice shop name, board-numeral total); voided receipts carry an ink-ringed VOIDED stamp with when, who, and why. Printing sets the page for that one print (80 mm roll at 72 mm, or a centred half-page on A4) and drops the report footer. /admin/sales: "New sale" (green), the owner's period picker (Today default) and figures (Sales, Total, Cash, GCash; voids excluded); rows grouped by day like History — time, short receipt number, pieces and item names, method (GCash ·last 4) or a Voided pill, cashier, total (struck through when void), chevron; stacked on phones. Green stays on primary actions only; no amber.
+
+## Phase 9 additions (Sales report)
+
+/admin/reports has an ink segmented control, Sales (default) | Inventory, under the header. The title, the "as of" line, and the print footer follow the tab, and switching keeps the period. On the Sales tab, the shared period picker (Today / 7 / 30 default / All time / Custom) sits under the tabs and scopes the whole report. Sections sit on display-heading rules, each with its CSV:
+- **Summary:** six board-numeral figures (Sales total, Sales, Average sale, Pieces sold, each with "+N% vs before" in ink; Cash and GCash with their share) and a sentence naming the comparison period and the voided sales left out.
+- **Sales by hour/day/month:** a single-series court-green column chart with hairline grid and ₱ ticks. Each column has an ink tooltip on hover or focus, the chart takes one tab stop with arrow keys to move, x labels are anchored on the latest bar, and "Show as a table" opens the table, which always prints.
+- **Best sellers:** Products (rank, name, pieces, total in bold, share) and Sizes and colors (ranked by pieces in bold), side by side on desktop, each with its own title and CSV.
+- **By cashier:** sales, average (hidden on phones), total, and share.
+
+Tables scroll sideways on phones inside labelled regions with the first column pinned. An empty period shows one line with a link to Point of sale. Before the migration runs, the tab shows a plain "needs the latest database update" message. Home's "Inventory report" button opens the Inventory tab.
+
+## Phase 10 additions (Custom orders)
+
+/admin/orders (More → Custom orders):
+- **List:** status tabs with exact counts (Open default, New with a live amber lamp, Accepted, In production, Ready, Completed, Declined or cancelled, All), a search over number, customer, and items, and rows (number + age, customer, garments + pieces, price or "Needs a price", status pill, chevron), stacked on phones. A note shows when a tab holds more than the newest 300.
+
+/admin/orders/[id]:
+- **Header:** a back link to the tab the order was opened from, the order number in display type, the customer and placed date (relative time only within the week), the status pill, and a one-line outcome strip for status moves (focused and announced).
+- **Stage board:** a small Court Green strip with a period lamp per stage (lit for passed, live amber for now), on phones with the stage name and "n/5" in board numerals. Declined and cancelled orders show a reason panel instead.
+- **Main column, by status:**
+  - "Review and price": ₱ field, live "Down payment (50%)" hint, green Accept, outlined Decline → reason dialog.
+  - "Hand over": green "Picked up: complete order", plus "Back to production" → reason dialog.
+  - "Production": five tick rows with who and when, in order, where only the next step reads "Tap when done". "Mark ready for pickup" (green) is enabled at 5/5; "Failed inspection: reprint" → reason dialog, shown once sewing is done.
+  - "What they ordered": items with ×qty in board numerals, request, notes, and AI design.
+  - "Finished photos": up to 4 on the photo backdrop; two taps to remove.
+- **Side column:** Customer (tel/mailto), Price (total, down payment 50%, balance at pickup, payments-later note, price editable while accepted), History (newest first, production notes inline), and "Cancel this order" → reason dialog.
+
+The order screens refresh live on order, step, photo, and history changes. Amber stays limited to New and the live lamp.
+
+## Phase 11 additions (Payment verification)
+
+/admin/payments (More → Payments):
+- **Queue:** status tabs with exact counts (To review with a live amber lamp when not selected, Verified, Rejected, All), scrolling sideways on phones. Rows show order number and age, customer, type · method · last 4 reference digits, amount, payment pill, and a chevron. They stack on phones. To review is oldest first.
+
+/admin/payments/[id]:
+- **Header:** the amount in display type, "Down payment / Balance for CO-… · customer", and the payment pill. Outcomes appear in the shared one-line flash strip.
+- **To review, "Check it":** the reference, the order total, what was paid before, and what's still due. A cancelled order says "Was still due".
+  - Amber alert panels when the payment can't be verified: above what's due, the order was never accepted or was declined, or there's no reference.
+  - A quiet note when the order was cancelled: verify only if the money reached the shop.
+  - Green Verify and outlined Reject (→ reason dialog).
+  - The screenshot on the photo backdrop, with "Open full size".
+- **Verified:** the payment slip (the receipt paper language) with Print slip and Print on A4. Slip rows say "Verified / Verified by" for customer GCash, "Date / Received by" for money recorded at the counter.
+- **Rejected:** a quiet panel with the reason the customer was told.
+- **Details aside:** for, paid by, sent/received, verified or rejected by and when, note, order link.
+- **Payment pills:** amber "To review" (the one state waiting on the shop), outlined ink Verified, and muted Rejected (no strikethrough).
+
+/admin/orders/[id], the "Price and payments" section replaces Price:
+- **Totals:** total (board numerals), down payment (50%) with "· paid", paid so far, still due, and waiting for review.
+- **Payments:** each payment is a row linked to its page, with its pill.
+- **Record a payment:** green, opens a dialog.
+  - Amount, with chips for the rest of the down payment and the balance, and an inline over-due line.
+  - Cash | GCash segmented control; GCash adds the 13-digit reference (with a counter) and an optional screenshot.
+  - Note.
+  - A quiet notice, linked to the payment, when a customer payment is waiting for review; quick amounts leave that money out.
+- **Refunds:** on cancelled orders. The owner records them in a dialog with amount, method, and a required note.
+- **Notices:** the accepted-order "waiting for the down payment" notice locks the checklist. The hand-over "Balance due" notice disables Picked up and links to any GCash payment waiting for review. Both carry an owner-only "make an exception" link → reason dialog.
+
+## Phase 12 additions (Chat, owner only)
+
+/admin/chat (More → Chat; owners only):
+- **Inbox:** the "Chat" display heading and a line saying how many messages are new.
+  - A search appears past five conversations.
+  - Rows: an initials avatar (board green when unread, otherwise ground-2), the name (semibold when unread), a two-line preview ("You:" when the shop wrote last), the order number, the time ("2:14 PM", "Yesterday", "Mon", "Sep 28"), and an amber unread count.
+  - On wide screens it's a sticky 21rem column beside the open conversation; the column scrolls inside itself.
+  - On phones the inbox and a conversation are separate screens.
+- **No conversation picked (wide screens):** a quiet ground-2 panel saying "Pick a conversation".
+
+/admin/chat/[customerId]:
+- **Header:** sticky under the top bar.
+  - A back arrow on phones, the avatar, the name in display type, and @username · phone · email (on phones the phone shrinks to an icon under 400px and email hides).
+  - The customer's open orders as outlined chips in one row that scrolls sideways.
+- **Messages:**
+  - Day separators in the label voice ("Today", "Yesterday", "Monday", "Sep 28").
+  - "About CO-…" links above a message when the order it's about changes.
+  - Bubbles: the customer's are ground-2 with a hairline on the left (bottom-left corner tightened); the shop's are ink on the right (bottom-right tightened).
+  - Times are small and tabular, with the sender's name only when more than one owner has replied.
+- **Reply box:** a surface card that sticks just above the dock and rests at the same spot.
+  - A text field that grows to about eight lines, with "About" and an order select ("Not about an order" or an order and its status) and a green Send.
+  - A character counter appears near 2,000.
+  - Focus shows as one amber ring on the card.
+- **Reading:** opening a conversation reads it, or reads it when the tab comes back into view. The unread count, the amber dot on More, and the bell alert all clear.
+
+Elsewhere:
+- **Dock:** More shows an amber dot while customer messages are unread, and the Chat row in More shows an amber count. Both are live.
+- **Bell:** every alert opens its page. Pop-ups carry a matching action ("View product", "Open order", "Check payment", "Reply").
+- **Order page (owner):** a "Messages" section under Customer.
+  - It shows the latest four messages about the order in the same bubble language, with day and time, and "Latest 4 of N" when there are more.
+  - An outlined "Message {name}" or "Open conversation" button.
+

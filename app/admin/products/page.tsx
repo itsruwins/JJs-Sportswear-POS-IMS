@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { LiveRefresh } from "@/components/admin/live-refresh";
-import { ProductsBrowser, type Filter, type Sort } from "@/components/admin/products/products-browser";
-import { fetchCatalog } from "@/lib/admin/catalog";
-import { requireStaff } from "@/lib/admin/session";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
+import { ProductsBrowser, type Filter, type Sort } from "@/features/admin/products/components/products-browser";
+import { fetchCatalog } from "@/features/shared/catalog/catalog";
+import { requireStaff } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "Products · J&J Sportswear Admin" };
 
@@ -12,7 +12,8 @@ const FILTERS: Filter[] = ["active", "low", "out", "archived"];
 const SORTS: Sort[] = ["name", "attention", "updated"];
 
 export default async function ProductsPage({ searchParams }: PageProps<"/admin/products">) {
-  const { supabase } = await requireStaff();
+  const { supabase, profile } = await requireStaff();
+  const isOwner = profile.role === "owner";
   const params = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 
@@ -28,16 +29,20 @@ export default async function ProductsPage({ searchParams }: PageProps<"/admin/p
         <div>
           <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">Products</h1>
           <p className="mt-2 text-[0.9375rem] text-ink-2">
-            Everything in the catalog, with stock for every size at a glance.
+            {isOwner
+              ? "Everything in the catalog, with stock for every size at a glance."
+              : "Look up any item’s stock by size, design, and color."}
           </p>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
-        >
-          <Plus aria-hidden="true" className="size-4" strokeWidth={2.5} />
-          Add product
-        </Link>
+        {isOwner && (
+          <Link
+            href="/admin/products/new"
+            className="press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+          >
+            <Plus aria-hidden="true" className="size-4" strokeWidth={2.5} />
+            Add product
+          </Link>
+        )}
       </header>
       {one(params.deleted) === "1" && (
         <p role="status" className="mb-6 rounded-xl bg-ground-2 px-4 py-3 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)]">
@@ -50,7 +55,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/admin/p
           We couldn’t load the products just now. Refresh the page to try again.
         </p>
       ) : (
-        <ProductsBrowser products={products} initialQuery={one(params.q)} initialFilter={filter} initialSort={sort} />
+        <ProductsBrowser products={products} initialQuery={one(params.q)} initialFilter={filter} initialSort={sort} canEdit={isOwner} />
       )}
     </div>
   );

@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { AuthButton, AuthProvider } from "@/components/auth/auth-provider";
-import { AiStudio } from "@/components/landing/ai-studio";
-import { OrderBand } from "@/components/landing/order-band";
-import { Scoreboard } from "@/components/landing/scoreboard";
-import { SiteFooter } from "@/components/landing/site-footer";
-import { SiteNav } from "@/components/landing/site-nav";
-import { StaffBoxScore } from "@/components/landing/staff-box-score";
-import { StockStandings } from "@/components/landing/stock-standings";
-import { UsernameForm } from "@/components/landing/username-form";
+import { AuthButton, AuthProvider } from "@/features/shared/auth/components/auth-provider";
+import { AiStudio } from "@/features/landing/components/ai-studio";
+import { OrderBand } from "@/features/landing/components/order-band";
+import { Scoreboard } from "@/features/landing/components/scoreboard";
+import { SiteFooter } from "@/features/landing/components/site-footer";
+import { SiteNav } from "@/features/landing/components/site-nav";
+import { StaffBoxScore } from "@/features/landing/components/staff-box-score";
+import { StockStandings } from "@/features/landing/components/stock-standings";
+import { UsernameForm } from "@/features/landing/components/username-form";
 
 const shell = "mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-10";
 

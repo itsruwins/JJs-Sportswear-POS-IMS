@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { History } from "lucide-react";
-import { HistoryFilters } from "@/components/admin/history/history-filters";
-import { HistoryList } from "@/components/admin/history/history-list";
-import { LiveRefresh } from "@/components/admin/live-refresh";
-import { fetchHistory, fetchHistoryOptions, HISTORY_STEP, MAX_SHOW, manilaToday, parseHistoryFilters, shiftDate } from "@/lib/admin/history";
-import { requireStaff } from "@/lib/admin/session";
+import { HistoryFilters } from "@/features/admin/history/components/history-filters";
+import { CsvLink } from "@/features/admin/reports/components/report-tables";
+import { HistoryList } from "@/features/admin/history/components/history-list";
+import { LiveRefresh } from "@/features/shared/ui/live-refresh";
+import { fetchHistory, fetchHistoryOptions, HISTORY_STEP, MAX_SHOW, manilaToday, parseHistoryFilters, shiftDate } from "@/features/admin/history/data";
+import { requireOwner } from "@/features/admin/shell/session";
 
 export const metadata: Metadata = { title: "History · J&J Sportswear Admin" };
 
 export default async function HistoryPage({ searchParams }: PageProps<"/admin/history">) {
-  const { supabase } = await requireStaff();
+  const { supabase } = await requireOwner();
   const params = await searchParams;
   const filters = parseHistoryFilters(params);
-  const [history, options] = await Promise.all([fetchHistory(supabase, filters), fetchHistoryOptions(supabase)]);
+  const [history, options] = await Promise.all([fetchHistory(supabase, filters), fetchHistoryOptions(supabase, filters.staff)]);
 
   const today = manilaToday();
   const yesterday = shiftDate(today, -1);
@@ -22,15 +23,27 @@ export default async function HistoryPage({ searchParams }: PageProps<"/admin/hi
   );
   moreParams.set("show", String(filters.show + HISTORY_STEP));
   const filtered = filters.type !== "all" || !!filters.product || !!filters.staff || filters.range !== "7d";
+  // The export takes the same filters, with the range spelled out (the export's own default differs).
+  const csvParams = new URLSearchParams({ kind: "history", range: filters.range });
+  if (filters.range === "custom") {
+    csvParams.set("from", filters.from);
+    csvParams.set("to", filters.to);
+  }
+  if (filters.type !== "all") csvParams.set("type", filters.type);
+  if (filters.product) csvParams.set("product", filters.product);
+  if (filters.staff) csvParams.set("staff", filters.staff);
 
   return (
     <div className="mx-auto max-w-[80rem] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
       <LiveRefresh />
-      <header className="mb-6">
-        <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">History</h1>
-        <p className="mt-2 max-w-[60ch] text-[0.9375rem] text-ink-2">
-          Every stock change: who made it, when, by how much, and why.
-        </p>
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+        <div>
+          <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">History</h1>
+          <p className="mt-2 max-w-[60ch] text-[0.9375rem] text-ink-2">
+            Every stock change: who made it, when, by how much, and why.
+          </p>
+        </div>
+        {history.total > 0 && <CsvLink href={`/admin/reports/export?${csvParams}`} label="Stock history with these filters" />}
       </header>
 
       <HistoryFilters filters={filters} products={options.products} staff={options.staff} />
