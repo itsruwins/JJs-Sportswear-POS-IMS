@@ -62,8 +62,8 @@ export async function recordPayment(
   if (value === null) return { ok: false, message: "Enter the amount received." };
   const ref = cleanReference(reference).slice(0, 60);
   if (method === "e_payment" && !ref) return { ok: false, message: "Enter the reference number from the receipt." };
-  // Only a fresh upload into this order's folder: {customer}/{order}/{uuid}.ext
-  const ownPath = (path: string) => new RegExp(`^[0-9a-f-]{36}/${orderId}/[0-9a-f-]{36}\\.(webp|jpe?g|png)$`, "i").test(path);
+  // Only a fresh upload into this order's folder: {customer or walk-in}/{order}/{uuid}.ext
+  const ownPath = (path: string) => new RegExp(`^([0-9a-f-]{36}|walk-in)/${orderId}/[0-9a-f-]{36}\\.(webp|jpe?g|png)$`, "i").test(path);
   if (proofPath && !ownPath(proofPath)) {
     return { ok: false, message: "The screenshot didn’t upload properly. Try again." };
   }
@@ -93,7 +93,10 @@ export async function recordPayment(
     if (!r.ok && /still due/.test(r.message)) return { ok: false, message: r.message };
     return r;
   }
-  return { ok: true, message: `${formatPeso(value)} recorded. The customer has been told.`, id: (data as { id?: string } | null)?.id };
+  // A walk-in (counter order) has no account to tell.
+  const { data: order } = await supabase.from("custom_orders").select("customer_id").eq("id", orderId).maybeSingle<{ customer_id: string | null }>();
+  const told = order?.customer_id ? " The customer has been told." : "";
+  return { ok: true, message: `${formatPeso(value)} recorded.${told}`, id: (data as { id?: string } | null)?.id };
 }
 
 export async function verifyPayment(id: string): Promise<PayResult> {

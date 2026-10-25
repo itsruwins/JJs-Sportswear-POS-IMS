@@ -86,6 +86,39 @@ Source files:
 - Migration: custom orders without an account take a walk-in name and phone. A database function creates the accepted order with its items and total, and records the down or full payment in one step (cash and the e-payment providers from E5).
 - POS: pick a design, then a style, size and quantity, then enter the walk-in details and take the payment. The order then appears in Orders and Payments like any custom order.
 - **Done when:** a counter order with a 50% down payment and one paid in full both appear correctly in Orders, Payments and the order timeline, and a payment under 50% is refused.
+- **Decisions (2026-10-25):**
+  - Separate checkouts: shelf items stay a normal sale, and a design order is its own step.
+  - Team name, needed-by date and a notes box for the player list. No per-piece roster.
+  - Walk-in name and phone only, never linked to an account. The order starts as Accepted.
+  - Pay anything from 50% to full, with the same e-payment flow as sales (provider, receipt scan, reference).
+  - A printable order slip. Staff and the owner can both take orders.
+  - Layout A: Shelf | Designs tabs, with several designs per order.
+- **Built 2026-10-25:**
+  - Migration `20261022000000_counter_design_orders.sql`:
+    - Custom orders can have no account, but then need `walk_in_name` and `walk_in_phone`. A `created_via` column says customer or counter, and a `counter_request_id` unique key makes a retried order safe.
+    - Order lines get `product_id`, `variant_id` and `unit_price`. Payments get `receipt_scan_id`.
+    - A notification with no recipient is skipped by one trigger, so every existing order, payment and refund trigger works for walk-ins unchanged. The order-created trigger records the cashier, and staff aren't asked to review their own order.
+    - `create_counter_order(items, buyer, details, payments, request_id)`: staff only, prices from the catalog, made-to-order designs only. It checks between half and the full total, up to 10 payment parts with at most one cash, then creates the order and accepts it. Each part goes through `record_custom_order_payment`, so the existing reference rules apply.
+  - `features/admin/design-orders/`:
+    - `model.ts` (lines, totals, half down, phone check) and `data.ts` (`designsFrom` catalog products, `fetchCounterOrder` for the slip).
+    - `actions.ts` (`placeCounterOrder`, which turns database refusals into plain messages).
+    - `components/`: the Designs screen, its parts (step strip with lamps, design tiles, a style × size pieces editor, order summary) and the order slip.
+  - POS: the header has Shelf | Designs tabs (`?tab=designs`).
+  - The Designs tab:
+    - A photo grid, searchable by team name, design number or color. Tiles show their piece count.
+    - Pieces: one block per style, with typed size cells.
+    - The green "N pieces · ₱X  Review order" bar, then Buyer (name, phone, team, needed-by, notes, checked inline), then Payment.
+    - Payment has Half and Full chips or a typed amount, plus the POS payment panel and receipt-scan sheet: cash with change, e-payments, splits. It shows paid now and the balance at pickup, and "Place order · ₱X" says why when it can't run.
+    - The order in progress is kept in this tab (sessionStorage).
+  - `/admin/pos/orders/[id]`: the order slip on the receipt's paper (80 mm or A4), with Print slip, New design order and Open the order.
+  - Orders and Payments show walk-ins as "Name (walk-in)" with their phone. The order page lets you record the balance for a walk-in (screenshots go in `walk-in/{order}/…`), says "Call … to pick it up" when ready, and links the slip. Chat stays account-only. "The customer has been told" only appears when there's an account.
+  - Tested in PGlite against every migration, 31 checks:
+    - Refused: under half, over the total, a stocked item, a missing phone, a customer placing one.
+    - Correct: walk-in details, merged lines at catalog prices, a verified down payment, history by the cashier, no review notice, no stray notifications, retry safety.
+    - Lifecycle: production, ready, balance before pickup and completion, GCash with a reference, a reused reference refused, a reference required, nothing left behind on failure, splits, two cash parts refused, cancel and refund.
+    - Online orders still go in, notify staff, and tell the customer.
+  - Clicked through in headless Chrome (puppeteer-core) on a temporary preview page with the live catalog (deleted afterwards): designs, pieces, buyer errors, payment and cash short, on desktop light and phone dark, plus the slip. No page errors. One fix: the size cell showed a double focus ring.
+  - Not done: placing a real order with the owner's login, and the cancel and reopen dialogs' "the customer is told" wording for walk-ins (`order-actions.tsx`).
 
 ### Phase D5: Shop gallery
 - The shop shows the designs with a photo, team name, style prices and sizes, with no order button on made-to-order products. It says orders are taken at the shop counter.

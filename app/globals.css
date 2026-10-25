@@ -704,6 +704,14 @@ input.auth-input:focus-visible,
 /* ---------- Admin: dock ---------- */
 
 /* Point of sale: the running sale, floating just above the dock on phones and tablets. */
+/* Design orders: a size cell takes the amber focus ring while its count is being typed. */
+.order-cell:focus-within {
+  box-shadow: 0 0 0 2px var(--amber);
+}
+.order-cell input:focus-visible {
+  outline: none;
+}
+
 .pos-cartbar {
   position: fixed;
   z-index: var(--z-sticky);

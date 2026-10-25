@@ -8,8 +8,8 @@ import { CancelOrderButton, HandoverPanel, OrderFlash, PhotoManager, ProductionC
 import { PaymentException, RecordPayment, RecordRefund } from "@/features/admin/payments/components/payment-actions";
 import { PayPill } from "@/features/admin/payments/components/payment-parts";
 import type { PaymentProvider } from "@/features/shared/payments/model";
-import { methodLine, PAY_TYPE_LABEL, PAYMENTS_MIGRATION, type OrderMoney } from "@/features/admin/payments/data";
-import { ago, personName, StatusPill, when } from "./order-parts";
+import { methodLine, PAY_TYPE_LABEL, PAYMENTS_MIGRATION, WALK_IN_FOLDER, type OrderMoney } from "@/features/admin/payments/data";
+import { ago, buyerName, personName, StatusPill, when } from "./order-parts";
 
 const TRACK: { status: OrderStatus; label: string }[] = [
   { status: "pending", label: "Placed" },
@@ -79,7 +79,7 @@ export function OrderView({
         <div className="min-w-0">
           <h1 className="voice-display tabular text-[clamp(2rem,4.5vw,3rem)]">{o.order_number}</h1>
           <p className="mt-1.5 text-[0.9375rem] text-ink-2">
-            {personName(o.customer)} · placed {when(o.created_at)}
+            {buyerName(o)} · placed {when(o.created_at)}
             {/* The relative time only when it says more than the date (within the week). */}
             {now.getTime() - new Date(o.created_at).getTime() < 7 * 86_400_000 && ` (${ago(o.created_at, now).toLowerCase()})`}
           </p>
@@ -154,7 +154,9 @@ export function OrderView({
 
           {o.status === "ready" && (
             <Section title="Hand over">
-              <p className="mb-4 text-[0.9375rem] text-ink-2">Ready since {o.ready_at ? when(o.ready_at) : "today"}. The customer has been told it’s ready.</p>
+              <p className="mb-4 text-[0.9375rem] text-ink-2">Ready since {o.ready_at ? when(o.ready_at) : "today"}.{" "}
+                {o.walk_in ? `Call ${o.walk_in.name} on ${o.walk_in.phone} to pick it up.` : "The customer has been told it’s ready."}
+              </p>
               {balanceDue > 0 && (
                 <div className="mb-4 rounded-xl bg-ground-2 px-4 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
                   {money && money.waiting > 0 && money.waitingId ? (
@@ -319,7 +321,7 @@ export function OrderView({
           </Section>
 
           {showPhotos && (
-            <Section title="Finished photos" aside={<span className="text-[0.875rem] text-ink-2">The customer sees these</span>}>
+            <Section title="Finished photos" aside={o.walk_in ? undefined : <span className="text-[0.875rem] text-ink-2">The customer sees these</span>}>
               <PhotoManager id={o.id} photos={o.photos} canEdit={isOwner} />
             </Section>
           )}
@@ -361,6 +363,25 @@ export function OrderView({
                     <li className="text-ink-2">No phone or email on file. {isOwner ? "Reach them through chat." : "The owner can reach them through chat."}</li>
                   )}
                 </ul>
+              </>
+            ) : o.walk_in ? (
+              <>
+                <p className="text-[1rem] font-semibold text-ink">{o.walk_in.name}</p>
+                <p className="text-[0.875rem] text-ink-2">Walk-in, ordered at the counter. No account.</p>
+                <ul className="mt-3 flex flex-col gap-1.5 text-[0.9375rem]">
+                  <li className="flex items-center gap-2">
+                    <Phone aria-hidden="true" className="size-4 text-ink-2" />
+                    <a href={`tel:${o.walk_in.phone.replace(/[^\d+]/g, "")}`} className="tabular text-ink hover:underline">
+                      {o.walk_in.phone}
+                    </a>
+                  </li>
+                </ul>
+                <Link
+                  href={`/admin/pos/orders/${o.id}`}
+                  className="press mt-3 inline-flex items-center gap-1.5 py-1 text-[0.9375rem] font-semibold text-ink hover:underline"
+                >
+                  Order slip
+                </Link>
               </>
             ) : (
               <p className="text-[0.9375rem] text-ink-2">Customer account not found.</p>
@@ -453,9 +474,9 @@ export function OrderView({
               </ul>
             )}
 
-            {money?.migrated && ["accepted", "in_progress", "ready", "completed"].includes(o.status) && money.due > 0 && o.customer && (
+            {money?.migrated && ["accepted", "in_progress", "ready", "completed"].includes(o.status) && money.due > 0 && (o.customer || o.walk_in) && (
               <div className="mt-4">
-                <RecordPayment orderId={o.id} customerId={o.customer.id} providers={providers} due={money.due} downLeft={Math.max(0, money.downDue - money.paid)} waiting={money.waiting} waitingId={money.waitingId} />
+                <RecordPayment orderId={o.id} customerId={o.customer?.id ?? WALK_IN_FOLDER} providers={providers} due={money.due} downLeft={Math.max(0, money.downDue - money.paid)} waiting={money.waiting} waitingId={money.waitingId} />
               </div>
             )}
             {money && !money.migrated && o.total_price !== null && !closed && (

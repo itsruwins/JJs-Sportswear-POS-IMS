@@ -47,6 +47,19 @@ const SIGNED_FOR = 6 * 60 * 60;
 const notMigrated = (e: { code?: string } | null) => e?.code === "PGRST205" || e?.code === "42P01" || e?.code === "PGRST200";
 
 type Person = { id: string; username: string; full_name: string | null; phone: string | null; email: string | null; avatar_url?: string | null } | null;
+/** A counter order's buyer, who has no account (counter_design_orders migration). */
+export type WalkIn = { name: string; phone: string } | null;
+
+/** Walk-in buyers for these orders. Read on their own, so lists still load before the counter-orders migration runs. */
+async function walkInsFor(supabase: SupabaseClient, ids: string[]) {
+  const byId = new Map<string, WalkIn>();
+  if (!ids.length) return byId;
+  const { data } = await supabase.from("custom_orders").select("id, walk_in_name, walk_in_phone").in("id", ids);
+  for (const r of (data ?? []) as { id: string; walk_in_name: string | null; walk_in_phone: string | null }[]) {
+    if (r.walk_in_name) byId.set(r.id, { name: r.walk_in_name, phone: r.walk_in_phone ?? "" });
+  }
+  return byId;
+}
 
 export type OrderSummary = {
   id: string;
@@ -62,6 +75,7 @@ export type OrderSummary = {
   /** From the customer request form (customer_order_requests migration); null before it runs. */
   team_name: string | null;
   needed_by: string | null;
+  walk_in: WalkIn;
 };
 
 /** Orders for a view, newest first (new orders first in Open), with a text search over number, customer, and request. */
@@ -110,17 +124,24 @@ export async function fetchOrders(supabase: SupabaseClient, view: OrderView, q: 
     stepsDone: (r.custom_order_steps ?? []).length,
     team_name: null,
     needed_by: null,
+    walk_in: null,
   }));
   // Team and needed-by come with the customer request migration; read them on their own,
   // so the list still loads before it runs.
   if (orders.length) {
     const extra = await supabase.from("custom_orders").select("id, team_name, needed_by").in("id", orders.map((o) => o.id));
     const byId = new Map(((extra.data ?? []) as { id: string; team_name: string | null; needed_by: string | null }[]).map((e) => [e.id, e]));
-    orders = orders.map((o) => ({ ...o, team_name: byId.get(o.id)?.team_name ?? null, needed_by: byId.get(o.id)?.needed_by ?? null }));
+    const walkIns = await walkInsFor(supabase, orders.map((o) => o.id));
+    orders = orders.map((o) => ({
+      ...o,
+      team_name: byId.get(o.id)?.team_name ?? null,
+      needed_by: byId.get(o.id)?.needed_by ?? null,
+      walk_in: walkIns.get(o.id) ?? null,
+    }));
   }
   if (needle) {
     orders = orders.filter((o) =>
-      [o.order_number, o.customer?.username, o.customer?.full_name, o.description, o.team_name, ...o.garments]
+      [o.order_number, o.customer?.username, o.customer?.full_name, o.walk_in?.name, o.walk_in?.phone, o.description, o.team_name, ...o.garments]
         .filter(Boolean)
         .some((t) => t!.toLowerCase().includes(needle)),
     );
@@ -161,6 +182,7 @@ export type OrderDetail = {
   team_name: string | null;
   needed_by: string | null;
   references: { path: string; url: string | null }[];
+  walk_in: WalkIn;
 };
 
 const nameOf = (p: { username: string; full_name: string | null } | null) => p?.full_name?.trim() || (p ? `@${p.username}` : "Someone");
@@ -181,11 +203,12 @@ export async function fetchOrder(supabase: SupabaseClient, id: string): Promise<
   if (error) return { order: null, error: "We couldn’t load this order just now. Refresh the page to try again." };
   if (!data) return { order: null, error: null };
 
-  const [stepsRes, photosRes, requestRes] = await Promise.all([
+  const [stepsRes, photosRes, requestRes, walkIns] = await Promise.all([
     supabase.from("custom_order_steps").select("step, done_at, actor:profiles (username, full_name)").eq("order_id", id),
     supabase.from("custom_order_photos").select("id, path, created_at").eq("order_id", id).order("created_at"),
     // Read on its own: these columns only exist once the customer request migration has run.
     supabase.from("custom_orders").select("team_name, needed_by, reference_images").eq("id", id).maybeSingle(),
+    walkInsFor(supabase, [id]),
   ]);
   const request = (requestRes.data ?? null) as { team_name: string | null; needed_by: string | null; reference_images: string[] | null } | null;
   const refPaths = request?.reference_images ?? [];
@@ -253,6 +276,7 @@ export async function fetchOrder(supabase: SupabaseClient, id: string): Promise<
       team_name: request?.team_name ?? null,
       needed_by: request?.needed_by ?? null,
       references: refPaths.map((path) => ({ path, url: refUrl.get(path) ?? null })),
+      walk_in: walkIns.get(id) ?? null,
     },
     error: null,
   };

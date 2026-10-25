@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronRight, ClipboardList, Search, X } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import type { OrderSummary, OrderView } from "@/features/admin/orders/data";
-import { personName, StatusPill } from "./order-parts";
+import { buyerName, StatusPill } from "./order-parts";
 
 /** Orders in the current tab, with a search over order number, customer, and what they asked for. */
 export function OrdersList({ orders, ages, emptyNote, view }: { orders: OrderSummary[]; ages: Record<string, string>; emptyNote: string; view: OrderView }) {
@@ -15,7 +15,7 @@ export function OrdersList({ orders, ages, emptyNote, view }: { orders: OrderSum
     const needle = q.trim().toLowerCase().replace(/^@/, "");
     if (!needle) return orders;
     return orders.filter((o) =>
-      [o.order_number, o.customer?.username, o.customer?.full_name, o.description, ...o.garments]
+      [o.order_number, o.customer?.username, o.customer?.full_name, o.walk_in?.name, o.walk_in?.phone, o.description, ...o.garments]
         .filter(Boolean)
         .some((t) => t!.toLowerCase().includes(needle)),
     );
@@ -76,7 +76,7 @@ export function OrdersList({ orders, ages, emptyNote, view }: { orders: OrderSum
                   <StatusPill status={o.status} progress={o.stepsDone} />
                 </span>
                 <span className="min-w-0 lg:order-2">
-                  <span className="block truncate text-[0.9375rem] text-ink">{personName(o.customer)}</span>
+                  <span className="block truncate text-[0.9375rem] text-ink">{buyerName(o)}</span>
                   {(o.team_name || o.needed_by) && (
                     <span className="block truncate text-[0.8125rem] text-ink-2">
                       {[o.team_name, o.needed_by && `Needed ${new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric" }).format(new Date(`${o.needed_by}T00:00:00+08:00`))}`]
