@@ -34,7 +34,7 @@ export function ShopView({ products, error, query }: { products: ShopProduct[]; 
         <section className="max-w-[46rem] rounded-[1.25rem] bg-ground-2 px-6 py-7 shadow-[inset_0_0_0_1px_var(--line)]">
           <h2 className="text-[1.125rem] font-semibold text-ink">The rack is empty right now.</h2>
           <p className="mt-2 text-[0.9375rem] leading-relaxed text-ink-2">
-            The shop hasn’t listed any ready-made items yet. Check back soon.
+            The shop hasn’t listed any items or designs yet. Check back soon.
           </p>
         </section>
       ) : (
@@ -72,7 +72,7 @@ export function ShopView({ products, error, query }: { products: ShopProduct[]; 
           </section>
 
           <p className="mt-14 max-w-[60ch] border-t border-line pt-5 text-[0.875rem] leading-relaxed text-ink-2">
-            Ready-made items are bought at the shop in Legazpi City; stock updates as the counter sells.
+            Ready-made items are bought at the shop in Legazpi City; stock updates as the counter sells. Made-to-order designs are ordered at the shop counter with at least half down.
           </p>
         </>
       )}

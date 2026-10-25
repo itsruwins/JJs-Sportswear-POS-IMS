@@ -123,3 +123,26 @@ Source files:
 ### Phase D5: Shop gallery
 - The shop shows the designs with a photo, team name, style prices and sizes, with no order button on made-to-order products. It says orders are taken at the shop counter.
 - **Done when:** customers can browse and filter the designs, and nothing in the shop or chat creates an order for one.
+- **Decisions (2026-10-25):**
+  - Designs sit in the shop itself, labelled Made to order, with their own category.
+  - The page has an "Order at the shop" sheet plus Ask the shop. There's no "Make a custom version" and no online ordering.
+  - The main photo has thumbnails, and cards say "From ₱325".
+  - Customers pick a style, then a size.
+  - A design can lead: the owner's "featured" pick, else the newest design. A featured ready-made item still comes first.
+- **Built 2026-10-25:**
+  - The catalog read now carries `created_at` and every photo (`images`, main photo first, then in the order added).
+  - The shop model:
+    - Products get `madeToOrder`, `images`, `designNumber` and `createdAt`. `available()` and `variantAvailable()` replace every "stock > 0" check (cards, filters, sort, category covers, related items, featured), so designs are never "sold out".
+    - A "Made to order" category (not a tag). Its styles keep the shop's order.
+    - Each category tile picks a cover the others don't already show, and designs sort by number.
+  - A new `components/design-detail.tsx` for designs:
+    - The photo with a row of 6 thumbnails, and "Made to order · Design N".
+    - Style chips with prices, a line on what a set and NBA cut mean, then sizes ("Every size is made to order").
+    - A chosen line, and a green "Order at the shop" that asks for a style and size first. Its sheet has a summary, how ordering works (half down, the rest at pickup), and where, hours, phone and pay with.
+    - "Ask the shop about this", which starts a chat about that design. "About this design", plus styles and prices, sizes and how to order.
+  - Cards: "Made to order · 4 styles" and "From ₱325". The featured band says "View design", and "More designs" sits under a design. Shop photos now sit whole on the backdrop (`object-fit: contain`) instead of being cropped to the tile.
+  - Clicked through in headless Chrome on a temporary preview page with the live catalog (deleted afterwards), on desktop light and phone dark:
+    - The shop, with a design featured and the filters (made to order + 2XL + in stock still shows all 77).
+    - A design page: the prompt with nothing picked, a photo swapped, a style and size picked, and the order sheet.
+    - No page errors. One fix: every category tile showed the same cover.
+  - Not checked with a real customer login.

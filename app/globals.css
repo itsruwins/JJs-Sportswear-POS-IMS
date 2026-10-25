@@ -932,10 +932,11 @@ button.admin-dock-item[data-current="true"]:hover {
   border-radius: 2rem;
 }
 
+/* Photos sit whole on the backdrop, padded like product shots (designs are square, tiles 4:5). */
 .garment-photo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 .shop-tile-art {
   padding: 12%;

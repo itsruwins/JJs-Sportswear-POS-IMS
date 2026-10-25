@@ -20,31 +20,36 @@ export type CatalogProduct = {
   is_active: boolean;
   /** Made after it's ordered: no stock is kept, and variants are style × size (style in `color`). */
   made_to_order: boolean;
+  created_at: string;
   updated_at: string;
   variants: CatalogVariant[];
   tags: string[];
   image: string | null;
+  /** Every photo, the main one first, then in the order they were added. */
+  images: string[];
 };
 
-type ProductRow = Omit<CatalogProduct, "variants" | "tags" | "image" | "made_to_order"> & {
+type ProductRow = Omit<CatalogProduct, "variants" | "tags" | "image" | "images" | "made_to_order"> & {
   made_to_order?: boolean;
   product_variants: CatalogVariant[] | null;
   product_tags: { tag: string }[] | null;
-  product_images: { image_url: string; is_primary: boolean }[] | null;
+  product_images: { image_url: string; is_primary: boolean; created_at: string }[] | null;
 };
 
 const PRODUCT_SELECT = `
-  id, name, description, base_price, is_active, made_to_order, updated_at,
+  id, name, description, base_price, is_active, made_to_order, created_at, updated_at,
   product_variants (id, size, color, sku, price, stock_quantity, low_stock_threshold, is_active),
   product_tags (tag),
-  product_images (image_url, is_primary)
+  product_images (image_url, is_primary, created_at)
 `;
 // Before migration 20261021000000_made_to_order.sql the column isn't there; read without it.
 const PRODUCT_SELECT_BEFORE_D2 = PRODUCT_SELECT.replace(" made_to_order,", "");
 const missingColumn = (error: { code?: string } | null) => error?.code === "42703";
 
 function toProduct(row: ProductRow): CatalogProduct {
-  const images = row.product_images ?? [];
+  const images = [...(row.product_images ?? [])].sort(
+    (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.created_at.localeCompare(b.created_at) || a.image_url.localeCompare(b.image_url),
+  );
   return {
     id: row.id,
     name: row.name,
@@ -52,10 +57,12 @@ function toProduct(row: ProductRow): CatalogProduct {
     base_price: Number(row.base_price),
     is_active: row.is_active,
     made_to_order: Boolean(row.made_to_order),
+    created_at: row.created_at,
     updated_at: row.updated_at,
     variants: (row.product_variants ?? []).map((v) => ({ ...v, price: Number(v.price) })),
     tags: (row.product_tags ?? []).map((t) => t.tag),
-    image: (images.find((i) => i.is_primary) ?? images[0])?.image_url ?? null,
+    image: images[0]?.image_url ?? null,
+    images: images.map((i) => i.image_url),
   };
 }
 
