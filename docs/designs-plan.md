@@ -65,6 +65,21 @@ Source files:
 - Compress the 76 full designs and upload them to `product-images` as the owner.
 - A load script for the products, primary photo, tags, and 36 variants each, with SKUs and prices from the list. Confirm the four uncertain team names first.
 - **Done when:** the admin lists 76 designs with photos, styles, sizes and prices matching the price list.
+- **Decisions (2026-10-25):**
+  - Names are the team name only. Repeats get their design number: ARCHANGEL (2) and (75), BUYO (4) and (43), 3x3 OCEANVIEW PIRATES (31) and (32).
+  - The four uncertain names (D39 JRES, D50 MIZTA FIVE, D53 BHOOOWHOOP, D54 BRDN GF) are used as read.
+  - Each design gets 6 photos: the full design (main) plus upper front, back and side, and lower front and back.
+  - Tags: jersey, basketball, sublimation, plus the design's colors. Each gets a generated one-line description.
+  - Photos are committed in the repo. The load was run with the owner's login after the owner approved the counts.
+- **Built and loaded 2026-10-25:**
+  - DESIGN 59 had been filled in on Drive since the first look (CRUZADA, black, purple and gold), so **77 designs** loaded, not 76.
+  - `supabase/seed/designs.json`: each design's number, fixed product id, name, description, tags and photo list, plus the styles and sizes. `supabase/seed/design-photos/D01…D77/`: 462 WebP files at 1800px with transparency kept, about 92 MB in all.
+  - DESIGN 3 has no full design, so its photos are the upper and lower front, back and side, with the upper front as main. DESIGN 1's differently named files (FRONT UPPER, FRONT BACK, FRONT SIDE) map to the upper views.
+  - `supabase/seed/load-designs.mjs` (`node supabase/seed/load-designs.mjs`): signs in as the owner and checks for SKU clashes. It shows the counts, writes only after LOAD, and adds only what's missing, so admin edits survive a re-run. A product stays hidden until its load finishes, and a run that stopped halfway finishes and shows it.
+  - `supabase/seed/owner-session.mjs` holds the shared owner sign-in, which `empty-storage.mjs` now uses too.
+  - SKUs follow `D{nn}-{style}-{size}`, e.g. D01-NBS-M (NBS, NMS, NBU, NMU). Base price is ₱325, the lowest style.
+  - The first run stopped once, at design 76, on a storage upload with no error text. The re-run finished it.
+  - Verified in the live database: 77 active made-to-order products, 462 photos with one main photo each, 2,772 variants all at 0 stock, 419 tags, no incomplete designs, photos served publicly as WebP, and a final run with nothing left to add.
 
 ### Phase D4: POS design orders
 - Designed with `/impeccable` and `/apple-design`, approved before it's built.

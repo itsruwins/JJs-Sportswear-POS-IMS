@@ -13,70 +13,9 @@
 //
 //   node supabase/seed/empty-storage.mjs
 
-import { createInterface } from "node:readline";
-import { createClient } from "@supabase/supabase-js";
+import { ask, signInAsOwner } from "./owner-session.mjs";
 
 const BUCKETS = ["order-references", "order-photos", "payment-proofs", "pos-receipts", "chat-photos", "ai-designs", "product-images"];
-
-// Problems print as one plain line, not a stack trace.
-process.on("uncaughtException", (e) => {
-  console.error(`\n${e.message}`);
-  process.exit(1);
-});
-
-process.loadEnvFile(".env.local");
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-if (!url || !key) throw new Error("Run this from the project folder: .env.local needs the Supabase URL and publishable key.");
-if (!process.stdin.isTTY) {
-  console.error("This script asks for the owner's password, so it needs a terminal you can type in.");
-  console.error("Open Terminal (or the VS Code terminal), go to the project folder, and run:");
-  console.error("  node supabase/seed/empty-storage.mjs");
-  process.exit(1);
-}
-
-function ask(question) {
-  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
-  return new Promise((resolve) =>
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.trim());
-    }),
-  );
-}
-
-/** Reads a line without showing it: keys are taken one by one and never echoed. */
-function askHidden(question) {
-  process.stdout.write(question);
-  const stdin = process.stdin;
-  stdin.setRawMode(true);
-  stdin.resume();
-  stdin.setEncoding("utf8");
-  let value = "";
-  return new Promise((resolve) => {
-    const onData = (chunk) => {
-      for (const ch of chunk) {
-        if (ch === "\r" || ch === "\n") {
-          stdin.setRawMode(false);
-          stdin.pause();
-          stdin.off("data", onData);
-          process.stdout.write("\n");
-          resolve(value);
-          return;
-        }
-        if (ch === "\u0003") {
-          // Ctrl+C
-          stdin.setRawMode(false);
-          process.stdout.write("\nStopped. Nothing was deleted.\n");
-          process.exit(130);
-        }
-        if (ch === "\u007f" || ch === "\b") value = value.slice(0, -1);
-        else if (ch >= " ") value += ch;
-      }
-    };
-    stdin.on("data", onData);
-  });
-}
 
 /** Every file path in a bucket. Folders come back from list() with no id. */
 async function listAll(storage, prefix = "") {
@@ -93,18 +32,7 @@ async function listAll(storage, prefix = "") {
   }
 }
 
-const supabase = createClient(url, key, { auth: { persistSession: false } });
-
-// Accounts sign in by username; the app logs in with a placeholder email made from it
-// (features/shared/auth/credentials.ts, usernameToEmail).
-const username = await ask("Owner username: ");
-const email = `${username.toLowerCase()}@jjsportswear.local`;
-const password = await askHidden("Password (hidden as you type): ");
-const { data: auth, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-if (signInError) throw new Error(`Sign-in failed: ${signInError.message}`);
-
-const { data: profile } = await supabase.from("profiles").select("role").eq("id", auth.user.id).single();
-if (profile?.role !== "owner") throw new Error("That account isn't the owner. Only the owner can empty the buckets.");
+const supabase = await signInAsOwner({ script: "supabase/seed/empty-storage.mjs", stopped: "Stopped. Nothing was deleted." });
 
 const found = [];
 for (const bucket of BUCKETS) {
