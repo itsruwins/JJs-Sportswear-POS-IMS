@@ -24,6 +24,8 @@ export type ProductInput = {
   id: string;
   name: string;
   description: string;
+  /** Made after it's ordered: no stock is kept, and each variant is a style × size. */
+  made_to_order: boolean;
   base_price: number;
   tags: string[];
   images: ImageInput[];
@@ -100,6 +102,7 @@ export function validateProduct(input: ProductInput): FieldErrors {
     if (!isMoney(v.price)) e[`variants.${k}.price`] = "Enter a price.";
     if (!isWhole(v.low_stock_threshold) || v.low_stock_threshold > LIMITS.stock) e[`variants.${k}.low_stock_threshold`] = "Whole number.";
     if (!v.id && (!isWhole(v.opening_stock) || v.opening_stock > LIMITS.stock)) e[`variants.${k}.opening_stock`] = "Whole number.";
+    else if (!v.id && input.made_to_order && v.opening_stock > 0) e[`variants.${k}.opening_stock`] = "Made-to-order products don’t keep stock.";
   }
 
   return e;

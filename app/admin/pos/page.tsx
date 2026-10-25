@@ -15,9 +15,10 @@ export default async function PosPage() {
   const { supabase, profile } = await requireStaff();
   const [{ products, error }, { providers }] = await Promise.all([fetchCatalog(supabase), fetchProviders(supabase)]);
 
-  // Only what can be sold: products in the catalog and their visible sizes and colors.
+  // Only what can be sold off the shelf: products in the catalog and their visible sizes and colors.
+  // Made-to-order designs are taken as custom orders instead, which the counter doesn't do yet.
   const forSale: PosProduct[] = products
-    .filter((p) => p.is_active)
+    .filter((p) => p.is_active && !p.made_to_order)
     .map((p) => {
       const variants = p.variants.filter((v) => v.is_active);
       const sizes = sortSizes([...new Set(variants.map((v) => v.size ?? ""))]);

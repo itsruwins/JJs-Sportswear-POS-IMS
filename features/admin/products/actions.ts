@@ -42,6 +42,7 @@ function clean(raw: ProductInput): ProductInput {
     id: str(raw?.id),
     name: str(raw?.name).trim(),
     description: str(raw?.description).trim(),
+    made_to_order: raw?.made_to_order === true,
     base_price: Number(raw?.base_price),
     tags: normalizeTags(list<unknown>(raw?.tags).map(str)),
     images: list<ProductInput["images"][number]>(raw?.images).map((i) => ({
@@ -74,10 +75,15 @@ function dbMessage(error: DbError, fallback: string) {
     return "Something here already exists. Reload the page and try again.";
   }
   if (error?.code === "42501") return "Your account isn’t allowed to do that.";
+  if (error?.code === "42703" && /made_to_order/.test(text)) return MIGRATION_MESSAGE;
+  // The database's own made-to-order rules (migration 20261021000000_made_to_order.sql).
+  if (error?.code === "P0001" && /made to order|made-to-order/i.test(text)) return error.message ?? fallback;
   return fallback;
 }
 
-type SavedVariant = { id: string; size: string | null; color: string | null; sku: string | null };
+const MIGRATION_MESSAGE = "Made to order needs the shop’s latest database update (20261021000000_made_to_order.sql).";
+
+type SavedVariant = { id: string; size: string | null; color: string | null; sku: string | null; stock_quantity: number };
 type SavedImage = { id: string; image_url: string; is_primary: boolean };
 
 /**
@@ -99,7 +105,7 @@ export async function saveProduct(raw: ProductInput, mode: "create" | "update"):
   const { data: existing, error: loadError } = await supabase
     .from("products")
     .select(
-      "id, product_variants (id, size, color, sku), product_images (id, image_url, is_primary), product_tags (id, tag)",
+      "id, product_variants (id, size, color, sku, stock_quantity), product_images (id, image_url, is_primary), product_tags (id, tag)",
     )
     .eq("id", input.id)
     .maybeSingle();
@@ -107,6 +113,15 @@ export async function saveProduct(raw: ProductInput, mode: "create" | "update"):
   if (!existing && mode === "update") return fail("This product doesn’t exist anymore.");
 
   const savedVariants = (existing?.product_variants ?? []) as SavedVariant[];
+
+  // Switching to made to order with stock on the shelf would leave that stock uncounted.
+  if (input.made_to_order) {
+    const pieces = savedVariants.reduce((sum, v) => sum + Math.max(0, v.stock_quantity), 0);
+    if (pieces > 0) {
+      const message = `This product still has ${pieces} in stock. Adjust every size to 0 first, then make it made to order.`;
+      return fail(message, { made_to_order: message });
+    }
+  }
   const savedImages = (existing?.product_images ?? []) as SavedImage[];
   const savedTags = (existing?.product_tags ?? []) as { id: string; tag: string }[];
 
@@ -158,13 +173,17 @@ export async function saveProduct(raw: ProductInput, mode: "create" | "update"):
   if (Object.keys(skuErrors).length) return fail("Some SKUs are already in use.", skuErrors);
 
   // 1. The product row. New products start hidden and are switched on at the very end.
-  const fields = { name: input.name, description: input.description || null, base_price: input.base_price };
-  if (!existing) {
-    const { error } = await supabase.from("products").insert({ id: input.id, ...fields, is_active: false });
-    if (error) return fail(dbMessage(error, "We couldn’t create the product. Try again."));
-  } else {
-    const { error } = await supabase.from("products").update(fields).eq("id", input.id);
-    if (error) return fail(dbMessage(error, "We couldn’t save the product details. Try again."));
+  // Before the made-to-order migration, a stocked product still saves (the column is left out).
+  const base = { name: input.name, description: input.description || null, base_price: input.base_price };
+  const fields = { ...base, made_to_order: input.made_to_order };
+  const writeProduct = async (row: typeof base) =>
+    existing
+      ? supabase.from("products").update(row).eq("id", input.id)
+      : supabase.from("products").insert({ id: input.id, ...row, is_active: false });
+  {
+    let { error } = await writeProduct(fields);
+    if (error?.code === "42703" && /made_to_order/.test(`${error.message}`) && !input.made_to_order) ({ error } = await writeProduct(base));
+    if (error) return fail(dbMessage(error, existing ? "We couldn’t save the product details. Try again." : "We couldn’t create the product. Try again."));
   }
 
   // 2. Tags: add what's missing, remove what's gone.
@@ -243,7 +262,7 @@ export async function saveProduct(raw: ProductInput, mode: "create" | "update"):
         sku: v.sku,
         price: v.price,
         low_stock_threshold: v.low_stock_threshold,
-        stock_quantity: v.opening_stock,
+        stock_quantity: input.made_to_order ? 0 : v.opening_stock,
         is_active: true,
       })),
     );

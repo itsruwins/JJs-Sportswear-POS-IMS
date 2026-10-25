@@ -18,24 +18,30 @@ export type CatalogProduct = {
   description: string | null;
   base_price: number;
   is_active: boolean;
+  /** Made after it's ordered: no stock is kept, and variants are style × size (style in `color`). */
+  made_to_order: boolean;
   updated_at: string;
   variants: CatalogVariant[];
   tags: string[];
   image: string | null;
 };
 
-type ProductRow = Omit<CatalogProduct, "variants" | "tags" | "image"> & {
+type ProductRow = Omit<CatalogProduct, "variants" | "tags" | "image" | "made_to_order"> & {
+  made_to_order?: boolean;
   product_variants: CatalogVariant[] | null;
   product_tags: { tag: string }[] | null;
   product_images: { image_url: string; is_primary: boolean }[] | null;
 };
 
 const PRODUCT_SELECT = `
-  id, name, description, base_price, is_active, updated_at,
+  id, name, description, base_price, is_active, made_to_order, updated_at,
   product_variants (id, size, color, sku, price, stock_quantity, low_stock_threshold, is_active),
   product_tags (tag),
   product_images (image_url, is_primary)
 `;
+// Before migration 20261021000000_made_to_order.sql the column isn't there; read without it.
+const PRODUCT_SELECT_BEFORE_D2 = PRODUCT_SELECT.replace(" made_to_order,", "");
+const missingColumn = (error: { code?: string } | null) => error?.code === "42703";
 
 function toProduct(row: ProductRow): CatalogProduct {
   const images = row.product_images ?? [];
@@ -45,6 +51,7 @@ function toProduct(row: ProductRow): CatalogProduct {
     description: row.description,
     base_price: Number(row.base_price),
     is_active: row.is_active,
+    made_to_order: Boolean(row.made_to_order),
     updated_at: row.updated_at,
     variants: (row.product_variants ?? []).map((v) => ({ ...v, price: Number(v.price) })),
     tags: (row.product_tags ?? []).map((t) => t.tag),
@@ -54,13 +61,17 @@ function toProduct(row: ProductRow): CatalogProduct {
 
 /** Every product, active or archived, with its variants, tags, and primary image. Staff only (RLS). */
 export async function fetchCatalog(supabase: SupabaseClient) {
-  const { data, error } = await supabase.from("products").select(PRODUCT_SELECT).order("name");
-  return { products: (data as ProductRow[] | null)?.map(toProduct) ?? [], error };
+  const read = (select: string) => supabase.from("products").select(select).order("name").returns<ProductRow[]>();
+  let res = await read(PRODUCT_SELECT);
+  if (missingColumn(res.error)) res = await read(PRODUCT_SELECT_BEFORE_D2);
+  return { products: res.data?.map(toProduct) ?? [], error: res.error };
 }
 
 export async function fetchProduct(supabase: SupabaseClient, id: string) {
-  const { data, error } = await supabase.from("products").select(PRODUCT_SELECT).eq("id", id).maybeSingle();
-  return { product: data ? toProduct(data as ProductRow) : null, error };
+  const read = (select: string) => supabase.from("products").select(select).eq("id", id).maybeSingle<ProductRow>();
+  let res = await read(PRODUCT_SELECT);
+  if (missingColumn(res.error)) res = await read(PRODUCT_SELECT_BEFORE_D2);
+  return { product: res.data ? toProduct(res.data) : null, error: res.error };
 }
 
 // ---------------------------------------------------------------------------
@@ -129,7 +140,9 @@ export function sizeSummaries(product: CatalogProduct): SizeSummary[] {
   });
 }
 
+/** Stock totals for a product. A made-to-order product keeps none, so nothing on it is low or sold out. */
 export function productStock(product: CatalogProduct) {
+  if (product.made_to_order) return { total: 0, low: 0, zero: 0 };
   const live = product.variants.filter((v) => v.is_active);
   const states = live.map(variantState);
   return {

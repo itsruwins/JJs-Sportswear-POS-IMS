@@ -1075,6 +1075,13 @@ button.admin-dock-item[data-current="true"]:hover {
 .shop-toggle[aria-pressed="true"] .shop-toggle-thumb {
   transform: translateX(0.75rem);
 }
+/* The same switch as a form control (role="switch", e.g. the product form's Made to order). */
+.shop-toggle[aria-checked="true"] .shop-toggle-track {
+  background: var(--board);
+}
+.shop-toggle[aria-checked="true"] .shop-toggle-thumb {
+  transform: translateX(0.75rem);
+}
 
 /* Color swatches: the chosen one wears an ink ring. */
 /* A hairline edge keeps black on dark ground and white on light ground visible. */

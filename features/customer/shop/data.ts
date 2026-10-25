@@ -4,6 +4,7 @@ import type { ShopProduct } from "./model";
 
 // The customer shop reads the same catalog as the admin; RLS already hides archived
 // products and hidden sizes from customers, and the filters here repeat that for safety.
+// Made-to-order designs stay out until the shop has a gallery for them.
 
 const HIDDEN_TAGS = new Set(["featured"]);
 
@@ -35,5 +36,5 @@ function toShop(p: CatalogProduct): ShopProduct {
 
 export async function fetchShop(supabase: SupabaseClient) {
   const { products, error } = await fetchCatalog(supabase);
-  return { products: products.filter((p) => p.is_active).map(toShop), error };
+  return { products: products.filter((p) => p.is_active && !p.made_to_order).map(toShop), error };
 }

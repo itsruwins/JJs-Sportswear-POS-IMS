@@ -44,6 +44,22 @@ Source files:
 - Migration: a `made_to_order` flag on products. Stock stays at 0, and nothing that reads stock treats these products as sold out or low.
 - Admin product form: a Made to order switch that hides stock fields and relabels Color as Style. The stock page and low-stock alerts skip these products.
 - **Done when:** a made-to-order product can be created and edited by hand and never appears as sold out or low stock.
+- **Decisions (2026-10-25):** the POS and the shop hide made-to-order products until D4 and D5. One price per style, for every size. The four jersey styles are one-tap chips that fill in the list price. Switching on is only allowed while stock is 0. The Stock page lists them in their own group with no counts.
+- **Built 2026-10-25:**
+  - Migration `20261021000000_made_to_order.sql`: a `products.made_to_order` column (default false). A trigger keeps every variant of a made-to-order product at 0 stock, covering opening stock, `adjust_stock` and returns. Another refuses switching on while any variant holds stock, and names how many pieces.
+  - `features/shared/catalog/styles.ts`: the four jersey styles with their list prices and SKU codes (NBS, NMS, NBU, NMU).
+  - Catalog and stock reads carry the flag, and fall back to the old read when the column isn't there yet. `productStock` gives a made-to-order product no stock, low or sold-out counts. Stock rows leave these products out, so Home, Needs restock, the reports and the CSVs skip them.
+  - Product form:
+    - A Made to order switch (the shop's switch as `role="switch"`) at the top of the sizes section. While stock is on the shelf it's disabled, with the count.
+    - When on: Styles replaces Colors, with chips that add a style at its list price (plus "Add all"), and a Price per style list replaces base price, upcharge and alert level.
+    - Opening stock is hidden, and Variant details drops Alert at.
+    - Editing derives each style's price from its most common size price, and keeps sizes priced apart.
+  - Product page: a Made to order pill, Styles, Sizes and Variants figures, a "Prices by size and style" grid, no Adjust stock and no stock history.
+  - Products list: a pill, "N styles", and the size range instead of the stock rail. Low and sold-out filters skip these products.
+  - Stock page: a collapsed "Made to order" group with Show/Hide. A search opens it, and it has no Adjust.
+  - Hidden from the POS grid and the customer shop, including direct product links.
+  - Tested in PGlite, 14 checks: the column default, creating one, refused opening stock and restock, prices still editable, switching blocked with stock and allowed at 0, no restock after switching, switching back off, a counter sale refused, no low-stock alert, and the migration re-running.
+  - Checked in headless Chrome against a temporary preview page (deleted afterwards): desktop, phone (390px, inside a frame) and light mode. The design detector reported only advisory font-size notes, on sizes the admin already uses.
 
 ### Phase D3: Load the 76 designs
 - Compress the 76 full designs and upload them to `product-images` as the owner.
