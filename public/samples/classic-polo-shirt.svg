@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img">
-<title>Classic Polo Shirt (sample illustration, White)</title>
-<!-- Sample illustration for demo data. Replace with real product photos. -->
-<g stroke="#8f9591" stroke-width="2.5" stroke-linejoin="round"><path d="M92 36 Q120 52 148 36 L196 60 L182 102 L162 94 L164 212 L76 212 L78 94 L58 102 L44 60 Z" fill="#f3f4f2"/>
-<path d="M94 37 Q120 56 146 37" fill="none" stroke="#aeafae" stroke-width="7" stroke-linecap="round"/>
-<path d="M100 38 L120 66 L140 38 L132 30 L108 30 Z" fill="#aeafae"/>
-<path d="M120 66 L120 100" stroke="#aeafae" stroke-width="4"/>
-<circle cx="120" cy="78" r="2.6" fill="#f3f4f2"/><circle cx="120" cy="92" r="2.6" fill="#f3f4f2"/></g>
-</svg>

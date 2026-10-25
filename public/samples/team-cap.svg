@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img">
-<title>Team Cap (sample illustration, Black)</title>
-<!-- Sample illustration for demo data. Replace with real product photos. -->
-<g><path d="M44 148 Q44 70 120 66 Q196 70 196 148 Z" fill="#1f2321"/>
-<path d="M120 66 L120 148 M80 74 Q90 110 92 148 M160 74 Q150 110 148 148" stroke="#6d706e" stroke-width="3" fill="none"/>
-<path d="M30 150 Q120 128 214 150 Q206 178 120 172 Q38 178 30 150 Z" fill="#6d706e"/>
-<circle cx="120" cy="66" r="6" fill="#6d706e"/></g>
-</svg>

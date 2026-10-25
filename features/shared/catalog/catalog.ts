@@ -158,10 +158,6 @@ export function priceRange(product: CatalogProduct) {
   return min === max ? formatPeso(min) : `${formatPeso(min)}–${formatPeso(max)}`;
 }
 
-export function isSample(product: Pick<CatalogProduct, "tags">) {
-  return product.tags.some((t) => t.toLowerCase() === "sample");
-}
-
 // ---------------------------------------------------------------------------
 // Product form context
 // ---------------------------------------------------------------------------
@@ -179,9 +175,7 @@ export async function fetchProductImages(supabase: SupabaseClient, productId: st
 /** Colors and tags already in use (for suggestions) and the SKUs other products own. */
 export function formContext(products: CatalogProduct[], excludeId?: string) {
   const colors = unique(products.flatMap((p) => p.variants.map((v) => v.color))).sort((a, b) => a.localeCompare(b));
-  const tags = unique(products.flatMap((p) => p.tags))
-    .filter((t) => t.toLowerCase() !== "sample")
-    .sort((a, b) => a.localeCompare(b));
+  const tags = unique(products.flatMap((p) => p.tags)).sort((a, b) => a.localeCompare(b));
   const takenSkus = products
     .filter((p) => p.id !== excludeId)
     .flatMap((p) => p.variants.map((v) => v.sku))

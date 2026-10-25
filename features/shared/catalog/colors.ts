@@ -1,4 +1,4 @@
-// Garment colors by name, for swatches and for recoloring the sample illustrations.
+// Garment colors by name, for swatches and the design studio's color stage.
 // Variant colors are typed by the owner, so lookups are case-insensitive and unknown
 // names fall back to a neutral gray (the swatch still carries the name).
 

@@ -62,7 +62,7 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
   const [basePrice, setBasePrice] = useState(product ? formatMoneyInput(product.base_price) : "");
   const [upcharge, setUpcharge] = useState("");
   const [threshold, setThreshold] = useState("5");
-  const [tags, setTags] = useState(() => (product?.tags ?? []).filter((t) => t.toLowerCase() !== "sample"));
+  const [tags, setTags] = useState(() => product?.tags ?? []);
   const [photos, setPhotos] = useState<PhotoItem[]>(() =>
     images.map((i) => ({ key: i.id, id: i.id, url: i.url, is_primary: i.is_primary })),
   );

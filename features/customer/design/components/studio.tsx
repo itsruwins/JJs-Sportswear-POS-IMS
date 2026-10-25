@@ -14,7 +14,6 @@ import {
   MAX_COLORS,
   MAX_EXTRA,
   picksSummary,
-  sampleFileFor,
   STUDIO_GARMENTS,
   STUDIO_SPORTS,
   STUDIO_STYLES,
@@ -63,30 +62,37 @@ function ChipGroup<T extends string>({ name, options, value, onPick }: { name: s
   );
 }
 
-/**
- * The stage before the first design: the sample garment in the picked colors, front and
- * back, recoloring with the jersey cross-fade as colors are picked. Same color rules as
- * the preview images: main color for the body, second for the trim.
- */
-/** The shop's sheen overlay off, so the stage matches the flat garment a generated preview draws. */
-const flat = (art: string) => art.replace(/<path[^>]*fill="url\(#__ID__\)"[^>]*\/>/g, "");
-
-function SampleStage({ art, picks }: { art: string | null; picks: DesignPicks }) {
-  const id = `stage${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
-  const body = garmentColor(picks.colors[0] ?? "White").body;
-  const trim = picks.colors[1] ? garmentColor(picks.colors[1]).body : garmentColor(picks.colors[0] ?? "White").trim;
-  const vars = { "--g-body": body, "--g-trim": trim, "--g-shade": `color-mix(in oklch, ${body}, black 9%)` } as React.CSSProperties;
+/** The stage before the first design: the picked colors, and what Generate will make. */
+function EmptyStage({ picks, live }: { picks: DesignPicks; live: boolean }) {
   return (
-    <div className="flex size-full flex-col">
-      <div className="grid min-h-0 flex-1 grid-cols-2 gap-[4%] px-[8%] pt-[6%]" aria-hidden="true">
-        {art &&
-          ["front", "back"].map((side) => (
-            <div key={side} className="garment-art" style={vars} dangerouslySetInnerHTML={{ __html: flat(art).replaceAll("__ID__", `${id}${side}`) }} />
-          ))}
+    <div className="grid size-full place-items-center p-6 text-center">
+      <div>
+        {picks.colors.length > 0 && (
+          <ul className="flex justify-center gap-2" aria-label="Your colors">
+            {picks.colors.map((c) => (
+              <li
+                key={c}
+                title={c}
+                className="size-9 rounded-full shadow-[inset_0_0_0_1px_oklch(0_0_0/0.12)]"
+                style={{ background: garmentColor(c).body }}
+              >
+                <span className="sr-only">{c}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="mx-auto mt-4 max-w-[34ch] text-[0.9375rem] leading-relaxed text-card-ink/75">
+          {live ? (
+            <>
+              <span className="font-semibold text-card-ink">Your design shows here.</span> Generate to see it front and back, with your names and number.
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-card-ink">The AI designer is coming soon.</span> Your picks are kept for when it’s on.
+            </>
+          )}
+        </p>
       </div>
-      <p className="px-6 pb-[4.5%] pt-2 text-center text-[0.875rem] text-card-ink/75">
-        <span className="font-semibold text-card-ink">Sample art in your colors.</span> Generate to see your design, front and back, with your names and number.
-      </p>
     </div>
   );
 }
@@ -101,16 +107,13 @@ export function Studio({
   designs,
   usedToday,
   live,
-  art,
   savedLogoUrl,
 }: {
   uid: string;
   designs: MyDesign[];
   usedToday: number;
-  /** True when the shop's FLUX key is set; otherwise designs are sample-art previews. */
+  /** True when the shop's FLUX key is set; without it nothing can be generated. */
   live: boolean;
-  /** Recolorable sample art by file name, for the stage before the first design. */
-  art: Record<string, string | null>;
   /** Signed link to the logo restored with the last design's picks. */
   savedLogoUrl: string | null;
 }) {
@@ -189,7 +192,7 @@ export function Studio({
     router.refresh();
   };
 
-  const disabled = left === 0 || busy !== null;
+  const disabled = !live || left === 0 || busy !== null;
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,25rem)_minmax(0,1fr)] lg:gap-12">
@@ -295,7 +298,6 @@ export function Studio({
                 <input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={(e) => { pickLogo(e.target.files?.[0]); e.target.value = ""; }} />
               </label>
             )}
-            {!live && picks.logoPath && <p className="mt-1.5 text-[0.8125rem] text-ink-2">Previews don’t draw logos; the AI will once it’s on.</p>}
           </div>
 
           <div>
@@ -321,10 +323,10 @@ export function Studio({
               className="press inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-board px-6 text-[1rem] font-semibold text-board-ink hover:bg-board-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
             >
               {busy === "generate" ? <LoaderCircle aria-hidden="true" className="size-5 animate-spin" /> : <Sparkles aria-hidden="true" className="size-5" />}
-              {busy === "generate" ? "Drawing your design…" : left === 0 ? "No designs left today" : "Generate design"}
+              {busy === "generate" ? "Drawing your design…" : !live ? "Coming soon" : left === 0 ? "No designs left today" : "Generate design"}
             </button>
             <p className="mt-2 text-center text-[0.8125rem] text-ink-2">
-              {left === 0 ? "You can make 3 more tomorrow." : `Uses 1 of today’s ${DESIGNS_PER_DAY}.`}
+              {!live ? "The shop is still turning the AI on." : left === 0 ? "You can make 3 more tomorrow." : `Uses 1 of today’s ${DESIGNS_PER_DAY}.`}
             </p>
           </div>
         </div>
@@ -341,14 +343,14 @@ export function Studio({
               <div>
                 <LoaderCircle aria-hidden="true" className="mx-auto size-8 animate-spin text-card-ink/60" />
                 <p className="mt-3 text-[1rem] font-semibold text-card-ink">{busy === "refine" ? "Refining your design…" : "Drawing your design…"}</p>
-                <p className="mt-1 text-[0.875rem] text-card-ink/70">{live ? "This takes about 10 to 30 seconds." : "Making a preview."}</p>
+                <p className="mt-1 text-[0.875rem] text-card-ink/70">This takes about 10 to 30 seconds.</p>
               </div>
             </div>
           ) : current?.url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={current.url} alt={`Design: ${picksSummary(current.details) ?? current.prompt}`} className="size-full object-contain" />
           ) : (
-            <SampleStage art={art[sampleFileFor(picks)] ?? null} picks={picks} />
+            <EmptyStage picks={picks} live={live} />
           )}
         </div>
 
@@ -405,7 +407,7 @@ export function Studio({
                 </div>
               ) : (
                 <p className="min-w-0 flex-1 text-[0.875rem] leading-relaxed text-ink-2 sm:pb-1">
-                  Refining with words comes when the AI is on. For now, change your picks and generate again.
+                  Refining with words comes when the AI is on.
                 </p>
               )}
             </div>

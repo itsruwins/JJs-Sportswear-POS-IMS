@@ -43,7 +43,7 @@ function clean(raw: ProductInput): ProductInput {
     name: str(raw?.name).trim(),
     description: str(raw?.description).trim(),
     base_price: Number(raw?.base_price),
-    tags: normalizeTags(list<unknown>(raw?.tags).map(str)).filter((t) => t !== "sample"),
+    tags: normalizeTags(list<unknown>(raw?.tags).map(str)),
     images: list<ProductInput["images"][number]>(raw?.images).map((i) => ({
       id: i?.id ? str(i.id) : undefined,
       url: str(i?.url),
@@ -167,11 +167,11 @@ export async function saveProduct(raw: ProductInput, mode: "create" | "update"):
     if (error) return fail(dbMessage(error, "We couldn’t save the product details. Try again."));
   }
 
-  // 2. Tags: add what's missing, remove what's gone. The hidden "sample" tag is never touched.
+  // 2. Tags: add what's missing, remove what's gone.
   {
     const want = new Set(input.tags);
     const have = new Set(savedTags.map((t) => t.tag.toLowerCase()));
-    const extra = savedTags.filter((t) => t.tag.toLowerCase() !== "sample" && !want.has(t.tag.toLowerCase()));
+    const extra = savedTags.filter((t) => !want.has(t.tag.toLowerCase()));
     const missing = input.tags.filter((t) => !have.has(t));
     if (missing.length) {
       const { error } = await supabase.from("product_tags").insert(missing.map((tag) => ({ product_id: input.id, tag })));

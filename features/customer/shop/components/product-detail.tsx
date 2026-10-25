@@ -59,7 +59,7 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
       {/* Sticky on a plain wrapper: the tile's own positioning would turn `top` into an offset. */}
       <div className="lg:sticky lg:top-24 lg:self-start">
         <div className="shop-tile aspect-square">
-          <GarmentArt art={p.art} image={p.image} color={color} name={p.name} className="shop-detail-art" sizes="(min-width: 1024px) 55vw, 100vw" />
+          <GarmentArt image={p.image} color={color} name={p.name} className="shop-detail-art" sizes="(min-width: 1024px) 55vw, 100vw" />
         </div>
       </div>
 
@@ -192,11 +192,6 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
           <dt className="text-ink-2">How to buy</dt>
           <dd className="text-ink">At the shop, cash or GCash</dd>
         </dl>
-        {p.sample && (
-          <p className="mt-6 text-[0.8125rem] leading-relaxed text-ink-2">
-            Sample product: the price, stock, and illustration are demo data until the shop’s real catalog goes in.
-          </p>
-        )}
       </div>
 
       <BuySheet sheetRef={sheet} product={p} color={color} variant={chosen} shop={shop} />
@@ -243,7 +238,7 @@ function BuySheet({
         {variant && (
           <div className="mt-5 flex items-center gap-4 rounded-2xl bg-ground-2 p-3 shadow-[inset_0_0_0_1px_var(--line)]">
             <div className="shop-tile size-20 shrink-0 rounded-xl">
-              <GarmentArt art={p.art} image={p.image} color={color} name={p.name} className="shop-thumb-art" sizes="5rem" />
+              <GarmentArt image={p.image} color={color} name={p.name} className="shop-thumb-art" sizes="5rem" />
             </div>
             <div className="min-w-0">
               <p className="truncate text-[0.9375rem] font-semibold text-ink">{p.name}</p>

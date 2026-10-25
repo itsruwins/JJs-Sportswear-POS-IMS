@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Search, Shirt, X } from "lucide-react";
 import {
-  isSample,
   priceRange,
   productStock,
   sizeSummaries,
@@ -257,7 +256,6 @@ export function ProductsBrowser({
                   <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="text-[1rem] font-semibold text-ink group-hover:underline">{product.name}</span>
                     {!product.is_active && <Pill>Archived</Pill>}
-                    {isSample(product) && <Pill>Sample</Pill>}
                   </p>
                   <p className="mt-1 truncate text-[0.875rem] text-ink-2">
                     {colors.join(" · ") || "No colors"}

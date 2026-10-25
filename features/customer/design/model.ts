@@ -1,5 +1,5 @@
 // The AI design studio's picks and the prompt they become. Safe for client components;
-// the generator itself (FLUX.2, or sample-art previews) runs on the server.
+// the generator itself (FLUX.2) runs on the server.
 
 export const DESIGNS_PER_DAY = 3;
 
@@ -113,36 +113,3 @@ export function picksSummary(p: Partial<DesignPicks> | null) {
   if (!p) return null;
   return [p.sport, p.garment?.toLowerCase(), p.colors?.length ? p.colors.join(" / ") : null].filter(Boolean).join(" · ");
 }
-
-/** Which sample illustration stands in for a garment (and sport, for plain jerseys). */
-export function sampleFileFor(p: Pick<DesignPicks, "garment" | "sport">) {
-  switch (p.garment) {
-    case "Sublimated jersey":
-      return "sublimated-basketball-jersey.svg";
-    case "Dri-fit shirt":
-      return "dri-fit-practice-tee.svg";
-    case "Polo":
-      return "classic-polo-shirt.svg";
-    case "Jacket":
-      return "warmer-jacket.svg";
-    case "Hoodie":
-      return "pullover-hoodie.svg";
-    default:
-      if (p.sport === "Volleyball") return "volleyball-jersey.svg";
-      if (p.sport === "Esports") return "esports-jersey.svg";
-      if (p.sport === "Football" || p.sport === "Running" || p.sport === "School PE") return "dri-fit-practice-tee.svg";
-      return "reversible-liga-jersey.svg";
-  }
-}
-
-/** Every sample file the studio can show (the stage loads their art up front). */
-export const STUDIO_SAMPLE_FILES = [
-  "reversible-liga-jersey.svg",
-  "volleyball-jersey.svg",
-  "esports-jersey.svg",
-  "dri-fit-practice-tee.svg",
-  "sublimated-basketball-jersey.svg",
-  "classic-polo-shirt.svg",
-  "warmer-jacket.svg",
-  "pullover-hoodie.svg",
-] as const;

@@ -20,7 +20,6 @@ export function ShopView({ products, error, query }: { products: ShopProduct[]; 
   const categories = categoriesWithProducts(products);
   const results = applyQuery(products, query);
   const heading = CATEGORIES.find((c) => c.id === query.cat)?.label ?? "All products";
-  const hasSamples = products.some((p) => p.sample);
 
   return (
     <div className={pageShell}>
@@ -74,7 +73,6 @@ export function ShopView({ products, error, query }: { products: ShopProduct[]; 
 
           <p className="mt-14 max-w-[60ch] border-t border-line pt-5 text-[0.875rem] leading-relaxed text-ink-2">
             Ready-made items are bought at the shop in Legazpi City; stock updates as the counter sells.
-            {hasSamples && " The products, prices, and illustrations here are sample data until the shop’s real catalog goes in."}
           </p>
         </>
       )}
