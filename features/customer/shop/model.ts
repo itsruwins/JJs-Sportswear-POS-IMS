@@ -1,7 +1,7 @@
 import { sortSizes, unique } from "@/features/shared/catalog/catalog";
 
 // The shop's product shape, categories, and URL filters. Safe for client components;
-// loading the catalog (which reads the sample illustrations from disk) is in data.ts.
+// loading the catalog is in data.ts.
 
 export type ShopVariant = {
   size: string;
@@ -20,14 +20,11 @@ export type ShopProduct = {
   colors: string[];
   sizes: string[];
   stock: number;
-  /** Tags customers see (not "sample" or "featured"). */
+  /** Tags customers see (not "featured"). */
   tags: string[];
-  sample: boolean;
   featured: boolean;
-  /** A real photo, when the product has one. */
+  /** The product's primary photo, when it has one. */
   image: string | null;
-  /** Recolorable sample illustration markup, when the image is one. */
-  art: string | null;
   variants: ShopVariant[];
 };
 

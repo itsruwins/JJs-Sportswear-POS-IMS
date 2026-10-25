@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { manilaDay } from "./data";
 import { buildPrompt, buildRefinePrompt, cleanPicks, DESIGNS_PER_DAY, type DesignPicks } from "./model";
 import { FluxError, fluxConfigured, fluxGenerate } from "./flux";
-import { renderPreview } from "./preview-art";
 import { requireCustomer } from "@/features/customer/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -14,10 +13,11 @@ const REFERENCE_LINK_FOR = 10 * 60;
 export type DesignResult = { ok: true; id: string } | { ok: false; message: string; limit?: boolean };
 
 const LIMIT_MESSAGE = `You’ve used today’s ${DESIGNS_PER_DAY} designs. You can make more tomorrow.`;
+const OFF_MESSAGE = "The AI designer isn’t on yet. Check back soon.";
 
 /**
- * Makes one design and saves it: FLUX.2 when the shop's key is set, otherwise a preview
- * from the sample art. Nothing is saved (or counted) unless an image came back.
+ * Makes one design with FLUX.2 and saves it. Without the shop's key there's nothing to
+ * make it with. Nothing is saved (or counted) unless an image came back.
  */
 async function make(
   prompt: string,
@@ -25,6 +25,7 @@ async function make(
   references: { parentPath?: string | null },
   parentId: string | null,
 ): Promise<DesignResult> {
+  if (!fluxConfigured()) return { ok: false, message: OFF_MESSAGE };
   const { supabase, profile } = await requireCustomer();
 
   // The database enforces the limit too; checking first spares a paid generation.
@@ -34,18 +35,13 @@ async function make(
     .eq("attempt_date", manilaDay());
   if ((count ?? 0) >= DESIGNS_PER_DAY) return { ok: false, message: LIMIT_MESSAGE, limit: true };
 
-  const live = fluxConfigured();
   let image: { bytes: Buffer; type: string; ext: string };
   try {
-    if (live) {
-      const paths = [references.parentPath, picks.logoPath].filter((p): p is string => Boolean(p));
-      const signed = paths.length ? await supabase.storage.from("ai-designs").createSignedUrls(paths, REFERENCE_LINK_FOR) : null;
-      const urls = (signed?.data ?? []).map((s) => s.signedUrl).filter((u): u is string => Boolean(u));
-      const out = await fluxGenerate(prompt, urls);
-      image = { ...out, ext: out.type.includes("png") ? "png" : out.type.includes("webp") ? "webp" : "jpg" };
-    } else {
-      image = { bytes: await renderPreview(picks), type: "image/webp", ext: "webp" };
-    }
+    const paths = [references.parentPath, picks.logoPath].filter((p): p is string => Boolean(p));
+    const signed = paths.length ? await supabase.storage.from("ai-designs").createSignedUrls(paths, REFERENCE_LINK_FOR) : null;
+    const urls = (signed?.data ?? []).map((s) => s.signedUrl).filter((u): u is string => Boolean(u));
+    const out = await fluxGenerate(prompt, urls);
+    image = { ...out, ext: out.type.includes("png") ? "png" : out.type.includes("webp") ? "webp" : "jpg" };
   } catch (e) {
     return { ok: false, message: e instanceof FluxError ? e.message : "We couldn’t make that design. Try again in a moment." };
   }
@@ -54,7 +50,7 @@ async function make(
   const up = await supabase.storage.from("ai-designs").upload(path, image.bytes, { contentType: image.type });
   if (up.error) return { ok: false, message: "The design was made but couldn’t be saved. Try again." };
 
-  const row = { prompt, generated_image_url: path, details: picks, parent_id: parentId, is_preview: !live };
+  const row = { prompt, generated_image_url: path, details: picks, parent_id: parentId };
   let ins = await supabase.from("ai_designs").insert(row).select("id").single();
   if (ins.error?.code === "42703" || ins.error?.code === "PGRST204") {
     // Before the studio migration: save what the original table holds.
@@ -81,8 +77,6 @@ export async function refineDesign(parentId: string, change: string): Promise<De
   if (typeof parentId !== "string" || !UUID.test(parentId)) return { ok: false, message: "That design doesn’t exist anymore." };
   const text = typeof change === "string" ? change.replace(/\s+/g, " ").trim().slice(0, 200) : "";
   if (text.length < 3) return { ok: false, message: "Say what to change, like “make the stripes thinner”." };
-  // Previews can't redraw from words, so a refinement would spend a try on the same picture.
-  if (!fluxConfigured()) return { ok: false, message: "Refining needs the AI, which isn’t on yet. Change your picks and generate instead." };
   const { supabase, profile } = await requireCustomer();
   const { data: parent } = await supabase
     .from("ai_designs")

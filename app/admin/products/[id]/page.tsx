@@ -11,7 +11,6 @@ import {
   fetchProduct,
   fetchRecentMoves,
   formatPeso,
-  isSample,
   priceRange,
   productStock,
   sortSizes,
@@ -52,7 +51,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   const cell = (size: string, color: string) =>
     product.variants.find((v) => (v.size ?? "One size") === size && (v.color ?? "—") === color);
   const stock = productStock(product);
-  const tags = product.tags.filter((t) => t.toLowerCase() !== "sample");
+  const tags = product.tags;
   const variants = [...product.variants].sort(
     (a, b) =>
       (a.color ?? "").localeCompare(b.color ?? "") ||
@@ -88,9 +87,6 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
       <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-14">
         <div className="mx-auto w-full max-w-[22rem] lg:mx-0">
           <ProductThumb src={product.image} name={product.name} size="lg" />
-          {isSample(product) && (
-            <p className="mt-3 text-center text-[0.8125rem] text-ink-2">Sample illustration. Real photos come with real products.</p>
-          )}
         </div>
 
         <div className="min-w-0">
@@ -98,7 +94,6 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <span className="tabular text-[1.25rem] font-semibold text-ink">{priceRange(product)}</span>
             {!product.is_active && <Pill>Archived</Pill>}
-            {isSample(product) && <Pill>Sample</Pill>}
           </p>
           {product.description && (
             <p className="mt-4 max-w-[60ch] text-[1rem] leading-relaxed text-ink-2">{product.description}</p>

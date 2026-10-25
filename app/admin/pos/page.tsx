@@ -26,7 +26,7 @@ export default async function PosPage() {
         id: p.id,
         name: p.name,
         image: p.image,
-        tags: p.tags.filter((t) => t.toLowerCase() !== "sample"),
+        tags: p.tags,
         variants: variants
           .map((v) => ({
             id: v.id,
