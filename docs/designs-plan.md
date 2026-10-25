@@ -119,6 +119,7 @@ Source files:
     - Online orders still go in, notify staff, and tell the customer.
   - Clicked through in headless Chrome (puppeteer-core) on a temporary preview page with the live catalog (deleted afterwards): designs, pieces, buyer errors, payment and cash short, on desktop light and phone dark, plus the slip. No page errors. One fix: the size cell showed a double focus ring.
   - Not done: placing a real order with the owner's login, and the cancel and reopen dialogs' "the customer is told" wording for walk-ins (`order-actions.tsx`).
+  - **Follow-up (2026-10-25):** the live database had run the first copy of `20261022000000`, whose `create_counter_order` took one payment (`p_payment`). The file was changed afterwards to take payment parts (`p_payments`), and Postgres won't rename an input, so re-running it failed. `20261022120000_counter_order_payment_parts.sql` drops the old function and creates the final one. Tested from that exact state in PGlite: 35 checks, including both files re-running afterwards.
 
 ### Phase D5: Shop gallery
 - The shop shows the designs with a photo, team name, style prices and sizes, with no order button on made-to-order products. It says orders are taken at the shop counter.
