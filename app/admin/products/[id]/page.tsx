@@ -40,8 +40,13 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   // Staff look stock up here; changing the product, its stock, and its history are the owner's.
   const isOwner = profile.role === "owner";
   const variantIds = product.variants.map((v) => v.id);
+  // A made-to-order product keeps no stock, so it has no stock history to show.
+  const mto = product.made_to_order;
   const [history, stockHistory] = isOwner
-    ? await Promise.all([hasStockHistory(supabase, variantIds).catch(() => true), fetchRecentMoves(supabase, 6, variantIds)])
+    ? await Promise.all([
+        hasStockHistory(supabase, variantIds).catch(() => true),
+        mto ? Promise.resolve(null) : fetchRecentMoves(supabase, 6, variantIds),
+      ])
     : ([true, null] as const);
   // Only the owner deletes, and only products that never held stock; work that out before offering it.
   const canDelete = isOwner && !history;
@@ -51,6 +56,8 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
   const cell = (size: string, color: string) =>
     product.variants.find((v) => (v.size ?? "One size") === size && (v.color ?? "—") === color);
   const stock = productStock(product);
+  const liveSizes = unique(product.variants.filter((v) => v.is_active).map((v) => v.size ?? "One size"));
+  const liveColors = unique(product.variants.filter((v) => v.is_active).map((v) => v.color ?? "—"));
   const tags = product.tags;
   const variants = [...product.variants].sort(
     (a, b) =>
@@ -94,6 +101,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <span className="tabular text-[1.25rem] font-semibold text-ink">{priceRange(product)}</span>
             {!product.is_active && <Pill>Archived</Pill>}
+            {mto && <Pill>Made to order</Pill>}
           </p>
           {product.description && (
             <p className="mt-4 max-w-[60ch] text-[1rem] leading-relaxed text-ink-2">{product.description}</p>
@@ -113,12 +121,25 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
             </ul>
           )}
 
-          <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-line py-5 sm:grid-cols-4">
-            <Stat label="In stock" value={String(stock.total)} />
-            <Stat label="Variants" value={String(product.variants.filter((v) => v.is_active).length)} />
-            <Stat label="Low" value={String(stock.low)} />
-            <Stat label="Sold out" value={String(stock.zero)} />
-          </dl>
+          {mto ? (
+            <>
+              <dl className="mt-6 grid grid-cols-3 gap-x-6 gap-y-4 border-y border-line py-5">
+                <Stat label="Styles" value={String(liveColors.length)} />
+                <Stat label="Sizes" value={String(liveSizes.length)} />
+                <Stat label="Variants" value={String(product.variants.filter((v) => v.is_active).length)} />
+              </dl>
+              <p className="mt-3 max-w-[56ch] text-[0.875rem] leading-relaxed text-ink-2">
+                Printed and sewn after it’s ordered, so no stock is kept and it never shows as low or sold out.
+              </p>
+            </>
+          ) : (
+            <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 border-y border-line py-5 sm:grid-cols-4">
+              <Stat label="In stock" value={String(stock.total)} />
+              <Stat label="Variants" value={String(product.variants.filter((v) => v.is_active).length)} />
+              <Stat label="Low" value={String(stock.low)} />
+              <Stat label="Sold out" value={String(stock.zero)} />
+            </dl>
+          )}
 
           <div className="mt-5">
             {isOwner && (
@@ -128,7 +149,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                 archived={!product.is_active}
                 isOwner
                 canDelete={canDelete}
-                lead={product.is_active ? <AdjustStockButton product={product} /> : undefined}
+                lead={product.is_active && !mto ? <AdjustStockButton product={product} /> : undefined}
               />
             )}
             <p className={`${isOwner ? "mt-3" : ""} text-[0.8125rem] text-ink-2`}>Last updated {updated}</p>
@@ -139,7 +160,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
       {/* Stock by size and color */}
       <section aria-labelledby="grid-title" className="mt-12">
         <h2 id="grid-title" className="voice-display border-b border-line pb-3 text-[1.75rem]">
-          Stock by size and color
+          {mto ? "Prices by size and style" : "Stock by size and color"}
         </h2>
         {product.variants.length === 0 ? (
           <p className="py-6 text-[0.9375rem] text-ink-2">This product has no sizes or colors yet.</p>
@@ -149,16 +170,18 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
               <thead>
                 <tr>
                   <th scope="col" className="pr-3 text-[0.8125rem] font-semibold text-ink-2">
-                    <span className="sr-only">Color</span>
+                    <span className="sr-only">{mto ? "Style" : "Color"}</span>
                   </th>
                   {sizes.map((s) => (
                     <th key={s} scope="col" className="voice-label min-w-12 text-center text-[0.8125rem] text-ink-2">
                       {s}
                     </th>
                   ))}
-                  <th scope="col" className="voice-label pl-3 text-right text-[0.8125rem] text-ink-2">
-                    Total
-                  </th>
+                  {!mto && (
+                    <th scope="col" className="voice-label pl-3 text-right text-[0.8125rem] text-ink-2">
+                      Total
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -178,6 +201,20 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                             </td>
                           );
                         }
+                        if (mto) {
+                          return (
+                            <td key={s}>
+                              <span
+                                className={`tabular grid h-11 min-w-16 place-items-center rounded-lg px-2 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] ${
+                                  v.is_active ? "" : "opacity-40"
+                                }`}
+                                title={`${c}, ${s}: ${formatPeso(v.price)}${v.is_active ? "" : " (hidden)"}`}
+                              >
+                                {formatPeso(v.price)}
+                              </span>
+                            </td>
+                          );
+                        }
                         const st = variantState(v);
                         return (
                           <td key={s}>
@@ -193,7 +230,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                           </td>
                         );
                       })}
-                      <td className="tabular pl-3 text-right text-[0.9375rem] font-semibold text-ink">{rowTotal}</td>
+                      {!mto && <td className="tabular pl-3 text-right text-[0.9375rem] font-semibold text-ink">{rowTotal}</td>}
                     </tr>
                   );
                 })}
@@ -242,15 +279,15 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                   <div className="min-w-0">
                     <p className="tabular whitespace-nowrap text-[0.9375rem] font-semibold text-ink">{v.sku ?? "—"}</p>
                     <p className="mt-0.5 text-[0.875rem] text-ink">
-                      {v.size ?? "One size"} · {v.color ?? "—"}
+                      {mto ? `${v.color ?? "—"}, ${v.size ?? "One size"}` : `${v.size ?? "One size"} · ${v.color ?? "—"}`}
                     </p>
                     <p className="tabular mt-0.5 text-[0.8125rem] text-ink-2">
-                      {formatPeso(v.price)} · alert at {v.low_stock_threshold}
+                      {mto ? formatPeso(v.price) : `${formatPeso(v.price)} · alert at ${v.low_stock_threshold}`}
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
-                    <span className="voice-board tabular text-[1.5rem] leading-none text-ink">{v.stock_quantity}</span>
-                    <VariantStatus active={v.is_active} state={st} />
+                    {!mto && <span className="voice-board tabular text-[1.5rem] leading-none text-ink">{v.stock_quantity}</span>}
+                    <VariantStatus active={v.is_active} state={st} madeToOrder={mto} />
                   </div>
                 </li>
               );
@@ -260,11 +297,11 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
             <table className="w-full text-left text-[0.9375rem]">
               <thead>
                 <tr className="text-[0.8125rem] text-ink-2">
-                  {["SKU", "Size", "Color", "Price", "Stock", "Alert at", "Status"].map((h, i) => (
+                  {(mto ? ["SKU", "Size", "Style", "Price", "Status"] : ["SKU", "Size", "Color", "Price", "Stock", "Alert at", "Status"]).map((h) => (
                     <th
                       key={h}
                       scope="col"
-                      className={`voice-label border-b border-line py-3 pr-4 font-semibold ${i >= 3 && i <= 5 ? "text-right" : ""}`}
+                      className={`voice-label border-b border-line py-3 pr-4 font-semibold ${["Price", "Stock", "Alert at"].includes(h) ? "text-right" : ""}`}
                     >
                       {h}
                     </th>
@@ -280,14 +317,18 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
                       <td className="border-b border-line py-3 pr-4 text-ink">{v.size ?? "One size"}</td>
                       <td className="border-b border-line py-3 pr-4 text-ink">{v.color ?? "—"}</td>
                       <td className="tabular border-b border-line py-3 pr-4 text-right text-ink">{formatPeso(v.price)}</td>
-                      <td
-                        className={`tabular border-b border-line py-3 pr-4 text-right ${st === "in" ? "text-ink" : "font-semibold text-ink"}`}
-                      >
-                        {v.stock_quantity}
-                      </td>
-                      <td className="tabular border-b border-line py-3 pr-4 text-right text-ink-2">{v.low_stock_threshold}</td>
+                      {!mto && (
+                        <>
+                          <td
+                            className={`tabular border-b border-line py-3 pr-4 text-right ${st === "in" ? "text-ink" : "font-semibold text-ink"}`}
+                          >
+                            {v.stock_quantity}
+                          </td>
+                          <td className="tabular border-b border-line py-3 pr-4 text-right text-ink-2">{v.low_stock_threshold}</td>
+                        </>
+                      )}
                       <td className="border-b border-line py-3 pr-4">
-                        <VariantStatus active={v.is_active} state={st} />
+                        <VariantStatus active={v.is_active} state={st} madeToOrder={mto} />
                       </td>
                     </tr>
                   );
@@ -309,8 +350,9 @@ function SoldOutPill() {
   );
 }
 
-function VariantStatus({ active, state }: { active: boolean; state: "in" | "low" | "zero" }) {
+function VariantStatus({ active, state, madeToOrder }: { active: boolean; state: "in" | "low" | "zero"; madeToOrder?: boolean }) {
   if (!active) return <Pill>Hidden</Pill>;
+  if (madeToOrder) return <span className="text-[0.875rem] text-ink-2">Offered</span>;
   if (state === "zero") return <SoldOutPill />;
   if (state === "low") return <Pill tone="amber">Low</Pill>;
   return <span className="text-[0.875rem] text-ink-2">In stock</span>;

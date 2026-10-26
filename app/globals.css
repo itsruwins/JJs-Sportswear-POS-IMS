@@ -704,6 +704,14 @@ input.auth-input:focus-visible,
 /* ---------- Admin: dock ---------- */
 
 /* Point of sale: the running sale, floating just above the dock on phones and tablets. */
+/* Design orders: a size cell takes the amber focus ring while its count is being typed. */
+.order-cell:focus-within {
+  box-shadow: 0 0 0 2px var(--amber);
+}
+.order-cell input:focus-visible {
+  outline: none;
+}
+
 .pos-cartbar {
   position: fixed;
   z-index: var(--z-sticky);
@@ -924,10 +932,11 @@ button.admin-dock-item[data-current="true"]:hover {
   border-radius: 2rem;
 }
 
+/* Photos sit whole on the backdrop, padded like product shots (designs are square, tiles 4:5). */
 .garment-photo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 .shop-tile-art {
   padding: 12%;
@@ -1073,6 +1082,13 @@ button.admin-dock-item[data-current="true"]:hover {
   background: var(--board);
 }
 .shop-toggle[aria-pressed="true"] .shop-toggle-thumb {
+  transform: translateX(0.75rem);
+}
+/* The same switch as a form control (role="switch", e.g. the product form's Made to order). */
+.shop-toggle[aria-checked="true"] .shop-toggle-track {
+  background: var(--board);
+}
+.shop-toggle[aria-checked="true"] .shop-toggle-thumb {
   transform: translateX(0.75rem);
 }
 

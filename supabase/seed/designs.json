@@ -1,0 +1,1689 @@
+{
+  "about": "The shop's full-sublimation jersey designs (Google Drive folder DESIGNS), loaded by supabase/seed/load-designs.mjs. Photos are in design-photos/, the full design first.",
+  "styles": [
+    {
+      "name": "NBA cut · Set",
+      "code": "NBS",
+      "price": 680
+    },
+    {
+      "name": "Normal cut · Set",
+      "code": "NMS",
+      "price": 650
+    },
+    {
+      "name": "NBA cut · Upper",
+      "code": "NBU",
+      "price": 350
+    },
+    {
+      "name": "Normal cut · Upper",
+      "code": "NMU",
+      "price": 325
+    }
+  ],
+  "sizes": [
+    "XS",
+    "S",
+    "M",
+    "L",
+    "XL",
+    "2XL",
+    "3XL",
+    "4XL",
+    "5XL"
+  ],
+  "designs": [
+    {
+      "design": 1,
+      "id": "e9f4ed62-9b90-4642-acaf-82a1840f6c78",
+      "name": "ANTIPOLO",
+      "description": "Full-sublimation basketball jersey in cream and red. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 1 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "cream",
+        "red"
+      ],
+      "photos": [
+        "D01/full.webp",
+        "D01/upper-front.webp",
+        "D01/upper-back.webp",
+        "D01/upper-side.webp",
+        "D01/lower-front.webp",
+        "D01/lower-back.webp"
+      ]
+    },
+    {
+      "design": 2,
+      "id": "ee3d69de-cb25-4967-84da-c2e58bf1424c",
+      "name": "ARCHANGEL (2)",
+      "description": "Full-sublimation basketball jersey in white, blue and red. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 2 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "blue",
+        "red"
+      ],
+      "photos": [
+        "D02/full.webp",
+        "D02/upper-front.webp",
+        "D02/upper-back.webp",
+        "D02/upper-side.webp",
+        "D02/lower-front.webp",
+        "D02/lower-back.webp"
+      ]
+    },
+    {
+      "design": 3,
+      "id": "529b4b4a-c81a-42c8-b63f-07efb48534c9",
+      "name": "BACACAY",
+      "description": "Full-sublimation basketball jersey in black, green and yellow. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 3 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "green",
+        "yellow"
+      ],
+      "photos": [
+        "D03/upper-front.webp",
+        "D03/upper-back.webp",
+        "D03/upper-side.webp",
+        "D03/lower-front.webp",
+        "D03/lower-back.webp",
+        "D03/lower-side.webp"
+      ]
+    },
+    {
+      "design": 4,
+      "id": "e817ca16-c6f5-4456-9b67-e46dc352ff89",
+      "name": "BUYO (4)",
+      "description": "Full-sublimation basketball jersey in red, orange and gold. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 4 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "red",
+        "orange",
+        "gold"
+      ],
+      "photos": [
+        "D04/full.webp",
+        "D04/upper-front.webp",
+        "D04/upper-back.webp",
+        "D04/upper-side.webp",
+        "D04/lower-front.webp",
+        "D04/lower-back.webp"
+      ]
+    },
+    {
+      "design": 5,
+      "id": "11171db4-e0d1-4d49-ac29-4809ee4b0209",
+      "name": "DREAM TEAM",
+      "description": "Full-sublimation basketball jersey in blue, white and red. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 5 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "blue",
+        "white",
+        "red"
+      ],
+      "photos": [
+        "D05/full.webp",
+        "D05/upper-front.webp",
+        "D05/upper-back.webp",
+        "D05/upper-side.webp",
+        "D05/lower-front.webp",
+        "D05/lower-back.webp"
+      ]
+    },
+    {
+      "design": 6,
+      "id": "794d82d3-0e8b-4995-b27a-3f1e5630f01a",
+      "name": "FOLLOW UP",
+      "description": "Full-sublimation basketball jersey in black and red. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 6 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "red"
+      ],
+      "photos": [
+        "D06/full.webp",
+        "D06/upper-front.webp",
+        "D06/upper-back.webp",
+        "D06/upper-side.webp",
+        "D06/lower-front.webp",
+        "D06/lower-back.webp"
+      ]
+    },
+    {
+      "design": 7,
+      "id": "da8c00a6-1127-47a7-b819-4c30763c2348",
+      "name": "GIN KINGS",
+      "description": "Full-sublimation basketball jersey in black, purple and teal. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 7 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "purple",
+        "teal"
+      ],
+      "photos": [
+        "D07/full.webp",
+        "D07/upper-front.webp",
+        "D07/upper-back.webp",
+        "D07/upper-side.webp",
+        "D07/lower-front.webp",
+        "D07/lower-back.webp"
+      ]
+    },
+    {
+      "design": 8,
+      "id": "68b78bf6-0af6-4077-8e89-bbc172d6ffd5",
+      "name": "HALPROP",
+      "description": "Full-sublimation basketball jersey in navy and light blue. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 8 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "navy",
+        "light blue"
+      ],
+      "photos": [
+        "D08/full.webp",
+        "D08/upper-front.webp",
+        "D08/upper-back.webp",
+        "D08/upper-side.webp",
+        "D08/lower-front.webp",
+        "D08/lower-back.webp"
+      ]
+    },
+    {
+      "design": 9,
+      "id": "b16d5d52-9f7d-433d-bf4e-f777fbad1fa5",
+      "name": "ISLA NOAH",
+      "description": "Full-sublimation basketball jersey in orange-red and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 9 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "orange-red",
+        "black"
+      ],
+      "photos": [
+        "D09/full.webp",
+        "D09/upper-front.webp",
+        "D09/upper-back.webp",
+        "D09/upper-side.webp",
+        "D09/lower-front.webp",
+        "D09/lower-back.webp"
+      ]
+    },
+    {
+      "design": 10,
+      "id": "6ba31431-8577-472f-b234-8de9070faaaa",
+      "name": "KAYELS",
+      "description": "Full-sublimation basketball jersey in white, black and gray. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 10 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "black",
+        "gray"
+      ],
+      "photos": [
+        "D10/full.webp",
+        "D10/upper-front.webp",
+        "D10/upper-back.webp",
+        "D10/upper-side.webp",
+        "D10/lower-front.webp",
+        "D10/lower-back.webp"
+      ]
+    },
+    {
+      "design": 11,
+      "id": "f49ea0ab-735e-4214-bed3-689eaa793547",
+      "name": "BACAK LADYBOSSGF",
+      "description": "Full-sublimation basketball jersey in black and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 11 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "white"
+      ],
+      "photos": [
+        "D11/full.webp",
+        "D11/upper-front.webp",
+        "D11/upper-back.webp",
+        "D11/upper-side.webp",
+        "D11/lower-front.webp",
+        "D11/lower-back.webp"
+      ]
+    },
+    {
+      "design": 12,
+      "id": "664bdd94-b4c3-472a-af41-da51f8e0e3eb",
+      "name": "LG BAGAMANOC",
+      "description": "Full-sublimation basketball jersey in gray and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 12 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "gray",
+        "black"
+      ],
+      "photos": [
+        "D12/full.webp",
+        "D12/upper-front.webp",
+        "D12/upper-back.webp",
+        "D12/upper-side.webp",
+        "D12/lower-front.webp",
+        "D12/lower-back.webp"
+      ]
+    },
+    {
+      "design": 13,
+      "id": "6bc6e3aa-dab8-4828-abef-6af4efd6a820",
+      "name": "MOONWALK",
+      "description": "Full-sublimation basketball jersey in yellow and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 13 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "yellow",
+        "black"
+      ],
+      "photos": [
+        "D13/full.webp",
+        "D13/upper-front.webp",
+        "D13/upper-back.webp",
+        "D13/upper-side.webp",
+        "D13/lower-front.webp",
+        "D13/lower-back.webp"
+      ]
+    },
+    {
+      "design": 14,
+      "id": "f5f1b451-5aca-4df9-918f-86be3abf5a71",
+      "name": "NAPROM/PAWAD BLGU LIBOD",
+      "description": "Full-sublimation basketball jersey in yellow and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 14 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "yellow",
+        "black"
+      ],
+      "photos": [
+        "D14/full.webp",
+        "D14/upper-front.webp",
+        "D14/upper-back.webp",
+        "D14/upper-side.webp",
+        "D14/lower-front.webp",
+        "D14/lower-back.webp"
+      ]
+    },
+    {
+      "design": 15,
+      "id": "679492fc-54a5-4884-81dd-3356f305e235",
+      "name": "PAROLA",
+      "description": "Full-sublimation basketball jersey in orange, red and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 15 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "orange",
+        "red",
+        "black"
+      ],
+      "photos": [
+        "D15/full.webp",
+        "D15/upper-front.webp",
+        "D15/upper-back.webp",
+        "D15/upper-side.webp",
+        "D15/lower-front.webp",
+        "D15/lower-back.webp"
+      ]
+    },
+    {
+      "design": 16,
+      "id": "e7a9de08-009f-47d9-9105-03af90768c1d",
+      "name": "PDH/DEL SUR/BFP (St. Ignatius of Loyola Parish)",
+      "description": "Full-sublimation basketball jersey in pink and orange. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 16 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "pink",
+        "orange"
+      ],
+      "photos": [
+        "D16/full.webp",
+        "D16/upper-front.webp",
+        "D16/upper-back.webp",
+        "D16/upper-side.webp",
+        "D16/lower-front.webp",
+        "D16/lower-back.webp"
+      ]
+    },
+    {
+      "design": 17,
+      "id": "369b572a-7e81-4ba0-a60c-833ffc1dd28a",
+      "name": "SAN RAMON TRISKELION",
+      "description": "Full-sublimation basketball jersey in orange and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 17 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "orange",
+        "black"
+      ],
+      "photos": [
+        "D17/full.webp",
+        "D17/upper-front.webp",
+        "D17/upper-back.webp",
+        "D17/upper-side.webp",
+        "D17/lower-front.webp",
+        "D17/lower-back.webp"
+      ]
+    },
+    {
+      "design": 18,
+      "id": "0e2f1906-aa50-4530-b7f1-dfc2d5b68eb9",
+      "name": "SIMAMLA",
+      "description": "Full-sublimation basketball jersey in navy and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 18 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "navy",
+        "white"
+      ],
+      "photos": [
+        "D18/full.webp",
+        "D18/upper-front.webp",
+        "D18/upper-back.webp",
+        "D18/upper-side.webp",
+        "D18/lower-front.webp",
+        "D18/lower-back.webp"
+      ]
+    },
+    {
+      "design": 19,
+      "id": "ffff4eaa-a214-4623-ae0c-7f3dd17e3880",
+      "name": "VRRA QUADROS",
+      "description": "Full-sublimation basketball jersey in maroon, red and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 19 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "maroon",
+        "red",
+        "white"
+      ],
+      "photos": [
+        "D19/full.webp",
+        "D19/upper-front.webp",
+        "D19/upper-back.webp",
+        "D19/upper-side.webp",
+        "D19/lower-front.webp",
+        "D19/lower-back.webp"
+      ]
+    },
+    {
+      "design": 20,
+      "id": "c019e9a6-664a-4b1d-8162-5e39ebf6c500",
+      "name": "76 FARM",
+      "description": "Full-sublimation basketball jersey in black, teal and gray. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 20 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "teal",
+        "gray"
+      ],
+      "photos": [
+        "D20/full.webp",
+        "D20/upper-front.webp",
+        "D20/upper-back.webp",
+        "D20/upper-side.webp",
+        "D20/lower-front.webp",
+        "D20/lower-back.webp"
+      ]
+    },
+    {
+      "design": 21,
+      "id": "66a2567e-2766-4cf1-abe3-0ebd26f7888d",
+      "name": "ALBA",
+      "description": "Full-sublimation basketball jersey in blue and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 21 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "blue",
+        "white"
+      ],
+      "photos": [
+        "D21/full.webp",
+        "D21/upper-front.webp",
+        "D21/upper-back.webp",
+        "D21/upper-side.webp",
+        "D21/lower-front.webp",
+        "D21/lower-back.webp"
+      ]
+    },
+    {
+      "design": 22,
+      "id": "e9ce1b57-7601-491a-8f0d-314b10a7c336",
+      "name": "BATCH 2K7",
+      "description": "Full-sublimation basketball jersey in navy, sky blue and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 22 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "navy",
+        "sky blue",
+        "white"
+      ],
+      "photos": [
+        "D22/full.webp",
+        "D22/upper-front.webp",
+        "D22/upper-back.webp",
+        "D22/upper-side.webp",
+        "D22/lower-front.webp",
+        "D22/lower-back.webp"
+      ]
+    },
+    {
+      "design": 23,
+      "id": "18c72a89-7645-4032-bf24-2630cea411e5",
+      "name": "BINANUAHAN VETERANS",
+      "description": "Full-sublimation basketball jersey in white and green. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 23 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "green"
+      ],
+      "photos": [
+        "D23/full.webp",
+        "D23/upper-front.webp",
+        "D23/upper-back.webp",
+        "D23/upper-side.webp",
+        "D23/lower-front.webp",
+        "D23/lower-back.webp"
+      ]
+    },
+    {
+      "design": 24,
+      "id": "eef0bd9f-b12a-4cad-8a94-69df2cf255c5",
+      "name": "D'PASMADO",
+      "description": "Full-sublimation basketball jersey in navy and gold. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 24 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "navy",
+        "gold"
+      ],
+      "photos": [
+        "D24/full.webp",
+        "D24/upper-front.webp",
+        "D24/upper-back.webp",
+        "D24/upper-side.webp",
+        "D24/lower-front.webp",
+        "D24/lower-back.webp"
+      ]
+    },
+    {
+      "design": 25,
+      "id": "e48846da-b2c4-4f13-8d35-353dcdac13e1",
+      "name": "RS HOMES",
+      "description": "Full-sublimation basketball jersey in mint and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 25 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "mint",
+        "black"
+      ],
+      "photos": [
+        "D25/full.webp",
+        "D25/upper-front.webp",
+        "D25/upper-back.webp",
+        "D25/upper-side.webp",
+        "D25/lower-front.webp",
+        "D25/lower-back.webp"
+      ]
+    },
+    {
+      "design": 26,
+      "id": "1d17975c-5b1f-4760-9e8c-c625088bdc24",
+      "name": "GUDAK",
+      "description": "Full-sublimation basketball jersey in white, green, red and yellow. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 26 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "green",
+        "red",
+        "yellow"
+      ],
+      "photos": [
+        "D26/full.webp",
+        "D26/upper-front.webp",
+        "D26/upper-back.webp",
+        "D26/upper-side.webp",
+        "D26/lower-front.webp",
+        "D26/lower-back.webp"
+      ]
+    },
+    {
+      "design": 27,
+      "id": "3e09c97c-309f-46b8-a98d-a5cfbbed8b9f",
+      "name": "INTROVOYS",
+      "description": "Full-sublimation basketball jersey in navy, red and gold. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 27 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "navy",
+        "red",
+        "gold"
+      ],
+      "photos": [
+        "D27/full.webp",
+        "D27/upper-front.webp",
+        "D27/upper-back.webp",
+        "D27/upper-side.webp",
+        "D27/lower-front.webp",
+        "D27/lower-back.webp"
+      ]
+    },
+    {
+      "design": 28,
+      "id": "5d16f80c-dabd-4e91-a529-a8d475ef938a",
+      "name": "IRAYA KNIGHTS",
+      "description": "Full-sublimation basketball jersey in white and navy. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 28 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "navy"
+      ],
+      "photos": [
+        "D28/full.webp",
+        "D28/upper-front.webp",
+        "D28/upper-back.webp",
+        "D28/upper-side.webp",
+        "D28/lower-front.webp",
+        "D28/lower-back.webp"
+      ]
+    },
+    {
+      "design": 29,
+      "id": "9f626e7d-be82-413c-9251-58a66b2b13ef",
+      "name": "LGU VIRAC",
+      "description": "Full-sublimation basketball jersey in blue and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 29 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "blue",
+        "black"
+      ],
+      "photos": [
+        "D29/full.webp",
+        "D29/upper-front.webp",
+        "D29/upper-back.webp",
+        "D29/upper-side.webp",
+        "D29/lower-front.webp",
+        "D29/lower-back.webp"
+      ]
+    },
+    {
+      "design": 30,
+      "id": "2e5d799f-8c5d-4835-a1f0-0f6f8791bab1",
+      "name": "NUESTRA SEÑORA DE SALVACION",
+      "description": "Full-sublimation basketball jersey in light blue, white and blue. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 30 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "light blue",
+        "white",
+        "blue"
+      ],
+      "photos": [
+        "D30/full.webp",
+        "D30/upper-front.webp",
+        "D30/upper-back.webp",
+        "D30/upper-side.webp",
+        "D30/lower-front.webp",
+        "D30/lower-back.webp"
+      ]
+    },
+    {
+      "design": 31,
+      "id": "f5acd16d-b0b8-497a-8d7c-aee0c3c404c6",
+      "name": "3x3 OCEANVIEW PIRATES (31)",
+      "description": "Full-sublimation basketball jersey in navy, purple and peach. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 31 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "navy",
+        "purple",
+        "peach"
+      ],
+      "photos": [
+        "D31/full.webp",
+        "D31/upper-front.webp",
+        "D31/upper-back.webp",
+        "D31/upper-side.webp",
+        "D31/lower-front.webp",
+        "D31/lower-back.webp"
+      ]
+    },
+    {
+      "design": 32,
+      "id": "b28ed184-3def-4409-841f-9b762b842d37",
+      "name": "3x3 OCEANVIEW PIRATES (32)",
+      "description": "Full-sublimation basketball jersey in purple and tan. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 32 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "purple",
+        "tan"
+      ],
+      "photos": [
+        "D32/full.webp",
+        "D32/upper-front.webp",
+        "D32/upper-back.webp",
+        "D32/upper-side.webp",
+        "D32/lower-front.webp",
+        "D32/lower-back.webp"
+      ]
+    },
+    {
+      "design": 33,
+      "id": "7cd79f16-d4de-4694-b911-6e2e4fee7e74",
+      "name": "PROVINCIAL ENGINEERING OFFICE",
+      "description": "Full-sublimation basketball jersey in maroon and gold. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 33 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "maroon",
+        "gold"
+      ],
+      "photos": [
+        "D33/full.webp",
+        "D33/upper-front.webp",
+        "D33/upper-back.webp",
+        "D33/upper-side.webp",
+        "D33/lower-front.webp",
+        "D33/lower-back.webp"
+      ]
+    },
+    {
+      "design": 34,
+      "id": "d2f395d6-ad98-4e89-8428-25527bcdad6f",
+      "name": "PYRA",
+      "description": "Full-sublimation basketball jersey in white, black and red. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 34 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "black",
+        "red"
+      ],
+      "photos": [
+        "D34/full.webp",
+        "D34/upper-front.webp",
+        "D34/upper-back.webp",
+        "D34/upper-side.webp",
+        "D34/lower-front.webp",
+        "D34/lower-back.webp"
+      ]
+    },
+    {
+      "design": 35,
+      "id": "21ed2ec2-31ce-40a4-b808-f9aab7f74bf6",
+      "name": "RAPUNGGAS",
+      "description": "Full-sublimation basketball jersey in purple and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 35 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "purple",
+        "white"
+      ],
+      "photos": [
+        "D35/full.webp",
+        "D35/upper-front.webp",
+        "D35/upper-back.webp",
+        "D35/upper-side.webp",
+        "D35/lower-front.webp",
+        "D35/lower-back.webp"
+      ]
+    },
+    {
+      "design": 36,
+      "id": "478f0251-c58e-43b2-958b-c9756c0ab2a4",
+      "name": "SDDJ",
+      "description": "Full-sublimation basketball jersey in gray and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 36 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "gray",
+        "black"
+      ],
+      "photos": [
+        "D36/full.webp",
+        "D36/upper-front.webp",
+        "D36/upper-back.webp",
+        "D36/upper-side.webp",
+        "D36/lower-front.webp",
+        "D36/lower-back.webp"
+      ]
+    },
+    {
+      "design": 37,
+      "id": "3f4cd930-253a-4ca6-81d4-2060d489e7ed",
+      "name": "ST. DIVINO ROSTRO (BOG'AS)",
+      "description": "Full-sublimation basketball jersey in cream, black and brown. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 37 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "cream",
+        "black",
+        "brown"
+      ],
+      "photos": [
+        "D37/full.webp",
+        "D37/upper-front.webp",
+        "D37/upper-back.webp",
+        "D37/upper-side.webp",
+        "D37/lower-front.webp",
+        "D37/lower-back.webp"
+      ]
+    },
+    {
+      "design": 38,
+      "id": "291baa0f-a48c-48ab-8606-b7ef25b61ba8",
+      "name": "SURE-CLEAN LAUNDRY HUB",
+      "description": "Full-sublimation basketball jersey in white and blue. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 38 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "blue"
+      ],
+      "photos": [
+        "D38/full.webp",
+        "D38/upper-front.webp",
+        "D38/upper-back.webp",
+        "D38/upper-side.webp",
+        "D38/lower-front.webp",
+        "D38/lower-back.webp"
+      ]
+    },
+    {
+      "design": 39,
+      "id": "658d6ca9-5050-4ea9-a6a6-f90a8696996b",
+      "name": "JRES",
+      "description": "Full-sublimation basketball jersey in black, tan and orange. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 39 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "tan",
+        "orange"
+      ],
+      "photos": [
+        "D39/full.webp",
+        "D39/upper-front.webp",
+        "D39/upper-back.webp",
+        "D39/upper-side.webp",
+        "D39/lower-front.webp",
+        "D39/lower-back.webp"
+      ]
+    },
+    {
+      "design": 40,
+      "id": "3559e1e5-f99b-45ff-a721-88eed17aab51",
+      "name": "BAGAMANOC LEGENDS",
+      "description": "Full-sublimation basketball jersey in khaki and maroon. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 40 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "khaki",
+        "maroon"
+      ],
+      "photos": [
+        "D40/full.webp",
+        "D40/upper-front.webp",
+        "D40/upper-back.webp",
+        "D40/upper-side.webp",
+        "D40/lower-front.webp",
+        "D40/lower-back.webp"
+      ]
+    },
+    {
+      "design": 41,
+      "id": "ece019f6-684d-4cbf-b356-f060c574ff57",
+      "name": "BASAW-BASAW BALLERS",
+      "description": "Full-sublimation basketball jersey in white and teal green. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 41 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "teal green"
+      ],
+      "photos": [
+        "D41/full.webp",
+        "D41/upper-front.webp",
+        "D41/upper-back.webp",
+        "D41/upper-side.webp",
+        "D41/lower-front.webp",
+        "D41/lower-back.webp"
+      ]
+    },
+    {
+      "design": 42,
+      "id": "657813a0-1c92-4fe9-b296-25aee28c4858",
+      "name": "BATANG PLAZA",
+      "description": "Full-sublimation basketball jersey in black and khaki. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 42 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "khaki"
+      ],
+      "photos": [
+        "D42/full.webp",
+        "D42/upper-front.webp",
+        "D42/upper-back.webp",
+        "D42/upper-side.webp",
+        "D42/lower-front.webp",
+        "D42/lower-back.webp"
+      ]
+    },
+    {
+      "design": 43,
+      "id": "ebf0be17-4dda-4555-bef4-3c918250477f",
+      "name": "BUYO (43)",
+      "description": "Full-sublimation basketball jersey in white and blue. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 43 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "blue"
+      ],
+      "photos": [
+        "D43/full.webp",
+        "D43/upper-front.webp",
+        "D43/upper-back.webp",
+        "D43/upper-side.webp",
+        "D43/lower-front.webp",
+        "D43/lower-back.webp"
+      ]
+    },
+    {
+      "design": 44,
+      "id": "2cc22cf6-30ba-4322-bfca-be65b8b8e93f",
+      "name": "GIN C2",
+      "description": "Full-sublimation basketball jersey in tan and maroon. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 44 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "tan",
+        "maroon"
+      ],
+      "photos": [
+        "D44/full.webp",
+        "D44/upper-front.webp",
+        "D44/upper-back.webp",
+        "D44/upper-side.webp",
+        "D44/lower-front.webp",
+        "D44/lower-back.webp"
+      ]
+    },
+    {
+      "design": 45,
+      "id": "70d20fc0-845e-43ca-bcbe-24625cd30a23",
+      "name": "CDRRMO",
+      "description": "Full-sublimation basketball jersey in navy and orange. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 45 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "navy",
+        "orange"
+      ],
+      "photos": [
+        "D45/full.webp",
+        "D45/upper-front.webp",
+        "D45/upper-back.webp",
+        "D45/upper-side.webp",
+        "D45/lower-front.webp",
+        "D45/lower-back.webp"
+      ]
+    },
+    {
+      "design": 46,
+      "id": "d876f40d-6eb5-42eb-9c67-48a2071c8b24",
+      "name": "DEL SUR",
+      "description": "Full-sublimation basketball jersey in navy, blue and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 46 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "navy",
+        "blue",
+        "white"
+      ],
+      "photos": [
+        "D46/full.webp",
+        "D46/upper-front.webp",
+        "D46/upper-back.webp",
+        "D46/upper-side.webp",
+        "D46/lower-front.webp",
+        "D46/lower-back.webp"
+      ]
+    },
+    {
+      "design": 47,
+      "id": "39b16d6a-a89d-47be-8b5c-f34514a5afbd",
+      "name": "GLSB EXPRESS",
+      "description": "Full-sublimation basketball jersey in white, red, yellow and blue. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 47 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "red",
+        "yellow",
+        "blue"
+      ],
+      "photos": [
+        "D47/full.webp",
+        "D47/upper-front.webp",
+        "D47/upper-back.webp",
+        "D47/upper-side.webp",
+        "D47/lower-front.webp",
+        "D47/lower-back.webp"
+      ]
+    },
+    {
+      "design": 48,
+      "id": "fd4f6918-6ae2-4b27-a532-6412dd52e8f8",
+      "name": "HRC CARARAYAN",
+      "description": "Full-sublimation basketball jersey in red and navy. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 48 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "red",
+        "navy"
+      ],
+      "photos": [
+        "D48/full.webp",
+        "D48/upper-front.webp",
+        "D48/upper-back.webp",
+        "D48/upper-side.webp",
+        "D48/lower-front.webp",
+        "D48/lower-back.webp"
+      ]
+    },
+    {
+      "design": 49,
+      "id": "35c8a2b2-33d4-4ecb-8fe1-989faeee19d0",
+      "name": "MABALASIK BALLER'S",
+      "description": "Full-sublimation basketball jersey in black and purple. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 49 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "purple"
+      ],
+      "photos": [
+        "D49/full.webp",
+        "D49/upper-front.webp",
+        "D49/upper-back.webp",
+        "D49/upper-side.webp",
+        "D49/lower-front.webp",
+        "D49/lower-back.webp"
+      ]
+    },
+    {
+      "design": 50,
+      "id": "edfc27de-9a38-478f-8214-c48322887719",
+      "name": "MIZTA FIVE",
+      "description": "Full-sublimation basketball jersey in dark teal and gold. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 50 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "dark teal",
+        "gold"
+      ],
+      "photos": [
+        "D50/full.webp",
+        "D50/upper-front.webp",
+        "D50/upper-back.webp",
+        "D50/upper-side.webp",
+        "D50/lower-front.webp",
+        "D50/lower-back.webp"
+      ]
+    },
+    {
+      "design": 51,
+      "id": "293f81b9-2fd1-4981-8420-b6d5fca883b1",
+      "name": "RAPIDWORKS (BRAYAN ARANDIA)",
+      "description": "Full-sublimation basketball jersey in cream yellow and aqua. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 51 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "cream yellow",
+        "aqua"
+      ],
+      "photos": [
+        "D51/full.webp",
+        "D51/upper-front.webp",
+        "D51/upper-back.webp",
+        "D51/upper-side.webp",
+        "D51/lower-front.webp",
+        "D51/lower-back.webp"
+      ]
+    },
+    {
+      "design": 52,
+      "id": "15eca4ec-9ad6-4386-a653-67ab8faa0803",
+      "name": "76 FARM LEGENDS",
+      "description": "Full-sublimation basketball jersey in yellow, green and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 52 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "yellow",
+        "green",
+        "black"
+      ],
+      "photos": [
+        "D52/full.webp",
+        "D52/upper-front.webp",
+        "D52/upper-back.webp",
+        "D52/upper-side.webp",
+        "D52/lower-front.webp",
+        "D52/lower-back.webp"
+      ]
+    },
+    {
+      "design": 53,
+      "id": "40ddad2a-7b27-45c3-8360-1cb071293f24",
+      "name": "BHOOOWHOOP",
+      "description": "Full-sublimation basketball jersey in purple and lime green. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 53 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "purple",
+        "lime green"
+      ],
+      "photos": [
+        "D53/full.webp",
+        "D53/upper-front.webp",
+        "D53/upper-back.webp",
+        "D53/upper-side.webp",
+        "D53/lower-front.webp",
+        "D53/lower-back.webp"
+      ]
+    },
+    {
+      "design": 54,
+      "id": "3897b251-8576-47b4-bfb0-1ba390d0b14c",
+      "name": "BRDN GF",
+      "description": "Full-sublimation basketball jersey in pink and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 54 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "pink",
+        "white"
+      ],
+      "photos": [
+        "D54/full.webp",
+        "D54/upper-front.webp",
+        "D54/upper-back.webp",
+        "D54/upper-side.webp",
+        "D54/lower-front.webp",
+        "D54/lower-back.webp"
+      ]
+    },
+    {
+      "design": 55,
+      "id": "a4c9a2da-895b-4d1c-85f0-63abd51fd601",
+      "name": "EL PRIMO'S",
+      "description": "Full-sublimation basketball jersey in maroon and tan. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 55 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "maroon",
+        "tan"
+      ],
+      "photos": [
+        "D55/full.webp",
+        "D55/upper-front.webp",
+        "D55/upper-back.webp",
+        "D55/upper-side.webp",
+        "D55/lower-front.webp",
+        "D55/lower-back.webp"
+      ]
+    },
+    {
+      "design": 56,
+      "id": "5d1f6b6d-cd82-4e9d-8d8b-8fdbe66fdbda",
+      "name": "SAINT VINCENT",
+      "description": "Full-sublimation basketball jersey in green, white and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 56 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "green",
+        "white",
+        "black"
+      ],
+      "photos": [
+        "D56/full.webp",
+        "D56/upper-front.webp",
+        "D56/upper-back.webp",
+        "D56/upper-side.webp",
+        "D56/lower-front.webp",
+        "D56/lower-back.webp"
+      ]
+    },
+    {
+      "design": 57,
+      "id": "4bb06856-55c3-4fa9-a29a-eb9b2c98984a",
+      "name": "SECRET VILLAGE",
+      "description": "Full-sublimation basketball jersey in cream, brown and orange. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 57 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "cream",
+        "brown",
+        "orange"
+      ],
+      "photos": [
+        "D57/full.webp",
+        "D57/upper-front.webp",
+        "D57/upper-back.webp",
+        "D57/upper-side.webp",
+        "D57/lower-front.webp",
+        "D57/lower-back.webp"
+      ]
+    },
+    {
+      "design": 58,
+      "id": "2d3d728c-0162-448e-b7d8-1b874c094ce7",
+      "name": "BARANGAY SICMIL",
+      "description": "Full-sublimation basketball jersey in white and maroon. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 58 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "maroon"
+      ],
+      "photos": [
+        "D58/full.webp",
+        "D58/upper-front.webp",
+        "D58/upper-back.webp",
+        "D58/upper-side.webp",
+        "D58/lower-front.webp",
+        "D58/lower-back.webp"
+      ]
+    },
+    {
+      "design": 59,
+      "id": "6588dbad-9873-44da-8e0b-cdd6c7abfdd9",
+      "name": "CRUZADA",
+      "description": "Full-sublimation basketball jersey in black, purple and gold. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 59 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "purple",
+        "gold"
+      ],
+      "photos": [
+        "D59/full.webp",
+        "D59/upper-front.webp",
+        "D59/upper-back.webp",
+        "D59/upper-side.webp",
+        "D59/lower-front.webp",
+        "D59/lower-back.webp"
+      ]
+    },
+    {
+      "design": 60,
+      "id": "9505c922-b171-4186-ab82-abb891b494da",
+      "name": "D'SAINT DOS",
+      "description": "Full-sublimation basketball jersey in white and blue. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 60 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "blue"
+      ],
+      "photos": [
+        "D60/full.webp",
+        "D60/upper-front.webp",
+        "D60/upper-back.webp",
+        "D60/upper-side.webp",
+        "D60/lower-front.webp",
+        "D60/lower-back.webp"
+      ]
+    },
+    {
+      "design": 61,
+      "id": "ee250312-fd77-445a-b918-1dbf6a9561f1",
+      "name": "UNO",
+      "description": "Full-sublimation basketball jersey in green and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 61 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "green",
+        "white"
+      ],
+      "photos": [
+        "D61/full.webp",
+        "D61/upper-front.webp",
+        "D61/upper-back.webp",
+        "D61/upper-side.webp",
+        "D61/lower-front.webp",
+        "D61/lower-back.webp"
+      ]
+    },
+    {
+      "design": 62,
+      "id": "06fad267-1d7c-4dba-bfa5-e1ea57d3cecb",
+      "name": "SDMPS",
+      "description": "Full-sublimation basketball jersey in black, gold and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 62 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "gold",
+        "white"
+      ],
+      "photos": [
+        "D62/full.webp",
+        "D62/upper-front.webp",
+        "D62/upper-back.webp",
+        "D62/upper-side.webp",
+        "D62/lower-front.webp",
+        "D62/lower-back.webp"
+      ]
+    },
+    {
+      "design": 63,
+      "id": "500499c4-823e-4d15-8ff0-511393bdf0d6",
+      "name": "TALLY'S & COWBOYS",
+      "description": "Full-sublimation basketball jersey in gold and purple. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 63 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "gold",
+        "purple"
+      ],
+      "photos": [
+        "D63/full.webp",
+        "D63/upper-front.webp",
+        "D63/upper-back.webp",
+        "D63/upper-side.webp",
+        "D63/lower-front.webp",
+        "D63/lower-back.webp"
+      ]
+    },
+    {
+      "design": 64,
+      "id": "c6e0eef4-61af-4e3a-b847-b50ce32245c0",
+      "name": "VALIANT KNIGHTS",
+      "description": "Full-sublimation basketball jersey in purple and gold. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 64 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "purple",
+        "gold"
+      ],
+      "photos": [
+        "D64/full.webp",
+        "D64/upper-front.webp",
+        "D64/upper-back.webp",
+        "D64/upper-side.webp",
+        "D64/lower-front.webp",
+        "D64/lower-back.webp"
+      ]
+    },
+    {
+      "design": 65,
+      "id": "d896cc93-ec9d-46f0-b710-b460ad3ef302",
+      "name": "EBMC",
+      "description": "Full-sublimation basketball jersey in light blue and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 65 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "light blue",
+        "white"
+      ],
+      "photos": [
+        "D65/full.webp",
+        "D65/upper-front.webp",
+        "D65/upper-back.webp",
+        "D65/upper-side.webp",
+        "D65/lower-front.webp",
+        "D65/lower-back.webp"
+      ]
+    },
+    {
+      "design": 66,
+      "id": "65babe29-48fa-4674-a7e6-d7c7f31b946b",
+      "name": "ILAYA",
+      "description": "Full-sublimation basketball jersey in navy, white and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 66 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "navy",
+        "white",
+        "black"
+      ],
+      "photos": [
+        "D66/full.webp",
+        "D66/upper-front.webp",
+        "D66/upper-back.webp",
+        "D66/upper-side.webp",
+        "D66/lower-front.webp",
+        "D66/lower-back.webp"
+      ]
+    },
+    {
+      "design": 67,
+      "id": "1fa63ad3-5a1e-406c-b985-d7eec25be55e",
+      "name": "FISH ON",
+      "description": "Full-sublimation basketball jersey in teal and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 67 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "teal",
+        "white"
+      ],
+      "photos": [
+        "D67/full.webp",
+        "D67/upper-front.webp",
+        "D67/upper-back.webp",
+        "D67/upper-side.webp",
+        "D67/lower-front.webp",
+        "D67/lower-back.webp"
+      ]
+    },
+    {
+      "design": 68,
+      "id": "ab512948-67b9-49d3-8ecb-42c243df3afb",
+      "name": "KALYE ALEGRE",
+      "description": "Full-sublimation basketball jersey in navy and red. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 68 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "navy",
+        "red"
+      ],
+      "photos": [
+        "D68/full.webp",
+        "D68/upper-front.webp",
+        "D68/upper-back.webp",
+        "D68/upper-side.webp",
+        "D68/lower-front.webp",
+        "D68/lower-back.webp"
+      ]
+    },
+    {
+      "design": 69,
+      "id": "77849bb1-dae4-4589-8958-f3f5aa754161",
+      "name": "TEAM POSADA",
+      "description": "Full-sublimation basketball jersey in black, pink and cyan. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 69 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "pink",
+        "cyan"
+      ],
+      "photos": [
+        "D69/full.webp",
+        "D69/upper-front.webp",
+        "D69/upper-back.webp",
+        "D69/upper-side.webp",
+        "D69/lower-front.webp",
+        "D69/lower-back.webp"
+      ]
+    },
+    {
+      "design": 70,
+      "id": "03e45217-14bb-4ab5-843f-4f59eb667094",
+      "name": "ST. JOHN",
+      "description": "Full-sublimation basketball jersey in black, gray and yellow. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 70 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "gray",
+        "yellow"
+      ],
+      "photos": [
+        "D70/full.webp",
+        "D70/upper-front.webp",
+        "D70/upper-back.webp",
+        "D70/upper-side.webp",
+        "D70/lower-front.webp",
+        "D70/lower-back.webp"
+      ]
+    },
+    {
+      "design": 71,
+      "id": "c68cba3d-8105-4ed5-8a97-ff1c4d0a3326",
+      "name": "ARGON",
+      "description": "Full-sublimation basketball jersey in white, orange and black. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 71 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "orange",
+        "black"
+      ],
+      "photos": [
+        "D71/full.webp",
+        "D71/upper-front.webp",
+        "D71/upper-back.webp",
+        "D71/upper-side.webp",
+        "D71/lower-front.webp",
+        "D71/lower-back.webp"
+      ]
+    },
+    {
+      "design": 72,
+      "id": "aa3b41fe-8698-4a88-a8a1-c975b910bc67",
+      "name": "UGAR",
+      "description": "Full-sublimation basketball jersey in white, orange and brown. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 72 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "orange",
+        "brown"
+      ],
+      "photos": [
+        "D72/full.webp",
+        "D72/upper-front.webp",
+        "D72/upper-back.webp",
+        "D72/upper-side.webp",
+        "D72/lower-front.webp",
+        "D72/lower-back.webp"
+      ]
+    },
+    {
+      "design": 73,
+      "id": "ea83c0e9-2ae0-4cc5-884b-72cc0b214d83",
+      "name": "VIENNEZOE ZACHARY",
+      "description": "Full-sublimation basketball jersey in yellow, black and white. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 73 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "yellow",
+        "black",
+        "white"
+      ],
+      "photos": [
+        "D73/full.webp",
+        "D73/upper-front.webp",
+        "D73/upper-back.webp",
+        "D73/upper-side.webp",
+        "D73/lower-front.webp",
+        "D73/lower-back.webp"
+      ]
+    },
+    {
+      "design": 74,
+      "id": "192f8ebf-3d42-4388-9411-c7bd28365d14",
+      "name": "TMG ST. ANTHONY",
+      "description": "Full-sublimation basketball jersey in white, gray and maroon. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 74 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "gray",
+        "maroon"
+      ],
+      "photos": [
+        "D74/full.webp",
+        "D74/upper-front.webp",
+        "D74/upper-back.webp",
+        "D74/upper-side.webp",
+        "D74/lower-front.webp",
+        "D74/lower-back.webp"
+      ]
+    },
+    {
+      "design": 75,
+      "id": "1e136b3a-31dd-4cfa-81e2-7642b48dfa8c",
+      "name": "ARCHANGEL (75)",
+      "description": "Full-sublimation basketball jersey in black, orange and cream. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 75 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "black",
+        "orange",
+        "cream"
+      ],
+      "photos": [
+        "D75/full.webp",
+        "D75/upper-front.webp",
+        "D75/upper-back.webp",
+        "D75/upper-side.webp",
+        "D75/lower-front.webp",
+        "D75/lower-back.webp"
+      ]
+    },
+    {
+      "design": 76,
+      "id": "8b153ede-e3c4-4b82-b51b-a5814f99f385",
+      "name": "SITIO MALABOG",
+      "description": "Full-sublimation basketball jersey in white and green. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 76 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "green"
+      ],
+      "photos": [
+        "D76/full.webp",
+        "D76/upper-front.webp",
+        "D76/upper-back.webp",
+        "D76/upper-side.webp",
+        "D76/lower-front.webp",
+        "D76/lower-back.webp"
+      ]
+    },
+    {
+      "design": 77,
+      "id": "91263ae2-9e57-454b-9a7c-34d444198e96",
+      "name": "TLC LINE RISING STAR",
+      "description": "Full-sublimation basketball jersey in white and gold. Order the set (jersey and shorts) or the upper only, in NBA or normal cut. Design 77 in the shop’s catalog.",
+      "tags": [
+        "jersey",
+        "basketball",
+        "sublimation",
+        "white",
+        "gold"
+      ],
+      "photos": [
+        "D77/full.webp",
+        "D77/upper-front.webp",
+        "D77/upper-back.webp",
+        "D77/upper-side.webp",
+        "D77/lower-front.webp",
+        "D77/lower-back.webp"
+      ]
+    }
+  ]
+}

@@ -44,3 +44,8 @@ export function when(iso: string) {
 export function personName(p: { username: string; full_name: string | null } | null) {
   return p?.full_name?.trim() || (p ? `@${p.username}` : "Unknown customer");
 }
+
+/** Who an order is for: the customer's account, or the walk-in buyer from the counter. */
+export function buyerName(o: { customer: { username: string; full_name: string | null } | null; walk_in: { name: string } | null }) {
+  return o.customer ? personName(o.customer) : o.walk_in ? `${o.walk_in.name} (walk-in)` : personName(null);
+}

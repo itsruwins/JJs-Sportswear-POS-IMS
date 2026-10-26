@@ -1,5 +1,8 @@
 // Suggested SKUs: PRODUCT-COLOR-SIZE, e.g. "Warmer Jacket", Black, XL → WJ-BLK-XL.
+// A made-to-order style stands where the color goes: NBA cut · Set → NBS.
 // Staff can always overwrite a suggestion.
+
+import { jerseyStyle } from "@/features/shared/catalog/styles";
 
 const COLOR_CODES: Record<string, string> = {
   black: "BLK", white: "WHT", navy: "NVY", maroon: "MRN", orange: "ORG", blue: "BLU", yellow: "YLW",
@@ -25,6 +28,8 @@ export function productCode(name: string) {
 }
 
 export function colorCode(color: string) {
+  const style = jerseyStyle(color);
+  if (style) return style.code;
   const key = color.trim().toLowerCase();
   if (COLOR_CODES[key]) return COLOR_CODES[key];
   const letters = clean(color);

@@ -22,17 +22,21 @@ export type StockRow = {
 
 /**
  * Every size and color on sale (active variants of active products), with its stock and its
- * value at the selling price. Archived products and hidden sizes are left out, as on Home.
+ * value at the selling price. Archived products, hidden sizes, and made-to-order products
+ * (which keep no stock) are left out, as on Home.
  */
 export async function fetchStockRows(supabase: SupabaseClient) {
   const rows: StockRow[] = [];
   let afterId = "";
+  // Before migration 20261021000000_made_to_order.sql there's no made_to_order column to filter on.
+  let hasMadeToOrder = true;
   for (let i = 0; i < MAX_PAGES; i++) {
     let q = supabase
       .from("product_variants")
       .select("id, product_id, size, color, sku, price, stock_quantity, low_stock_threshold, product:products!inner(name)")
       .eq("is_active", true)
       .eq("products.is_active", true);
+    if (hasMadeToOrder) q = q.eq("products.made_to_order", false);
     if (afterId) q = q.gt("id", afterId);
     const { data, error } = await q
       .order("id")
@@ -50,6 +54,11 @@ export async function fetchStockRows(supabase: SupabaseClient) {
           product: { name: string } | null;
         }[]
       >();
+    if (error?.code === "42703" && hasMadeToOrder && rows.length === 0) {
+      hasMadeToOrder = false;
+      i--;
+      continue;
+    }
     if (error) return { rows, error };
     if (data.length === 0) break;
     afterId = data[data.length - 1].id;
