@@ -31,6 +31,9 @@
   --amber: oklch(0.82 0.165 78);
   --amber-ink: oklch(0.28 0.06 65);
 
+  /* The logo's orange, exact (#F64D03). For the badge and large type only. */
+  --brand: oklch(0.653 0.215 37.5);
+
   --nav-bg: oklch(0.975 0.004 158 / 0.72);
   --shadow-board: 0 1px 0 oklch(1 0 0 / 0.12) inset, 0 30px 60px -30px oklch(0.25 0.08 158 / 0.55),
     0 12px 24px -12px oklch(0.25 0.06 158 / 0.35);
@@ -126,6 +129,7 @@
   --color-card-ink: var(--card-ink);
   --color-amber: var(--amber);
   --color-amber-ink: var(--amber-ink);
+  --color-brand: var(--brand);
 
   --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
 }
@@ -205,6 +209,16 @@ html {
   font-variation-settings: "wdth" 85;
   font-weight: 650;
   letter-spacing: 0.02em;
+}
+
+/* Brand voice: the logo's "CRAFTS & SPORTSWEAR" lettering, Montserrat SemiBold set wide. */
+.voice-brand {
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .tabular {

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo } from "next/font/google";
+import { Archivo, Montserrat } from "next/font/google";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
@@ -7,6 +7,14 @@ const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
   axes: ["wdth"],
+  display: "swap",
+});
+
+// The logo's tagline lettering: only the brand voice uses it.
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: "600",
   display: "swap",
 });
 
@@ -26,7 +34,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // suppressHydrationWarning: the theme script sets data-theme on <html> before React hydrates.
-    <html lang="en" className={`${archivo.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${archivo.variable} ${montserrat.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

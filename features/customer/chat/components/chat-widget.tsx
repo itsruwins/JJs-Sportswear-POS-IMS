@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { ImagePlus, LoaderCircle, MessageCircle, SendHorizontal, X } from "lucide-react";
 import { clock, dayLabel, sameDay } from "@/features/shared/chat/format";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
+import { BrandBadge } from "@/features/shared/ui/brand-badge";
 import { markChatRead, sendChatMessage } from "@/features/customer/chat/actions";
 import {
   fetchChatOrders,
@@ -314,16 +315,7 @@ export function ChatWidget({ uid, firstName, initialUnread, hours }: { uid: stri
         className="chat-panel"
       >
         <header className="chat-panel-head board">
-          {/* The wordmark's two hinged J cards, small, on the board. */}
-          <span aria-hidden="true" className="voice-board inline-flex shrink-0 items-center gap-[2px] text-[1.0625rem] leading-none">
-            <span className="relative inline-grid h-[1.3rem] w-[0.95rem] place-items-center rounded-[3px] bg-card text-card-ink">
-              J<span className="absolute inset-x-0 top-1/2 h-px bg-black/25" />
-            </span>
-            <span className="text-board-ink">&amp;</span>
-            <span className="relative inline-grid h-[1.3rem] w-[0.95rem] place-items-center rounded-[3px] bg-card text-card-ink">
-              J<span className="absolute inset-x-0 top-1/2 h-px bg-black/25" />
-            </span>
-          </span>
+          <BrandBadge className="size-9 shrink-0" />
           <div className="min-w-0 flex-1">
             <h2 id={ids.title} ref={heading} tabIndex={-1} className="truncate text-[1rem] font-semibold text-board-ink outline-none">
               J&amp;J Sportswear
