@@ -34,7 +34,7 @@ const ROWS = [
   },
 ];
 
-/** The staff side, set as a box score on the board's own green. */
+/** The staff side, set as a box score on the charcoal board. */
 export function StaffBoxScore() {
   return (
     <div className="grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">

@@ -560,7 +560,7 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
         {madeToOrder && <StyleChips picked={colors} onAdd={(names) => changeColors([...colors, ...names])} />}
         {err("variants") && (
           <p className="mt-3 flex gap-2 text-[0.875rem] font-semibold leading-snug text-ink">
-            <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-amber" />
+            <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-signal" />
             {err("variants")}
           </p>
         )}
@@ -799,7 +799,7 @@ function FormActions({ status, cancelHref, label }: { status: string | null; can
       <button
         type="submit"
         disabled={!!status}
-        className="press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:cursor-progress disabled:opacity-85"
+        className="press inline-flex h-11 items-center gap-2 rounded-xl bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep disabled:cursor-progress disabled:opacity-85"
       >
         {status && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
         <span aria-live="polite">{status ?? label}</span>
@@ -846,7 +846,7 @@ function MadeToOrderSwitch({
         </p>
         {error ? (
           <p className="mt-2 flex gap-2 text-[0.875rem] font-semibold leading-snug text-ink">
-            <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-amber" />
+            <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-signal" />
             {error}
           </p>
         ) : (
@@ -978,7 +978,7 @@ function Field({
       {children}
       {(error || hint) && (
         <p id={`${id}-msg`} className={`mt-2 flex gap-2 text-[0.875rem] leading-snug ${error ? "font-semibold text-ink" : "text-ink-2"}`}>
-          {error && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-amber" />}
+          {error && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-signal" />}
           {error ?? hint}
         </p>
       )}

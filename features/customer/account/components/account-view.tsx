@@ -125,7 +125,7 @@ function PhotoSection({ uid, username, initials, fullName, avatarUrl }: Props) {
           <p className="truncate text-[1.25rem] font-semibold text-ink">{fullName || `@${username}`}</p>
           <p className="truncate text-[0.9375rem] text-ink-2">@{username}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <label className="press inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 focus-within:shadow-[0_0_0_2px_var(--amber)]">
+            <label className="press inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 focus-within:shadow-[0_0_0_2px_var(--focus)]">
               <Camera aria-hidden="true" className="size-[1.125rem] text-ink-2" />
               {url ? "Change photo" : "Add a photo"}
               <input
@@ -290,7 +290,7 @@ function DetailsSection({ username, fullName, phone, email }: Props) {
           <button
             type="submit"
             disabled={busy || !changed}
-            className="press inline-flex h-12 items-center justify-center gap-2 rounded-full bg-board px-6 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
+            className="press inline-flex h-12 items-center justify-center gap-2 rounded-full bg-action px-6 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
           >
             {busy && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
             {busy ? "Saving…" : "Save changes"}
@@ -440,7 +440,7 @@ function PasswordSection() {
             <button
               type="submit"
               disabled={busy}
-              className="press inline-flex h-12 items-center justify-center gap-2 rounded-full bg-board px-6 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-80"
+              className="press inline-flex h-12 items-center justify-center gap-2 rounded-full bg-action px-6 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-80"
             >
               {busy && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
               {busy ? "Changing…" : "Change password"}

@@ -90,7 +90,7 @@ function PaymentPill({ status }: { status: MyPayment["status"] }) {
   return <span className={`inline-flex h-6 shrink-0 items-center whitespace-nowrap rounded-full px-2.5 text-[0.75rem] font-semibold ${tone}`}>{text}</span>;
 }
 
-/** What the customer has to do next about money: the one amber thing in the app. */
+/** What the customer has to do next about money: the one yellow thing in the app. */
 function ActionNotice({ o, money, uid, providers }: { o: MyOrder; money: Money; uid: string; providers: PaymentProvider[] }) {
   const action = payAction(o.status, money);
   if (!action) return null;
@@ -105,7 +105,7 @@ function ActionNotice({ o, money, uid, providers }: { o: MyOrder; money: Money; 
   return (
     <div role="status" className="pay-notice mt-6 flex flex-col gap-4 rounded-2xl px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
       <p className="flex items-start gap-3 text-[0.9375rem] leading-relaxed text-ink">
-        {/* The live lamp: amber means "now", and what's live here is money the customer owes. */}
+        {/* The live lamp: yellow means "now", and what's live here is money the customer owes. */}
         <span aria-hidden="true" className="lamp mt-1.5 shrink-0" data-state="live" />
         <span>
         <span className="font-semibold">{action.kind === "down" ? "Down payment needed. " : "Balance due. "}</span>
@@ -154,7 +154,7 @@ export function OrderDetailView({
 
         {flash && (
           <p role="status" className="mb-6 flex items-start gap-3 rounded-2xl bg-ground-2 px-5 py-4 text-[0.9375rem] text-ink shadow-[inset_0_0_0_1px_var(--line)]">
-            <CircleCheck aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-board-text" />
+            <CircleCheck aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-accent" />
             <span>
               <span className="font-semibold">{flash === "sent" ? "Request sent." : "Changes saved."}</span>{" "}
               {flash === "sent" ? "The shop will review it and send you a price." : "The shop sees your updated request."}

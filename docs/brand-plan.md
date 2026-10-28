@@ -67,6 +67,16 @@ Garment and sample colors in `features/shared/catalog/colors.ts` are product dat
 - `viewport.themeColor` in `app/layout.tsx` gets the new grounds.
 - Rewrite `DESIGN.md`'s color section and rules (One Green Rule → one-orange rule, Amber-Is-Now → Yellow-Is-Now) and its frontmatter values. Update `.impeccable/design.json` to match.
 - **Done when:** no green is left in the theme, every token pair above passes in both themes, and `npm run build` passes.
+- **Decisions (2026-10-27):** flip cards stay off-white with dark numerals on the charcoal board. Focus rings are orange everywhere (yellow on off-white is about 1.3:1). Each screen keeps one orange main action, and a control that repeats down a list stays charcoal. In dark mode the board sits a step *lighter* than the page (this replaces "one step deeper" above).
+- **Built 2026-10-28:**
+  - `app/globals.css` tokens rewritten for light, dark (system) and dark (picked): charcoal `board*`, warm neutrals, and new `brand`, `action` / `action-deep` / `action-ink`, `accent` (lighter in dark), `focus` (= accent), and `signal` / `signal-ink` in place of `amber` / `amber-ink`. `board-text` is gone; its uses became `accent`.
+  - New `pick` / `pick-ink` for the chosen one of a set (current dock and tab item, pressed chips and sizes, switches on, unread avatars, done steps). It's charcoal in light, but near-white with dark type in dark mode, because charcoal on the dark page is only 1.3:1 and the fill is the state's only cue there.
+  - Every amber use sorted by role: 10 CSS focus rings and every `focus…:shadow-[…]` class went to `--focus`; lamps, low cells, pills, counts, dots and the pay notice went to `signal`. `.is-invalid` now wears the same solid ink ring as `.is-error`, since a yellow ring wouldn't show on off-white.
+  - 36 main buttons went to `bg-action text-action-ink hover:bg-action-deep`, and the `green` button constants were renamed `primary`. The staff list's per-row "Make staff" stayed charcoal; its confirm dialog is orange. `Pill` lost its unused `green` tone, and `amber` became `signal`.
+  - The sales chart uses `accent` (print: action orange). Green-tinted shadows and scrims moved to the warm hue, the print palette included. Idle lamps got a 1px `board-line` rim so they show on charcoal. `viewport.themeColor` is now #f9f6f2 / #110d0b.
+  - `DESIGN.md`: color frontmatter, overview, Colors section, the Yellow-Is-Now, One-Orange and Card Ink rules, component specs, do's and don'ts, and the B1 lockup and Montserrat brand voice. `.impeccable/design.json` regenerated from it.
+  - Checked: every pair in the palette table plus pick, in both themes (all pass); typecheck, lint, `npm run build`; landing page screenshotted at 1440 in light and dark, and phone width (Chrome's narrowest window, about 500px, crops the right edge). Only the landing page is reachable without a login, so the admin and customer screens are B3's walk-through.
+  - Left as product data: the sample jersey colorways in the landing AI studio (including a green one) and the garment colors in `catalog/colors.ts`.
 
 ### Phase B3: Screen-by-screen pass
 - Walk every surface in light and dark at phone and desktop widths: landing, shop, product, design studio, orders, pay, chat, account; admin home, POS, stock, products, orders, design orders, payments, sales, receipts, reports, staff, history.

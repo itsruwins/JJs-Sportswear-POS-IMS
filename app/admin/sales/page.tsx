@@ -37,7 +37,7 @@ export default async function SalesPage({ searchParams }: PageProps<"/admin/sale
         </div>
         <Link
           href="/admin/pos"
-          className="press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+          className="press inline-flex h-11 items-center gap-2 rounded-xl bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep"
         >
           <Plus aria-hidden="true" className="size-4" strokeWidth={2.5} />
           New sale

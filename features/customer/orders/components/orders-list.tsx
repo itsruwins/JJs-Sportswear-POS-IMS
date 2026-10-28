@@ -7,7 +7,7 @@ import { pageShell } from "@/features/customer/shell/components/page-parts";
 import { dayDate, shortDate, StageStrip, StatusPill } from "./order-parts";
 
 const newRequestButton =
-  "press inline-flex h-12 items-center justify-center gap-2 rounded-full bg-board px-6 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep";
+  "press inline-flex h-12 items-center justify-center gap-2 rounded-full bg-action px-6 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep";
 
 /** The Orders tab: every request the customer has sent, newest first. */
 export function OrdersListView({ orders, error, migrated }: { orders: MyOrderSummary[]; error: boolean; migrated: boolean }) {
@@ -102,7 +102,7 @@ function OrderRow({ order: o }: { order: MyOrderSummary }) {
             <span className="tabular text-[0.875rem] font-semibold text-ink-2">{o.order_number}</span>
             <StatusPill status={o.status} />
             {action && (
-              <span className="tabular inline-flex h-7 items-center rounded-full bg-amber px-3 text-[0.8125rem] font-semibold text-amber-ink">
+              <span className="tabular inline-flex h-7 items-center rounded-full bg-signal px-3 text-[0.8125rem] font-semibold text-signal-ink">
                 {action.kind === "down" ? `Pay ${formatPeso(action.amount)} down payment` : `${formatPeso(action.amount)} balance due`}
               </span>
             )}

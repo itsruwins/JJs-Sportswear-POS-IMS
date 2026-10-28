@@ -117,7 +117,7 @@ function Inbox({ rows, activeId, now, ownerId }: { rows: InboxRow[]; activeId: s
                   <span
                     aria-hidden="true"
                     className={`grid size-10 place-items-center rounded-full text-[0.8125rem] font-bold ${
-                      r.unread > 0 ? "bg-board text-board-ink" : "bg-ground-2 text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]"
+                      r.unread > 0 ? "bg-pick text-pick-ink" : "bg-ground-2 text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]"
                     }`}
                   >
                     {initials(r)}
@@ -134,7 +134,7 @@ function Inbox({ rows, activeId, now, ownerId }: { rows: InboxRow[]; activeId: s
                 <span className="flex flex-col items-end gap-1.5">
                   <span className="tabular whitespace-nowrap text-[0.75rem] text-ink-2">{inboxTime(r.last_at, now)}</span>
                   {r.unread > 0 && (
-                    <span className="tabular grid h-5 min-w-5 place-items-center rounded-full bg-amber px-1.5 text-[0.6875rem] font-bold leading-none text-amber-ink">
+                    <span className="tabular grid h-5 min-w-5 place-items-center rounded-full bg-signal px-1.5 text-[0.6875rem] font-bold leading-none text-signal-ink">
                       {r.unread}
                       <span className="sr-only"> unread</span>
                     </span>

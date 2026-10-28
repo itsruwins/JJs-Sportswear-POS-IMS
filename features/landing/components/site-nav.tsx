@@ -60,7 +60,7 @@ export function SiteNav() {
               {/* Log out lives in the account sheet behind the username. */}
               <a
                 href={isStaff ? "/admin" : CUSTOMER_HOME}
-                className="press whitespace-nowrap rounded-full bg-board px-4 py-2 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+                className="press whitespace-nowrap rounded-full bg-action px-4 py-2 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep"
               >
                 {isStaff ? "Open admin" : "Open shop"}
               </a>
@@ -79,7 +79,7 @@ export function SiteNav() {
                 type="button"
                 onClick={() => openAuth("signup")}
                 aria-haspopup="dialog"
-                className="press whitespace-nowrap rounded-full bg-board px-4 py-2 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+                className="press whitespace-nowrap rounded-full bg-action px-4 py-2 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep"
               >
                 Create account
               </button>

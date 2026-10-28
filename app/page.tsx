@@ -32,7 +32,7 @@ export default function Home() {
             >
               <span className="whitespace-nowrap">Design it.</span>{" "}
               <span className="whitespace-nowrap">Track it.</span>{" "}
-              <span className="whitespace-nowrap text-board-text">Wear it.</span>
+              <span className="whitespace-nowrap text-accent">Wear it.</span>
             </h1>
             <p className="max-w-[36ch] shrink-0 text-[1.0625rem] leading-relaxed text-ink-2 lg:mb-2">
               Custom team kits from J&amp;J Sportswear in Legazpi, with every order on a board you can check from your
@@ -92,7 +92,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* For staff: drenched in board green */}
+        {/* For staff: drenched in board charcoal */}
         <section id="staff" aria-labelledby="staff-title" className="bg-board py-20 text-board-ink lg:py-28">
           <div className={shell}>
             <StaffBoxScore />

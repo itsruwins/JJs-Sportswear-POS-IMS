@@ -322,7 +322,7 @@ export function RequestForm({
                 ))}
                 {draft.references.length + uploading < MAX_REFERENCES && (
                   <li>
-                    <label className="press grid aspect-square cursor-pointer place-items-center rounded-[1.125rem] text-center text-ink-2 shadow-[inset_0_0_0_1.5px_var(--line)] hover:text-ink hover:shadow-[inset_0_0_0_1.5px_var(--ink-2)] focus-within:shadow-[0_0_0_2px_var(--amber)]">
+                    <label className="press grid aspect-square cursor-pointer place-items-center rounded-[1.125rem] text-center text-ink-2 shadow-[inset_0_0_0_1.5px_var(--line)] hover:text-ink hover:shadow-[inset_0_0_0_1.5px_var(--ink-2)] focus-within:shadow-[0_0_0_2px_var(--focus)]">
                       <span className="flex flex-col items-center gap-1.5 text-[0.875rem] font-semibold">
                         <ImagePlus aria-hidden="true" className="size-6" />
                         Add picture
@@ -514,7 +514,7 @@ export function RequestForm({
               type="button"
               onClick={send}
               disabled={sending}
-              className="press inline-flex h-14 items-center justify-center gap-2 rounded-full bg-board px-8 text-[1rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-70"
+              className="press inline-flex h-14 items-center justify-center gap-2 rounded-full bg-action px-8 text-[1rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-70"
             >
               {sending && <LoaderCircle aria-hidden="true" className="size-[1.125rem] animate-spin" />}
               {sending ? (orderId ? "Saving…" : "Sending…") : orderId ? "Save changes" : "Send request"}

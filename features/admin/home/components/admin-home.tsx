@@ -247,7 +247,7 @@ function SetupStep({ done = false, title, body }: { done?: boolean; title: strin
       <span
         aria-hidden="true"
         className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full ${
-          done ? "bg-board text-board-ink" : "shadow-[inset_0_0_0_1.5px_var(--line)]"
+          done ? "bg-pick text-pick-ink" : "shadow-[inset_0_0_0_1.5px_var(--line)]"
         }`}
       >
         {done && <Check className="size-3.5" strokeWidth={3} />}

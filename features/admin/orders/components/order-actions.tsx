@@ -23,7 +23,7 @@ import { formatPeso } from "@/features/shared/catalog/catalog";
 import { downPayment, STEPS, type OrderStatus, type Step } from "@/features/admin/orders/data";
 import { createClient } from "@/lib/supabase/client";
 
-const green = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-50";
+const primary = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-50";
 const outline = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 disabled:opacity-50";
 const inkBtn = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-ink px-5 text-[0.9375rem] font-semibold text-ground hover:opacity-90 disabled:opacity-50";
 
@@ -260,7 +260,7 @@ export function ReviewPanel({ id, status, price }: { id: string; status: OrderSt
       <div className="mt-4 flex flex-wrap gap-2.5">
         {status === "pending" ? (
           <>
-            <button type="button" disabled={!valid} aria-disabled={!!busy} onClick={() => run("accept", () => acceptOrder(id, amount))} className={green}>
+            <button type="button" disabled={!valid} aria-disabled={!!busy} onClick={() => run("accept", () => acceptOrder(id, amount))} className={primary}>
               {busy === "accept" ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : <Check aria-hidden="true" className="size-4" strokeWidth={2.5} />}
               Accept order
             </button>
@@ -360,7 +360,7 @@ export function ProductionChecklist({
 
       {editable && status === "in_progress" && (
         <div className="mt-4 flex flex-wrap gap-2.5">
-          <button type="button" disabled={done < 5} aria-disabled={!!busy} onClick={() => run("ready", () => markReady(id))} className={green}>
+          <button type="button" disabled={done < 5} aria-disabled={!!busy} onClick={() => run("ready", () => markReady(id))} className={primary}>
             {busy === "ready" && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
             Mark ready for pickup
           </button>
@@ -398,7 +398,7 @@ export function HandoverPanel({ id, balanceDue = 0 }: { id: string; balanceDue?:
   return (
     <div>
       <div className="flex flex-wrap gap-2.5">
-        <button type="button" disabled={balanceDue > 0} aria-disabled={!!busy} onClick={() => run("complete", () => completeOrder(id))} className={green}>
+        <button type="button" disabled={balanceDue > 0} aria-disabled={!!busy} onClick={() => run("complete", () => completeOrder(id))} className={primary}>
           {busy === "complete" ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : <Check aria-hidden="true" className="size-4" strokeWidth={2.5} />}
           Picked up: complete order
         </button>

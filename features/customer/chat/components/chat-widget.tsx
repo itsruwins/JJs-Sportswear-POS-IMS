@@ -526,7 +526,7 @@ export function ChatWidget({ uid, firstName, initialUnread, hours }: { uid: stri
             <button
               type="submit"
               disabled={(!text.trim() && !photo) || !!pending}
-              className="press grid size-10 shrink-0 place-items-center self-end rounded-full bg-board text-board-ink hover:bg-board-deep disabled:bg-ground-2 disabled:text-ink-2"
+              className="press grid size-10 shrink-0 place-items-center self-end rounded-full bg-action text-action-ink hover:bg-action-deep disabled:bg-ground-2 disabled:text-ink-2"
             >
               {pending ? <LoaderCircle aria-hidden="true" className="size-[1.125rem] animate-spin" /> : <SendHorizontal aria-hidden="true" className="size-[1.125rem]" />}
               <span className="sr-only">Send</span>

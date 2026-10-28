@@ -81,7 +81,7 @@ export default async function ProductPage({ params, searchParams }: PageProps<"/
 
       {justSaved && (
         <p role="status" className="mt-4 flex items-center gap-2.5 rounded-xl bg-ground-2 px-4 py-3 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)]">
-          <CircleCheck aria-hidden="true" className="size-[1.125rem] text-board-text" />
+          <CircleCheck aria-hidden="true" className="size-[1.125rem] text-accent" />
           Product saved.
         </p>
       )}
@@ -354,7 +354,7 @@ function VariantStatus({ active, state, madeToOrder }: { active: boolean; state:
   if (!active) return <Pill>Hidden</Pill>;
   if (madeToOrder) return <span className="text-[0.875rem] text-ink-2">Offered</span>;
   if (state === "zero") return <SoldOutPill />;
-  if (state === "low") return <Pill tone="amber">Low</Pill>;
+  if (state === "low") return <Pill tone="signal">Low</Pill>;
   return <span className="text-[0.875rem] text-ink-2">In stock</span>;
 }
 

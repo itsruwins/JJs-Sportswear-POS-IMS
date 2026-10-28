@@ -21,7 +21,7 @@ import type { RefundMethod } from "@/features/admin/payments/data";
 import { cleanReference, digitsOnly, formatReference, referenceFits, referenceLength, type PaymentProvider } from "@/features/shared/payments/model";
 import { createClient } from "@/lib/supabase/client";
 
-const green = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-50";
+const primary = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-50";
 const outline = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 disabled:opacity-50";
 const inkBtn = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-ink px-5 text-[0.9375rem] font-semibold text-ground hover:opacity-90 disabled:opacity-50";
 const chip = "press tabular inline-flex h-9 items-center rounded-full px-3 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2";
@@ -171,7 +171,7 @@ export function RecordPayment({
           reset();
           setOpen(true);
         }}
-        className={green}
+        className={primary}
       >
         <Plus aria-hidden="true" className="size-4" strokeWidth={2.5} />
         Record a payment
@@ -329,7 +329,7 @@ export function RecordPayment({
             <button type="button" onClick={() => sheetRef.current?.close()} className={outline}>
               Go back
             </button>
-            <button type="submit" disabled={!ready} aria-disabled={busy} className={green}>
+            <button type="submit" disabled={!ready} aria-disabled={busy} className={primary}>
               {busy ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : <Check aria-hidden="true" className="size-4" strokeWidth={2.5} />}
               Record {value > 0 ? formatPeso(value) : "payment"}
             </button>
@@ -348,7 +348,7 @@ export function ReviewPayment({ paymentId, canVerify = true }: { paymentId: stri
     <div>
       <div className="flex flex-wrap gap-2.5">
         {canVerify && (
-          <button type="button" aria-disabled={!!busy} onClick={() => run("verify", () => verifyPayment(paymentId))} className={green}>
+          <button type="button" aria-disabled={!!busy} onClick={() => run("verify", () => verifyPayment(paymentId))} className={primary}>
             {busy === "verify" ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : <Check aria-hidden="true" className="size-4" strokeWidth={2.5} />}
             Verify payment
           </button>
@@ -528,7 +528,7 @@ export function CheckCounterPayment({ paymentId, status }: { paymentId: string; 
     <div>
       {status === "cashier_confirmed" ? (
         <div className="flex flex-wrap gap-2">
-          <button type="button" aria-disabled={!!busy} onClick={() => run("match", () => checkCounterPayment(paymentId, "matched"))} className={green}>
+          <button type="button" aria-disabled={!!busy} onClick={() => run("match", () => checkCounterPayment(paymentId, "matched"))} className={primary}>
             {busy === "match" ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : <Check aria-hidden="true" className="size-4" strokeWidth={2.5} />}
             Matched
           </button>
@@ -602,13 +602,13 @@ export function PaymentReading({
       <dd className="text-right text-[0.8125rem]">
         {mark === "same" && (
           <span className="inline-flex items-center gap-1 text-ink-2">
-            <Check aria-hidden="true" className="size-3.5 text-board-text" strokeWidth={2.5} />
+            <Check aria-hidden="true" className="size-3.5 text-accent" strokeWidth={2.5} />
             Matches
           </span>
         )}
         {(mark === "differs" || mark === "check") && (
           <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
-            <span aria-hidden="true" className="size-2 rounded-full bg-amber" />
+            <span aria-hidden="true" className="size-2 rounded-full bg-signal" />
             {mark === "differs" ? "Differs" : "Check this"}
           </span>
         )}

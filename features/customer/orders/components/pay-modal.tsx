@@ -154,7 +154,7 @@ export function PayModal({
         onClick={open}
         className={
           tone === "board"
-            ? "press inline-flex h-12 items-center justify-center rounded-full bg-board px-6 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+            ? "press inline-flex h-12 items-center justify-center rounded-full bg-action px-6 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep"
             : "press inline-flex h-11 items-center justify-center rounded-full px-5 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1.5px_var(--ink)] hover:bg-ground-2"
         }
       >
@@ -356,7 +356,7 @@ export function PayModal({
                   </div>
                 ) : (
                   <label
-                    className={`press mt-2 flex h-14 cursor-pointer items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-semibold focus-within:shadow-[0_0_0_2px_var(--amber)] ${
+                    className={`press mt-2 flex h-14 cursor-pointer items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-semibold focus-within:shadow-[0_0_0_2px_var(--focus)] ${
                       errors.proof ? "text-ink shadow-[inset_0_0_0_2px_var(--ink)]" : "text-ink-2 shadow-[inset_0_0_0_1.5px_var(--line)] hover:text-ink"
                     }`}
                   >
@@ -397,7 +397,7 @@ export function PayModal({
                 type="button"
                 onClick={send}
                 disabled={busy}
-                className="press mt-7 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-board px-6 text-[1rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-70"
+                className="press mt-7 inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-action px-6 text-[1rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-70"
               >
                 {sending && <LoaderCircle aria-hidden="true" className="size-[1.125rem] animate-spin" />}
                 {sending ? "Sending…" : value > 0 ? `Send payment · ${formatPeso(value)}` : "Send payment"}

@@ -15,7 +15,7 @@ const RANGES: { id: HistoryRange; label: string }[] = [
 const fullDate = (v: string) => /^(19|20)\d{2}-\d{2}-\d{2}$/.test(v);
 
 export const filterSelect =
-  "h-10 min-w-0 rounded-full bg-ground-2 px-3.5 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] outline-none focus-visible:shadow-[0_0_0_2px_var(--amber)]";
+  "h-10 min-w-0 rounded-full bg-ground-2 px-3.5 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]";
 
 export type RangePatch = { range?: HistoryRange; from?: string; to?: string };
 

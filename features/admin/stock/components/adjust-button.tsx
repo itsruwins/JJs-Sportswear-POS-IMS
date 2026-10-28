@@ -14,7 +14,7 @@ export function AdjustStockButton({ product }: { product: CatalogProduct }) {
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        className="press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+        className="press inline-flex h-11 items-center gap-2 rounded-xl bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep"
       >
         <PackagePlus aria-hidden="true" className="size-4" />
         Adjust stock

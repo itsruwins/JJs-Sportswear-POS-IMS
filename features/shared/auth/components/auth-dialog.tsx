@@ -278,7 +278,7 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, isStaff, onSigne
             <a
               href={isStaff ? "/admin" : CUSTOMER_HOME}
               data-autofocus
-              className="press inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-board px-5 text-[1rem] font-semibold text-board-ink hover:bg-board-deep"
+              className="press inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-action px-5 text-[1rem] font-semibold text-action-ink hover:bg-action-deep"
             >
               {isStaff ? "Open admin" : "Open the shop"}
             </a>
@@ -466,7 +466,7 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, isStaff, onSigne
         <button
           type="submit"
           disabled={pending}
-          className="press inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-board px-5 text-[1rem] font-semibold text-board-ink hover:bg-board-deep disabled:cursor-progress disabled:opacity-80"
+          className="press inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-action px-5 text-[1rem] font-semibold text-action-ink hover:bg-action-deep disabled:cursor-progress disabled:opacity-80"
         >
           {pending && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
           {pending ? copy.pending : copy.submit}
@@ -554,7 +554,7 @@ function Field({
           id={`${id}-msg`}
           className={`mt-2 flex gap-2 text-[0.875rem] leading-snug ${error ? "font-semibold text-ink" : "text-ink-2"}`}
         >
-          {error && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-amber" />}
+          {error && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-signal" />}
           {error ?? hint}
         </p>
       )}

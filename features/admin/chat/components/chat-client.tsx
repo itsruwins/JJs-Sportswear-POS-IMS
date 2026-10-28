@@ -240,7 +240,7 @@ export function Composer({
             </span>
           )}
           {photos && (
-            <label className="press grid size-10 cursor-pointer place-items-center rounded-xl text-ink-2 hover:bg-ground-2 hover:text-ink focus-within:text-ink focus-within:shadow-[0_0_0_2px_var(--amber)]">
+            <label className="press grid size-10 cursor-pointer place-items-center rounded-xl text-ink-2 hover:bg-ground-2 hover:text-ink focus-within:text-ink focus-within:shadow-[0_0_0_2px_var(--focus)]">
               {preparing ? <LoaderCircle aria-hidden="true" className="size-5 animate-spin" /> : <ImagePlus aria-hidden="true" className="size-5" />}
               <span className="sr-only">Add a photo</span>
               <input
@@ -259,7 +259,7 @@ export function Composer({
             type="submit"
             disabled={(!trimmed && !photo) || over}
             aria-disabled={busy || undefined}
-            className="press inline-flex h-10 items-center gap-2 rounded-xl bg-board px-4 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-45"
+            className="press inline-flex h-10 items-center gap-2 rounded-xl bg-action px-4 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-45"
           >
             {busy ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : <SendHorizontal aria-hidden="true" className="size-4" />}
             Send
