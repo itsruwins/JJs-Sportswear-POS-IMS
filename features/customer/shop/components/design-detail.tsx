@@ -149,7 +149,7 @@ export function DesignDetail({ product: p, shop }: { product: ShopProduct; shop:
           <button
             type="button"
             onClick={order}
-            className="press inline-flex h-14 items-center justify-center gap-2 rounded-full bg-board px-6 text-[1rem] font-semibold text-board-ink hover:bg-board-deep"
+            className="press inline-flex h-14 items-center justify-center gap-2 rounded-full bg-action px-6 text-[1rem] font-semibold text-action-ink hover:bg-action-deep"
           >
             <Store aria-hidden="true" className="size-[1.125rem]" />
             Order at the shop

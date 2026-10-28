@@ -27,7 +27,7 @@ export function ProductThumb({ src, name, size = "md" }: { src: string | null; n
   );
 }
 
-/** Stock per size: lit card in stock, amber when a color is low or out (a notch when out), hollow when none are left. */
+/** Stock per size: lit card in stock, yellow when a color is low or out (a notch when out), hollow when none are left. */
 export function SizeRail({
   sizes,
   compact = false,
@@ -95,12 +95,8 @@ function CellFace({ size, total }: { size: string; total: number }) {
   );
 }
 
-export function Pill({ tone = "neutral", children }: { tone?: "neutral" | "green" | "amber"; children: React.ReactNode }) {
+export function Pill({ tone = "neutral", children }: { tone?: "neutral" | "signal"; children: React.ReactNode }) {
   const cls =
-    tone === "green"
-      ? "bg-board text-board-ink"
-      : tone === "amber"
-        ? "bg-amber text-amber-ink"
-        : "bg-ground-2 text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]";
+    tone === "signal" ? "bg-signal text-signal-ink" : "bg-ground-2 text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]";
   return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold ${cls}`}>{children}</span>;
 }

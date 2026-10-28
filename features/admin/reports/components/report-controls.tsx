@@ -42,7 +42,7 @@ export function PrintButton() {
     <button
       type="button"
       onClick={() => window.print()}
-      className="press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-4 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+      className="press inline-flex h-11 items-center gap-2 rounded-xl bg-action px-4 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep"
     >
       <Printer aria-hidden="true" className="size-[1.125rem]" />
       Print report

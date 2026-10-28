@@ -75,7 +75,7 @@ export function AiStudio() {
                 }}
                 className={`press rounded-2xl px-5 py-4 text-left text-[1.0625rem] leading-snug ${
                   on
-                    ? "bg-ink text-ground shadow-[0_10px_24px_-14px_oklch(0.2_0.02_158/0.6)]"
+                    ? "bg-ink text-ground shadow-[0_10px_24px_-14px_oklch(0.2_0.02_50/0.6)]"
                     : "bg-ground-2 text-ink hover:bg-line/60"
                 }`}
               >

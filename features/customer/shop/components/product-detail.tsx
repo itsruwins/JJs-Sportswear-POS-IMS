@@ -137,7 +137,7 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
         <p className="mt-4 flex items-center gap-2 text-[0.9375rem] text-ink-2" aria-live="polite">
           {chosen ? (
             <>
-              {chosen.low && <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-amber" />}
+              {chosen.low && <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-signal" />}
               <span>
                 <span className="font-semibold text-ink">
                   {chosen.low ? `Only ${piecesLeft(chosen.stock)}` : piecesLeft(chosen.stock)}
@@ -159,7 +159,7 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
             type="button"
             onClick={buy}
             disabled={p.stock <= 0}
-            className="press inline-flex h-14 items-center justify-center gap-2 rounded-full bg-board px-6 text-[1rem] font-semibold text-board-ink hover:bg-board-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
+            className="press inline-flex h-14 items-center justify-center gap-2 rounded-full bg-action px-6 text-[1rem] font-semibold text-action-ink hover:bg-action-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
           >
             <Store aria-hidden="true" className="size-[1.125rem]" />
             {p.stock <= 0 ? "Sold out at the shop" : "Buy at the shop"}

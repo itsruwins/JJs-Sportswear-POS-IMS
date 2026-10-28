@@ -100,7 +100,7 @@ export function OrderView({
         </div>
       ) : (
         // The order's game clock: a small board with a lamp per stage, the way the landing page's
-        // scoreboard keeps periods. Passed stages are lit, the current one is live (amber).
+        // scoreboard keeps periods. Passed stages are lit, the current one is live (yellow).
         <div className="board mt-6 rounded-[1.25rem] px-4 py-3.5 text-board-ink sm:px-5">
           <ol aria-label="Order progress" className="grid grid-cols-5 gap-2">
             {TRACK.map((t, i) => {

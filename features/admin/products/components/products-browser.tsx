@@ -200,7 +200,7 @@ export function ProductsBrowser({
                 setSort(next);
                 syncUrl({ sort: next });
               }}
-              className="h-9 rounded-full bg-ground-2 px-3 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] outline-none focus-visible:shadow-[0_0_0_2px_var(--amber)]"
+              className="h-9 rounded-full bg-ground-2 px-3 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
             >
               {SORTS.map((s) => (
                 <option key={s.id} value={s.id}>

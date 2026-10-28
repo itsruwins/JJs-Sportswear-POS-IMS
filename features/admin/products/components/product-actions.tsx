@@ -17,7 +17,7 @@ type Props = {
 };
 
 const primary =
-  "press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep";
+  "press inline-flex h-11 items-center gap-2 rounded-xl bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep";
 const secondary =
   "press inline-flex h-11 items-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 disabled:opacity-70";
 

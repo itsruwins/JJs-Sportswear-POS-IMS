@@ -292,7 +292,7 @@ export function Studio({
                 </button>
               </div>
             ) : (
-              <label className="press mt-2 flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-semibold text-ink-2 shadow-[inset_0_0_0_1.5px_var(--line)] hover:text-ink focus-within:shadow-[0_0_0_2px_var(--amber)]">
+              <label className="press mt-2 flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl text-[0.9375rem] font-semibold text-ink-2 shadow-[inset_0_0_0_1.5px_var(--line)] hover:text-ink focus-within:shadow-[0_0_0_2px_var(--focus)]">
                 {uploading ? <LoaderCircle aria-hidden="true" className="size-5 animate-spin" /> : <ImagePlus aria-hidden="true" className="size-5" />}
                 {uploading ? "Uploading…" : "Add your logo"}
                 <input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={(e) => { pickLogo(e.target.files?.[0]); e.target.value = ""; }} />
@@ -320,7 +320,7 @@ export function Studio({
               type="button"
               onClick={generate}
               disabled={disabled || uploading}
-              className="press inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-board px-6 text-[1rem] font-semibold text-board-ink hover:bg-board-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
+              className="press inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-action px-6 text-[1rem] font-semibold text-action-ink hover:bg-action-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
             >
               {busy === "generate" ? <LoaderCircle aria-hidden="true" className="size-5 animate-spin" /> : <Sparkles aria-hidden="true" className="size-5" />}
               {busy === "generate" ? "Drawing your design…" : !live ? "Coming soon" : left === 0 ? "No designs left today" : "Generate design"}
@@ -374,7 +374,7 @@ export function Studio({
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">
               <Link
                 href={`/orders/new?design=${current.id}`}
-                className="press inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-board px-6 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+                className="press inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-action px-6 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep"
               >
                 Use this design
                 <ArrowRight aria-hidden="true" className="size-4" />

@@ -294,7 +294,7 @@ function SheetBody({
                   message.tone === "error" ? "auth-alert" : "bg-ground-2 font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)]"
                 }`}
               >
-                {message.tone === "ok" && <CircleCheck aria-hidden="true" className="mt-0.5 size-[1.125rem] shrink-0 text-board-text" />}
+                {message.tone === "ok" && <CircleCheck aria-hidden="true" className="mt-0.5 size-[1.125rem] shrink-0 text-accent" />}
                 {message.text}
               </p>
             )}
@@ -331,7 +331,7 @@ function SheetBody({
                   type="button"
                   onClick={save}
                   disabled={!canSave}
-                  className="press inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
+                  className="press inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none"
                 >
                   {saving && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
                   {saving ? "Saving…" : info.save}

@@ -8,7 +8,7 @@ export function StatusPill({ status, progress }: { status: OrderStatus; progress
   const base = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold";
   const tone =
     status === "pending"
-      ? "bg-amber text-amber-ink"
+      ? "bg-signal text-signal-ink"
       : status === "ready"
         ? "bg-ink text-ground"
         : status === "accepted" || status === "in_progress"

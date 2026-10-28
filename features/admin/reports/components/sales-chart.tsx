@@ -94,7 +94,7 @@ export function SalesChart({ series, bucket }: { series: SeriesPoint[]; bucket: 
                 className="group relative flex h-full min-w-0 flex-1 flex-col items-center justify-end outline-none"
               >
                 <div
-                  className={`sales-bar w-full max-w-6 rounded-t-[4px] transition-opacity duration-150 group-focus-visible:shadow-[0_0_0_2px_var(--amber)] ${on ? "opacity-80" : ""}`}
+                  className={`sales-bar w-full max-w-6 rounded-t-[4px] transition-opacity duration-150 group-focus-visible:shadow-[0_0_0_2px_var(--focus)] ${on ? "opacity-80" : ""}`}
                   style={{ height: `${h}%`, minHeight: s.revenue > 0 ? 2 : 0 }}
                 />
                 <span

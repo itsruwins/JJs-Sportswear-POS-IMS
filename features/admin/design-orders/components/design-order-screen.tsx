@@ -30,8 +30,8 @@ const STORE = "jj-pos-design-order";
 type View = "designs" | "design" | Step;
 type Saved = { pieces: Pieces; designOrder: string[]; buyer: Buyer; amount: string; cashOn: boolean; cash: string; ePayments: EPayment[]; key: string };
 
-const green =
-  "press inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-board px-5 text-[1.0625rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-50";
+const primary =
+  "press inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-action px-5 text-[1.0625rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-50";
 const outlined =
   "press inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl px-5 text-[1.0625rem] font-semibold text-ink shadow-[inset_0_0_0_1.5px_var(--line)] hover:bg-ground-2";
 const back = "press inline-flex items-center gap-1.5 self-start py-1 text-[0.9375rem] font-semibold text-ink hover:underline";
@@ -233,7 +233,7 @@ export function DesignOrderScreen({
       <button
         type="button"
         onClick={() => go("buyer")}
-        className="press flex h-14 w-full items-center justify-between gap-3 rounded-2xl bg-board px-5 text-board-ink shadow-[0_10px_30px_-12px_oklch(0.2_0.05_158/0.55)] hover:bg-board-deep"
+        className="press flex h-14 w-full items-center justify-between gap-3 rounded-2xl bg-action px-5 text-action-ink shadow-[0_10px_30px_-12px_oklch(0.4_0.12_37.5/0.45)] hover:bg-action-deep"
       >
         <span className="whitespace-nowrap text-[0.9375rem] font-semibold">
           {count} {count === 1 ? "piece" : "pieces"} · <span className="tabular">{formatPeso(total)}</span>
@@ -334,7 +334,7 @@ export function DesignOrderScreen({
               <button type="button" onClick={() => go("designs")} className={outlined}>
                 {mine > 0 ? "Add another design" : "Back to designs"}
               </button>
-              <button type="button" onClick={() => go("buyer")} disabled={count === 0} className={green}>
+              <button type="button" onClick={() => go("buyer")} disabled={count === 0} className={primary}>
                 Review order
                 <ArrowRight aria-hidden="true" className="size-5" />
               </button>
@@ -393,7 +393,7 @@ export function DesignOrderScreen({
         {input}
         {(problem || hint) && (
           <p id={`${id}-msg`} className={`mt-2 flex gap-2 text-[0.875rem] leading-snug ${problem ? "font-semibold text-ink" : "text-ink-2"}`}>
-            {problem && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-amber" />}
+            {problem && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-signal" />}
             {problem || hint}
           </p>
         )}
@@ -513,7 +513,7 @@ export function DesignOrderScreen({
                 )}
               </div>
             </div>
-            <button type="submit" disabled={count === 0} className={`${green} mt-8 sm:max-w-[22rem]`}>
+            <button type="submit" disabled={count === 0} className={`${primary} mt-8 sm:max-w-[22rem]`}>
               Next: payment
               <ArrowRight aria-hidden="true" className="size-5" />
             </button>
@@ -647,7 +647,7 @@ export function DesignOrderScreen({
               {error.text}
             </p>
           )}
-          <button type="submit" disabled={!canPlace} className={`${green} mt-5`}>
+          <button type="submit" disabled={!canPlace} className={`${primary} mt-5`}>
             {busy && <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />}
             {busy ? "Placing order…" : `Place order · ${formatPeso(Math.min(payingNow, total))}`}
           </button>
