@@ -18,6 +18,8 @@ export const PAY_STATUS_LABEL: Record<PayStatus, string> = {
 export const PAY_TYPE_LABEL: Record<PayType, string> = { down_payment: "Down payment", balance: "Balance" };
 
 export const PAYMENTS_MIGRATION = "supabase/migrations/20261010000000_custom_order_payments.sql";
+/** Payment screenshots for a walk-in's order (no account folder): walk-in/{order}/{uuid}.ext */
+export const WALK_IN_FOLDER = "walk-in";
 const notMigrated = (e: { code?: string } | null) => e?.code === "PGRST205" || e?.code === "42P01" || e?.code === "42703" || e?.code === "PGRST200";
 const SIGNED_FOR = 6 * 60 * 60;
 
@@ -143,6 +145,20 @@ export const QUEUE_VIEWS: { id: QueueView; label: string }[] = [
 
 export type QueueRow = Payment & { order_number: string; order_status: OrderStatus; customer: Person };
 
+/**
+ * Walk-in buyers (counter orders, no account) as names to show where the customer goes. Read on
+ * their own, so payments still load before the counter-orders migration runs.
+ */
+async function walkInNames(supabase: SupabaseClient, orderIds: string[]) {
+  const names = new Map<string, Person>();
+  if (!orderIds.length) return names;
+  const { data } = await supabase.from("custom_orders").select("id, walk_in_name").in("id", [...new Set(orderIds)]);
+  for (const r of (data ?? []) as { id: string; walk_in_name: string | null }[]) {
+    if (r.walk_in_name) names.set(r.id, { id: "", username: "", full_name: `${r.walk_in_name} (walk-in)` });
+  }
+  return names;
+}
+
 /** Payments for the queue: newest first (oldest first while reviewing, so nobody waits longest). */
 export async function fetchPaymentQueue(supabase: SupabaseClient, view: QueueView) {
   const run = (withNote: boolean) => {
@@ -165,11 +181,13 @@ export async function fetchPaymentQueue(supabase: SupabaseClient, view: QueueVie
   if (res.error) return { rows: [] as QueueRow[], more: false, counts, error: res.error };
 
   type Row = PaymentRow & { order: { order_number: string; status: OrderStatus; customer: Person } | null };
-  const rows = ((res.data ?? []) as unknown as Row[]).map((r) => ({
+  const raw = (res.data ?? []) as unknown as Row[];
+  const walkIns = await walkInNames(supabase, raw.filter((r) => !r.order?.customer).map((r) => r.order_id));
+  const rows = raw.map((r) => ({
     ...toPayment(r),
     order_number: r.order?.order_number ?? "Unknown order",
     order_status: r.order?.status ?? "pending",
-    customer: r.order?.customer ?? null,
+    customer: r.order?.customer ?? walkIns.get(r.order_id) ?? null,
   }));
   return { rows: rows.slice(0, 300), more: rows.length > 300, counts, error: null };
 }
@@ -196,9 +214,10 @@ export async function fetchPayment(supabase: SupabaseClient, id: string): Promis
   type Row = PaymentRow & { order: { id: string; order_number: string; status: OrderStatus; total_price: number | string | null; customer: Person } };
   const r = res.data as unknown as Row;
   const p = toPayment(r);
-  const [{ data: others }, signed] = await Promise.all([
+  const [{ data: others }, signed, walkIns] = await Promise.all([
     supabase.from("payments").select("id, amount, verified_at, created_at").eq("order_id", r.order.id).eq("status", "verified"),
     p.proof_path ? supabase.storage.from("payment-proofs").createSignedUrl(p.proof_path, SIGNED_FOR) : Promise.resolve({ data: null }),
+    r.order.customer ? Promise.resolve(new Map<string, Person>()) : walkInNames(supabase, [r.order.id]),
   ]);
   // A verified slip shows the order as it stood then, so a reprint doesn't count later payments.
   type Other = { id: string; amount: number | string; verified_at: string | null; created_at: string };
@@ -213,7 +232,11 @@ export async function fetchPayment(supabase: SupabaseClient, id: string): Promis
   return {
     payment: {
       ...p,
-      order: { ...r.order, total_price: r.order.total_price === null ? null : Number(r.order.total_price) },
+      order: {
+        ...r.order,
+        total_price: r.order.total_price === null ? null : Number(r.order.total_price),
+        customer: r.order.customer ?? walkIns.get(r.order.id) ?? null,
+      },
       proofUrl: (signed as { data: { signedUrl: string } | null }).data?.signedUrl ?? null,
       paidBefore: Math.round(paidBefore * 100) / 100,
     },

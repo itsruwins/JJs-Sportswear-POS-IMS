@@ -1,7 +1,7 @@
 import { sortSizes, unique } from "@/features/shared/catalog/catalog";
 
 // The shop's product shape, categories, and URL filters. Safe for client components;
-// loading the catalog (which reads the sample illustrations from disk) is in data.ts.
+// loading the catalog is in data.ts.
 
 export type ShopVariant = {
   size: string;
@@ -20,16 +20,27 @@ export type ShopProduct = {
   colors: string[];
   sizes: string[];
   stock: number;
-  /** Tags customers see (not "sample" or "featured"). */
+  /** Tags customers see (not "featured"). */
   tags: string[];
-  sample: boolean;
   featured: boolean;
-  /** A real photo, when the product has one. */
+  /** The product's primary photo, when it has one. */
   image: string | null;
-  /** Recolorable sample illustration markup, when the image is one. */
-  art: string | null;
+  /** Every photo, the main one first. */
+  images: string[];
+  /**
+   * Made after it's ordered at the counter (the shop's jersey designs). It keeps no stock, so it's
+   * always available; its "colors" are styles like "NBA cut · Set".
+   */
+  madeToOrder: boolean;
+  /** The shop's design number, for made-to-order designs (from SKUs like D01-NBS-M). */
+  designNumber: number | null;
+  createdAt: string;
   variants: ShopVariant[];
 };
+
+/** Can be bought or ordered: in stock, or made to order. */
+export const available = (p: Pick<ShopProduct, "madeToOrder" | "stock">) => p.madeToOrder || p.stock > 0;
+export const variantAvailable = (p: Pick<ShopProduct, "madeToOrder">, v: Pick<ShopVariant, "stock">) => p.madeToOrder || v.stock > 0;
 
 // ---------------------------------------------------------------------------
 // Categories: quick filters built from tags
@@ -37,7 +48,11 @@ export type ShopProduct = {
 
 export type Category = { id: string; label: string; tags: string[] };
 
+/** The shop's designs, made to order at the counter: a category of its own, not a tag. */
+export const MADE_TO_ORDER = "made-to-order";
+
 export const CATEGORIES: Category[] = [
+  { id: MADE_TO_ORDER, label: "Made to order", tags: [] },
   { id: "basketball", label: "Basketball", tags: ["basketball"] },
   { id: "volleyball", label: "Volleyball", tags: ["volleyball"] },
   { id: "jerseys", label: "Jerseys", tags: ["jersey"] },
@@ -49,30 +64,41 @@ export const CATEGORIES: Category[] = [
 ];
 
 export function inCategory(p: ShopProduct, c: Category) {
+  if (c.id === MADE_TO_ORDER) return p.madeToOrder;
   return p.tags.some((t) => c.tags.includes(t.toLowerCase()));
 }
 
 /** Categories that hold at least one product, each with the product its tile shows. */
 export function categoriesWithProducts(products: ShopProduct[]) {
+  // Categories share products (a design is a jersey and basketball too), so each tile takes one
+  // the others haven't shown yet, keeping the rail from repeating the same garment.
+  const shown = new Set<string>();
   return CATEGORIES.map((c) => {
     const items = products.filter((p) => inCategory(p, c));
+    const fresh = items.filter((p) => !shown.has(p.id));
     // The tile shows the category's most telling garment: a jersey if it has one in stock.
-    const cover =
-      items.find((p) => p.stock > 0 && p.tags.some((t) => t.toLowerCase() === "jersey")) ??
-      items.find((p) => p.stock > 0) ??
-      items[0] ??
-      null;
+    const pick = (list: ShopProduct[]) =>
+      list.find((p) => available(p) && p.tags.some((t) => t.toLowerCase() === "jersey")) ?? list.find(available) ?? list[0];
+    const cover = pick(fresh) ?? pick(items) ?? null;
+    if (cover) shown.add(cover.id);
     return { ...c, count: items.length, cover };
   }).filter((c) => c.count > 0);
 }
 
-/** The owner features a product by tagging it "featured"; otherwise the first jersey in stock leads. */
+/**
+ * What leads the shop. The owner features a product by tagging it "featured" (a ready-made one
+ * first, then a design); otherwise the first jersey in stock, then the newest design.
+ */
 export function pickFeatured(products: ShopProduct[]) {
-  const inStock = products.filter((p) => p.stock > 0);
+  const ready = products.filter((p) => !p.madeToOrder && p.stock > 0);
+  const designs = products.filter((p) => p.madeToOrder);
+  const newest = [...designs].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || (b.designNumber ?? 0) - (a.designNumber ?? 0))[0];
   return (
-    inStock.find((p) => p.featured) ??
-    inStock.find((p) => p.tags.some((t) => t.toLowerCase() === "jersey")) ??
-    inStock[0] ??
+    ready.find((p) => p.featured) ??
+    designs.find((p) => p.featured) ??
+    ready.find((p) => p.tags.some((t) => t.toLowerCase() === "jersey")) ??
+    newest ??
+    ready[0] ??
     null
   );
 }
@@ -123,9 +149,9 @@ export function applyQuery(products: ShopProduct[], q: ShopQuery) {
     (p) =>
       (!q.q || matchesSearch(p, q.q)) &&
       (!cat || inCategory(p, cat)) &&
-      // A size filter shows products that have that size in stock, in any color.
-      (!q.size || p.variants.some((v) => v.size.toLowerCase() === q.size.toLowerCase() && v.stock > 0)) &&
-      (!q.inStock || p.stock > 0),
+      // A size filter shows products that have that size in stock (or made to order), in any color.
+      (!q.size || p.variants.some((v) => v.size.toLowerCase() === q.size.toLowerCase() && variantAvailable(p, v))) &&
+      (!q.inStock || available(p)),
   );
   switch (q.sort) {
     case "price-asc":
@@ -135,13 +161,14 @@ export function applyQuery(products: ShopProduct[], q: ShopQuery) {
     case "name":
       return [...list].sort((a, b) => a.name.localeCompare(b.name));
     default:
-      // Featured order: in stock first, then the owner's featured pick, then by category
-      // (jerseys and team wear before accessories), then name.
+      // Featured order: available first, then the owner's featured pick, then by category
+      // (jerseys and team wear before accessories), then designs by number, then name.
       return [...list].sort(
         (a, b) =>
-          Number(b.stock > 0) - Number(a.stock > 0) ||
+          Number(available(b)) - Number(available(a)) ||
           Number(b.featured) - Number(a.featured) ||
           categoryRank(a) - categoryRank(b) ||
+          (a.designNumber ?? 0) - (b.designNumber ?? 0) ||
           a.name.localeCompare(b.name),
       );
   }
@@ -149,7 +176,7 @@ export function applyQuery(products: ShopProduct[], q: ShopQuery) {
 
 function categoryRank(p: ShopProduct) {
   if (p.tags.some((t) => t.toLowerCase() === "jersey")) return -1;
-  const i = CATEGORIES.findIndex((c) => inCategory(p, c));
+  const i = CATEGORIES.findIndex((c) => c.id !== MADE_TO_ORDER && inCategory(p, c));
   return i === -1 ? CATEGORIES.length : i;
 }
 
@@ -158,7 +185,8 @@ export function catalogSizes(products: ShopProduct[]) {
   return sortSizes(unique(products.flatMap((p) => p.variants.map((v) => v.size))));
 }
 
-/** The color a card or tile shows: the first one with stock. */
+/** The color a card or tile shows: the first one with stock (a design has none to show). */
 export function leadColor(p: ShopProduct) {
+  if (p.madeToOrder) return null;
   return p.colors.find((c) => p.variants.some((v) => v.color === c && v.stock > 0)) ?? p.colors[0] ?? null;
 }

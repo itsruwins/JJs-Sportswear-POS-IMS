@@ -1,6 +1,6 @@
 // FLUX.2 from Black Forest Labs: the AI behind the design studio. Server only; the key
-// never reaches the browser. Set BFL_API_KEY in the environment to switch the studio from
-// sample-art previews to real generations (BFL_MODEL picks the endpoint, flux-2-pro by default).
+// never reaches the browser. Set BFL_API_KEY in the environment to turn the studio on
+// (BFL_MODEL picks the endpoint, flux-2-pro by default).
 
 const API = "https://api.bfl.ai/v1";
 const POLL_EVERY_MS = 1200;

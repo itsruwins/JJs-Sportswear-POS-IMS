@@ -103,7 +103,7 @@ function AccountRow({ provider: p }: { provider: PaymentProvider & { qrPath: str
             // eslint-disable-next-line @next/next/no-img-element -- a public QR image the owner just chose
             <img src={qr.url} alt={`${p.name} QR code`} className="size-16 rounded-lg bg-white object-contain p-1 shadow-[inset_0_0_0_1px_var(--line)]" />
           )}
-          <label className="press inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-3.5 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 focus-within:shadow-[0_0_0_2px_var(--amber)]">
+          <label className="press inline-flex h-10 cursor-pointer items-center gap-2 rounded-full px-3.5 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 focus-within:shadow-[0_0_0_2px_var(--focus)]">
             {busy === "qr" ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : <ImagePlus aria-hidden="true" className="size-4" />}
             {qr.url ? "Change QR code" : "Add QR code"}
             <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" disabled={!!busy} onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ""; }} />
@@ -121,7 +121,7 @@ function AccountRow({ provider: p }: { provider: PaymentProvider & { qrPath: str
           type="button"
           onClick={save}
           disabled={!changed || !!busy}
-          className="press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
+          className="press inline-flex h-11 items-center gap-2 rounded-xl bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
         >
           {busy === "save" && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
           Save

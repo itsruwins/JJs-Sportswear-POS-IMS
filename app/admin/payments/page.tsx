@@ -68,7 +68,7 @@ function KindSwitch({ counter, orders, counterCount }: { counter: boolean; order
       }`}
     >
       {label}
-      {n > 0 && <span className={`tabular rounded-full px-1.5 text-[0.75rem] ${on ? "bg-ground/20" : "bg-amber text-amber-ink"}`}>{n}</span>}
+      {n > 0 && <span className={`tabular rounded-full px-1.5 text-[0.75rem] ${on ? "bg-ground/20" : "bg-signal text-signal-ink"}`}>{n}</span>}
     </Link>
   );
   return (

@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Search, Shirt, X } from "lucide-react";
 import {
-  isSample,
   priceRange,
   productStock,
   sizeSummaries,
@@ -201,7 +200,7 @@ export function ProductsBrowser({
                 setSort(next);
                 syncUrl({ sort: next });
               }}
-              className="h-9 rounded-full bg-ground-2 px-3 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] outline-none focus-visible:shadow-[0_0_0_2px_var(--amber)]"
+              className="h-9 rounded-full bg-ground-2 px-3 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] outline-none focus-visible:shadow-[0_0_0_2px_var(--focus)]"
             >
               {SORTS.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -257,15 +256,23 @@ export function ProductsBrowser({
                   <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="text-[1rem] font-semibold text-ink group-hover:underline">{product.name}</span>
                     {!product.is_active && <Pill>Archived</Pill>}
-                    {isSample(product) && <Pill>Sample</Pill>}
+                    {product.made_to_order && <Pill>Made to order</Pill>}
                   </p>
                   <p className="mt-1 truncate text-[0.875rem] text-ink-2">
-                    {colors.join(" · ") || "No colors"}
+                    {product.made_to_order
+                      ? `${colors.length} ${colors.length === 1 ? "style" : "styles"}`
+                      : colors.join(" · ") || "No colors"}
                     <span className="md:hidden"> · {priceRange(product)}</span>
                   </p>
                 </div>
                 <div className="col-span-3 col-start-1 row-start-2 md:col-span-1 md:col-start-auto md:row-start-auto">
-                  {sizes.length > 0 ? (
+                  {product.made_to_order && sizes.length > 0 ? (
+                    // No stock to show: just the size range it's made in.
+                    <span className="tabular text-[0.875rem] text-ink">
+                      {sizes.length > 1 ? `${sizes[0].size}–${sizes[sizes.length - 1].size}` : sizes[0].size}
+                      <span className="text-ink-2"> · {sizes.length} {sizes.length === 1 ? "size" : "sizes"}</span>
+                    </span>
+                  ) : sizes.length > 0 ? (
                     <SizeRail sizes={sizes} compact />
                   ) : (
                     <span className="text-[0.875rem] text-ink-2">No sizes yet</span>
@@ -273,7 +280,9 @@ export function ProductsBrowser({
                 </div>
                 <div className="hidden text-right md:block">
                   <p className="tabular text-[0.9375rem] font-semibold text-ink">{priceRange(product)}</p>
-                  <p className="tabular mt-0.5 text-[0.8125rem] text-ink-2">{stock.total} in stock</p>
+                  <p className="tabular mt-0.5 text-[0.8125rem] text-ink-2">
+                    {product.made_to_order ? "No stock kept" : `${stock.total} in stock`}
+                  </p>
                 </div>
                 <ChevronRight
                   aria-hidden="true"

@@ -74,7 +74,7 @@ export function StatusPill({ state }: { state: StockState }) {
         Sold out
       </span>
     );
-  if (state === "low") return <Pill tone="amber">Low</Pill>;
+  if (state === "low") return <Pill tone="signal">Low</Pill>;
   return <span className="text-[0.875rem] text-ink-2">In stock</span>;
 }
 

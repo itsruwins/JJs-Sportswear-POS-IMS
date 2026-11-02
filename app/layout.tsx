@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo } from "next/font/google";
+import { Archivo, Montserrat } from "next/font/google";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
@@ -7,6 +7,14 @@ const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
   axes: ["wdth"],
+  display: "swap",
+});
+
+// The logo's tagline lettering: only the brand voice uses it.
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: "600",
   display: "swap",
 });
 
@@ -18,15 +26,15 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f8f6" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f1611" },
+    { media: "(prefers-color-scheme: light)", color: "#f9f6f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#110d0b" },
   ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // suppressHydrationWarning: the theme script sets data-theme on <html> before React hydrates.
-    <html lang="en" className={`${archivo.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${archivo.variable} ${montserrat.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

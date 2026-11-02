@@ -75,7 +75,7 @@ export function moneyOf(total: number | null, payments: Pick<MyPayment, "amount"
   };
 }
 
-/** What the customer has to do about money now, if anything (the only amber in the app). */
+/** What the customer has to do about money now, if anything (the only yellow in the app). */
 export function payAction(status: OrderStatus, money: Money | null): { kind: "down" | "balance"; amount: number } | null {
   if (!money) return null;
   if (status === "accepted" && money.downLeft > 0) return { kind: "down", amount: money.downLeft };

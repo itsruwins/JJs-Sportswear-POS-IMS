@@ -33,8 +33,8 @@ export type ReceiptPhoto = { url: string; blob: Blob };
 type Step = "start" | "preview" | "reading" | "review" | "failed";
 
 const MAX_FILE = 20 * 1024 * 1024;
-const green =
-  "press inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-board px-5 text-[1.0625rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-50";
+const primary =
+  "press inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-action px-5 text-[1.0625rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-50";
 const outlined =
   "press inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl px-5 text-[1.0625rem] font-semibold text-ink shadow-[inset_0_0_0_1.5px_var(--line)] hover:bg-ground-2 disabled:opacity-50";
 const quiet = "press inline-flex h-11 items-center justify-center gap-1.5 rounded-full px-4 text-[0.9375rem] font-semibold text-ink hover:bg-ground-2";
@@ -141,7 +141,7 @@ export function PosScanSheet({
     setTouch(window.matchMedia("(pointer: coarse)").matches);
   }, []);
 
-  // Each step announces itself by moving focus to its heading (no amber ring: it's not a control).
+  // Each step announces itself by moving focus to its heading (no focus ring: it's not a control).
   useEffect(() => {
     if (session) headingRef.current?.focus({ preventScroll: true });
   }, [step, session]);
@@ -412,12 +412,12 @@ export function PosScanSheet({
             </p>
             <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
               {touch && (
-                <button type="button" onClick={() => cameraRef.current?.click()} disabled={preparing} className={green}>
+                <button type="button" onClick={() => cameraRef.current?.click()} disabled={preparing} className={primary}>
                   {preparing ? <LoaderCircle aria-hidden="true" className="size-5 animate-spin" /> : <Camera aria-hidden="true" className="size-5" />}
                   Take photo
                 </button>
               )}
-              <button type="button" onClick={() => fileRef.current?.click()} disabled={preparing} className={touch ? outlined : green}>
+              <button type="button" onClick={() => fileRef.current?.click()} disabled={preparing} className={touch ? outlined : primary}>
                 <ImageUp aria-hidden="true" className="size-5" />
                 {touch ? "Upload screenshot" : "Choose receipt image"}
               </button>
@@ -449,7 +449,7 @@ export function PosScanSheet({
             {step === "preview" ? (
               <>
                 <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-                  <button type="button" onClick={readReceipt} className={green}>
+                  <button type="button" onClick={readReceipt} className={primary}>
                     Read receipt
                   </button>
                   <button type="button" onClick={retake} className={outlined}>
@@ -487,7 +487,7 @@ export function PosScanSheet({
             <div className="mt-5 grid gap-2.5 sm:grid-cols-2">
               {FAILURE[failure?.kind ?? "unreadable"].retake ? (
                 <>
-                  <button type="button" onClick={retake} className={green}>
+                  <button type="button" onClick={retake} className={primary}>
                     <Camera aria-hidden="true" className="size-5" />
                     Retake
                   </button>
@@ -498,7 +498,7 @@ export function PosScanSheet({
                 </>
               ) : (
                 <>
-                  <button type="button" onClick={typeInstead} className={green}>
+                  <button type="button" onClick={typeInstead} className={primary}>
                     <PenLine aria-hidden="true" className="size-5" />
                     Type the details
                   </button>
@@ -632,7 +632,7 @@ export function PosScanSheet({
               />
             )}
 
-            <button type="submit" disabled={!canAdd} className={`${green} mt-5`}>
+            <button type="submit" disabled={!canAdd} className={`${primary} mt-5`}>
               <span>
                 {editing ? "Save payment" : `Add ${provider.name} payment`}
                 {amountOk && <span className="tabular"> · {formatPeso(value)}</span>}
@@ -674,14 +674,14 @@ function FieldMark({ mark }: { mark: Mark }) {
   if (mark === "read")
     return (
       <span className="inline-flex items-center gap-1 text-[0.8125rem] text-ink-2">
-        <Check aria-hidden="true" className="size-3.5 text-board-text" strokeWidth={2.5} />
+        <Check aria-hidden="true" className="size-3.5 text-accent" strokeWidth={2.5} />
         From the receipt
       </span>
     );
   if (mark === "unsure")
     return (
       <span className="inline-flex items-center gap-1.5 text-[0.8125rem] font-semibold text-ink">
-        <span aria-hidden="true" className="size-2 rounded-full bg-amber" />
+        <span aria-hidden="true" className="size-2 rounded-full bg-signal" />
         Check this
       </span>
     );
@@ -846,7 +846,7 @@ function OwnerApproval({
   if (approval) {
     return (
       <div className="mt-4 flex items-start gap-3 rounded-2xl bg-ground-2 px-4 py-3 shadow-[inset_0_0_0_1px_var(--line)]">
-        <ShieldCheck aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-board-text" />
+        <ShieldCheck aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-accent" />
         <div className="min-w-0 flex-1 text-[0.9375rem] leading-snug text-ink">
           <p>
             <b className="font-semibold">Approved by {approval.approver}</b> for <span className="tabular">{formatPeso(approval.amount)}</span>.
@@ -896,7 +896,7 @@ function OwnerApproval({
     <fieldset className="mt-4 rounded-2xl bg-ground-2 p-4 shadow-[inset_0_0_0_1px_var(--line)]" disabled={busy}>
       <legend className="sr-only">Owner approval</legend>
       <p className="flex items-center gap-2 text-[0.9375rem] font-semibold text-ink">
-        <ShieldCheck aria-hidden="true" className="size-5 text-board-text" />
+        <ShieldCheck aria-hidden="true" className="size-5 text-accent" />
         Owner approval
       </p>
       <p className="mt-1 text-[0.875rem] leading-snug text-ink-2">
@@ -957,7 +957,7 @@ function OwnerApproval({
         <button
           type="button"
           onClick={ask}
-          className="press inline-flex h-11 items-center gap-2 rounded-full bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-50"
+          className="press inline-flex h-11 items-center gap-2 rounded-full bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-50"
         >
           {busy && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
           Approve

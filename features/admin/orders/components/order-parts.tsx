@@ -8,7 +8,7 @@ export function StatusPill({ status, progress }: { status: OrderStatus; progress
   const base = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold";
   const tone =
     status === "pending"
-      ? "bg-amber text-amber-ink"
+      ? "bg-signal text-signal-ink"
       : status === "ready"
         ? "bg-ink text-ground"
         : status === "accepted" || status === "in_progress"
@@ -43,4 +43,9 @@ export function when(iso: string) {
 
 export function personName(p: { username: string; full_name: string | null } | null) {
   return p?.full_name?.trim() || (p ? `@${p.username}` : "Unknown customer");
+}
+
+/** Who an order is for: the customer's account, or the walk-in buyer from the counter. */
+export function buyerName(o: { customer: { username: string; full_name: string | null } | null; walk_in: { name: string } | null }) {
+  return o.customer ? personName(o.customer) : o.walk_in ? `${o.walk_in.name} (walk-in)` : personName(null);
 }

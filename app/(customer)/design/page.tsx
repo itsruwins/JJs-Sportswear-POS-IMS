@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Studio, TriesLeft } from "@/features/customer/design/components/studio";
 import { pageShell } from "@/features/customer/shell/components/page-parts";
-import { DESIGNS_PER_DAY, STUDIO_SAMPLE_FILES } from "@/features/customer/design/model";
+import { DESIGNS_PER_DAY } from "@/features/customer/design/model";
 import { fetchMyDesigns, STUDIO_MIGRATION } from "@/features/customer/design/data";
 import { fluxConfigured } from "@/features/customer/design/flux";
-import { sampleArt } from "@/features/customer/design/sample-art";
 import { requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = { title: "Design · J&J Sportswear" };
@@ -15,8 +14,6 @@ export default async function DesignPage() {
   const { supabase, profile } = await requireCustomer();
   const { designs, usedToday, migrated, error } = await fetchMyDesigns(supabase);
   const live = fluxConfigured();
-  // The stage draws the sample garment in the picked colors before there's a design.
-  const art = Object.fromEntries(await Promise.all(STUDIO_SAMPLE_FILES.map(async (f) => [f, await sampleArt(`/samples/${f}`)] as const)));
   // The picks come back from the last design, logo included; sign it so it shows.
   const logoPath = designs[0]?.details?.logoPath;
   const logoUrl = logoPath ? ((await supabase.storage.from("ai-designs").createSignedUrl(logoPath, 6 * 60 * 60)).data?.signedUrl ?? null) : null;
@@ -35,7 +32,7 @@ export default async function DesignPage() {
 
       {!live && (
         <p className="mb-6 rounded-2xl bg-ground-2 px-5 py-3.5 text-[0.9375rem] leading-relaxed text-ink shadow-[inset_0_0_0_1px_var(--line)]">
-          <span className="font-semibold">Preview mode.</span> The AI turns on soon. Until then, designs use the shop’s sample art in your colors, with your team name and number. Each preview still counts toward today’s {DESIGNS_PER_DAY}.
+          <span className="font-semibold">Coming soon.</span> The shop is still turning the AI designer on. You can set up your picks now; generating opens once it’s on.
         </p>
       )}
       {!migrated && (
@@ -49,7 +46,7 @@ export default async function DesignPage() {
         </p>
       )}
 
-      <Studio uid={profile.id} designs={designs} usedToday={usedToday} live={live} art={art} savedLogoUrl={logoUrl} />
+      <Studio uid={profile.id} designs={designs} usedToday={usedToday} live={live} savedLogoUrl={logoUrl} />
     </div>
   );
 }

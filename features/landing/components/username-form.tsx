@@ -44,11 +44,11 @@ export function UsernameForm({ tone = "ground", label = "Choose a username" }: U
       </label>
       <div className="flex flex-col gap-2.5 sm:flex-row">
         <div
-          className={`flex h-12 min-w-0 flex-none items-center sm:flex-1 rounded-xl px-4 transition-[box-shadow] duration-200 focus-within:shadow-[0_0_0_2px_var(--amber)] ${
+          className={`flex h-12 min-w-0 flex-none items-center sm:flex-1 rounded-xl px-4 transition-[box-shadow] duration-200 focus-within:shadow-[0_0_0_2px_var(--focus)] ${
             onBoard
               ? "board-well text-board-ink"
               : "bg-ground-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]"
-          } ${showError ? "shadow-[0_0_0_2px_var(--amber)]" : ""}`}
+          } ${showError ? "shadow-[0_0_0_2px_var(--signal)]" : ""}`}
         >
           <span aria-hidden="true" className={onBoard ? "text-board-ink-2" : "text-ink-2"}>
             @
@@ -80,7 +80,7 @@ export function UsernameForm({ tone = "ground", label = "Choose a username" }: U
           className={`press inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl px-5 text-[1rem] font-semibold ${
             onBoard
               ? "bg-card text-card-ink shadow-[0_1px_0_oklch(1_0_0/0.6)_inset,0_6px_14px_-6px_oklch(0_0_0/0.45)] hover:bg-white"
-              : "bg-board text-board-ink hover:bg-board-deep"
+              : "bg-action text-action-ink hover:bg-action-deep"
           }`}
         >
           Create account
@@ -93,7 +93,7 @@ export function UsernameForm({ tone = "ground", label = "Choose a username" }: U
         className={`mt-2 text-[0.8125rem] ${
           showError
             ? onBoard
-              ? "font-semibold text-amber"
+              ? "font-semibold text-signal"
               : "font-semibold text-ink"
             : onBoard
               ? "text-board-ink-2"

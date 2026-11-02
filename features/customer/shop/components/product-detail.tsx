@@ -59,7 +59,7 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
       {/* Sticky on a plain wrapper: the tile's own positioning would turn `top` into an offset. */}
       <div className="lg:sticky lg:top-24 lg:self-start">
         <div className="shop-tile aspect-square">
-          <GarmentArt art={p.art} image={p.image} color={color} name={p.name} className="shop-detail-art" sizes="(min-width: 1024px) 55vw, 100vw" />
+          <GarmentArt image={p.image} color={color} name={p.name} className="shop-detail-art" sizes="(min-width: 1024px) 55vw, 100vw" />
         </div>
       </div>
 
@@ -137,7 +137,7 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
         <p className="mt-4 flex items-center gap-2 text-[0.9375rem] text-ink-2" aria-live="polite">
           {chosen ? (
             <>
-              {chosen.low && <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-amber" />}
+              {chosen.low && <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-signal" />}
               <span>
                 <span className="font-semibold text-ink">
                   {chosen.low ? `Only ${piecesLeft(chosen.stock)}` : piecesLeft(chosen.stock)}
@@ -159,7 +159,7 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
             type="button"
             onClick={buy}
             disabled={p.stock <= 0}
-            className="press inline-flex h-14 items-center justify-center gap-2 rounded-full bg-board px-6 text-[1rem] font-semibold text-board-ink hover:bg-board-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
+            className="press inline-flex h-14 items-center justify-center gap-2 rounded-full bg-action px-6 text-[1rem] font-semibold text-action-ink hover:bg-action-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
           >
             <Store aria-hidden="true" className="size-[1.125rem]" />
             {p.stock <= 0 ? "Sold out at the shop" : "Buy at the shop"}
@@ -192,11 +192,6 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
           <dt className="text-ink-2">How to buy</dt>
           <dd className="text-ink">At the shop, cash or GCash</dd>
         </dl>
-        {p.sample && (
-          <p className="mt-6 text-[0.8125rem] leading-relaxed text-ink-2">
-            Sample product: the price, stock, and illustration are demo data until the shop’s real catalog goes in.
-          </p>
-        )}
       </div>
 
       <BuySheet sheetRef={sheet} product={p} color={color} variant={chosen} shop={shop} />
@@ -243,7 +238,7 @@ function BuySheet({
         {variant && (
           <div className="mt-5 flex items-center gap-4 rounded-2xl bg-ground-2 p-3 shadow-[inset_0_0_0_1px_var(--line)]">
             <div className="shop-tile size-20 shrink-0 rounded-xl">
-              <GarmentArt art={p.art} image={p.image} color={color} name={p.name} className="shop-thumb-art" sizes="5rem" />
+              <GarmentArt image={p.image} color={color} name={p.name} className="shop-thumb-art" sizes="5rem" />
             </div>
             <div className="min-w-0">
               <p className="truncate text-[0.9375rem] font-semibold text-ink">{p.name}</p>

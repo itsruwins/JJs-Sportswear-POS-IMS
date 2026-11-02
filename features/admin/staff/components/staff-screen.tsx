@@ -11,12 +11,12 @@ const secondary =
   "press inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3.5 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2 disabled:opacity-60";
 const quiet =
   "press inline-flex h-10 shrink-0 items-center justify-center rounded-full px-3 text-[0.875rem] font-semibold text-ink-2 hover:bg-ground-2 hover:text-ink disabled:opacity-60";
-const green =
+const board =
   "press inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-board px-3.5 text-[0.875rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-60";
 const confirmBase = "press inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-[0.9375rem] font-semibold disabled:opacity-50";
 const confirmTone = {
   ink: `${confirmBase} bg-ink text-ground hover:opacity-90`,
-  green: `${confirmBase} bg-board text-board-ink hover:bg-board-deep`,
+  action: `${confirmBase} bg-action text-action-ink hover:bg-action-deep`,
 };
 
 type Change = { account: Account; from: AccountRole; to: AccountRole };
@@ -376,7 +376,7 @@ function AccountResults({ accounts, onPick }: { accounts: Account[]; onPick: (a:
             <Contact account={a} />
           </div>
           <div className="pl-[3.625rem] sm:row-span-2 sm:pl-0 lg:row-span-1 lg:flex lg:justify-end">
-            <button type="button" className={green} onClick={() => onPick(a)}>
+            <button type="button" className={board} onClick={() => onPick(a)}>
               <UserPlus aria-hidden="true" className="size-4" />
               Make staff
               <span className="sr-only">: {displayName(a)}</span>
@@ -388,12 +388,12 @@ function AccountResults({ accounts, onPick }: { accounts: Account[]; onPick: (a:
   );
 }
 
-const COPY: Record<string, { title: (who: string) => string; body: string; confirm: string; tone: "green" | "ink" }> = {
+const COPY: Record<string, { title: (who: string) => string; body: string; confirm: string; tone: "action" | "ink" }> = {
   "customer>staff": {
     title: (who) => `Make ${who} staff?`,
     body: "They’ll be able to add and edit products and change stock from their own account. They can’t delete products, see reports, or manage staff.",
     confirm: "Make staff",
-    tone: "green",
+    tone: "action",
   },
   "staff>owner": {
     title: (who) => `Make ${who} an owner?`,

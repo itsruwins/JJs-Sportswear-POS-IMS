@@ -11,7 +11,6 @@ features/customer/<x>/   customer-only features (shell/ = same for the customer 
 features/landing/        the public home page
 features/shared/         used by more than one side: ui/, auth/, catalog/, chat/, orders/, photos/
 lib/                     app-wide plumbing: supabase/, theme.ts, paths.ts, shop.ts
-assets/fonts/            fonts read on the server
 ```
 
 Rules:

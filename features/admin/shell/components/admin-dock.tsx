@@ -164,7 +164,7 @@ export function AdminDock({
                 <>
                   <span
                     className={`grid size-10 shrink-0 place-items-center rounded-xl shadow-[inset_0_0_0_1px_var(--line)] ${
-                      active ? "bg-board text-board-ink shadow-none" : s.href ? "bg-ground-2 text-ink" : "bg-ground-2 text-ink-2"
+                      active ? "bg-pick text-pick-ink shadow-none" : s.href ? "bg-ground-2 text-ink" : "bg-ground-2 text-ink-2"
                     }`}
                   >
                     <Icon aria-hidden="true" className="size-5" strokeWidth={1.8} />
@@ -173,7 +173,7 @@ export function AdminDock({
                     <span className={`flex items-center gap-2 text-[0.9375rem] font-semibold leading-tight ${s.href ? "text-ink" : "text-ink-2"}`}>
                       {s.label}
                       {s.href === "/admin/chat" && chats > 0 && (
-                        <span className="tabular grid h-5 min-w-5 place-items-center rounded-full bg-amber px-1.5 text-[0.6875rem] font-bold leading-none text-amber-ink">
+                        <span className="tabular grid h-5 min-w-5 place-items-center rounded-full bg-signal px-1.5 text-[0.6875rem] font-bold leading-none text-signal-ink">
                           {chats > 99 ? "99+" : chats}
                           <span className="sr-only"> unread</span>
                         </span>

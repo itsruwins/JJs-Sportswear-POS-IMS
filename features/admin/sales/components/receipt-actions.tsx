@@ -55,7 +55,7 @@ export function PrintButtons({ primary = false, label = "Print receipt" }: { pri
         onClick={() => printOn("thermal")}
         className={
           primary
-            ? "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-board px-4 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep"
+            ? "press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-action px-4 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep"
             : outline
         }
       >

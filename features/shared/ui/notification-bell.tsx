@@ -207,7 +207,7 @@ export function NotificationBell({ userId, variant = "admin" }: { userId: string
         {unread > 0 && (
           <span
             aria-hidden="true"
-            className="tabular absolute right-0.5 top-0.5 grid h-[1.125rem] min-w-[1.125rem] place-items-center rounded-full bg-amber px-1 text-[0.6875rem] font-bold leading-none text-amber-ink shadow-[0_0_0_2px_var(--ground)]"
+            className="tabular absolute right-0.5 top-0.5 grid h-[1.125rem] min-w-[1.125rem] place-items-center rounded-full bg-signal px-1 text-[0.6875rem] font-bold leading-none text-signal-ink shadow-[0_0_0_2px_var(--ground)]"
           >
             {unread > 9 ? "9+" : unread}
           </span>
@@ -257,7 +257,7 @@ export function NotificationBell({ userId, variant = "admin" }: { userId: string
                     >
                       <span
                         className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg ${
-                          n.type === "low_stock" ? "bg-amber text-amber-ink" : "bg-ground-2 text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]"
+                          n.type === "low_stock" ? "bg-signal text-signal-ink" : "bg-ground-2 text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]"
                         }`}
                       >
                         <Icon aria-hidden="true" className="size-4" strokeWidth={2} />
@@ -321,7 +321,7 @@ function Toast({ n, action, onDismiss, onOpen }: { n: Notification; action: stri
     >
       <span
         className={`grid size-8 shrink-0 place-items-center rounded-lg ${
-          n.type === "low_stock" ? "bg-amber text-amber-ink" : "bg-ground-2 text-ink-2"
+          n.type === "low_stock" ? "bg-signal text-signal-ink" : "bg-ground-2 text-ink-2"
         }`}
       >
         <Icon aria-hidden="true" className="size-4" strokeWidth={2} />

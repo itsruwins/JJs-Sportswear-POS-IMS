@@ -4,11 +4,12 @@ import { uuid } from "@/lib/uuid";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, LoaderCircle } from "lucide-react";
+import { ArrowLeft, LoaderCircle, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { saveProduct } from "@/features/admin/products/actions";
 import { SIZE_GROUPS, STANDARD_SIZES, UPCHARGE_SIZES } from "@/features/shared/catalog/sizes";
 import { suggestSku } from "@/features/admin/products/sku";
+import { JERSEY_STYLES, jerseyStyle } from "@/features/shared/catalog/styles";
 import { formatPeso, sortSizes, unique, variantState, type CatalogProduct } from "@/features/shared/catalog/catalog";
 import {
   LIMITS,
@@ -51,6 +52,15 @@ const sentenceCase = (s: string) => {
   return t ? t[0].toUpperCase() + t.slice(1) : t;
 };
 const fieldAttr = (key: string) => encodeURIComponent(key);
+/** A typed style reads like its preset ("nba cut · set" → "NBA cut · Set"), else in sentence case. */
+const styleName = (s: string) => jerseyStyle(s)?.name ?? sentenceCase(s);
+
+/** The price most of a style's sizes have, as the style's own price when editing. */
+function commonPrice(prices: number[]) {
+  const counts = new Map<number, number>();
+  for (const p of prices) counts.set(p, (counts.get(p) ?? 0) + 1);
+  return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]?.[0];
+}
 
 export function ProductForm({ product, images, suggestions, takenSkus }: Props) {
   const router = useRouter();
@@ -62,7 +72,8 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
   const [basePrice, setBasePrice] = useState(product ? formatMoneyInput(product.base_price) : "");
   const [upcharge, setUpcharge] = useState("");
   const [threshold, setThreshold] = useState("5");
-  const [tags, setTags] = useState(() => (product?.tags ?? []).filter((t) => t.toLowerCase() !== "sample"));
+  const [madeToOrder, setMadeToOrder] = useState(product?.made_to_order ?? false);
+  const [tags, setTags] = useState(() => product?.tags ?? []);
   const [photos, setPhotos] = useState<PhotoItem[]>(() =>
     images.map((i) => ({ key: i.id, id: i.id, url: i.url, is_primary: i.is_primary })),
   );
@@ -76,8 +87,25 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
   const live = (product?.variants ?? []).filter((v) => v.is_active);
   const [sizes, setSizes] = useState<string[]>(() => unique(live.map((v) => v.size)));
   const [colors, setColors] = useState<string[]>(() => unique(live.map((v) => v.color)));
+  // A made-to-order product's styles each carry one price for every size.
+  const [stylePrices, setStylePrices] = useState<Record<string, string>>(() => {
+    const out: Record<string, string> = {};
+    for (const c of unique(live.map((v) => v.color))) {
+      const price = commonPrice(live.filter((v) => v.color === c).map((v) => v.price));
+      if (price !== undefined) out[c] = formatMoneyInput(price);
+    }
+    return out;
+  });
   const [overrides, setOverrides] = useState<Record<string, Override>>(() => {
     const gaps: Record<string, Override> = {};
+    // A size priced apart from the rest of its style keeps that price.
+    if (product?.made_to_order)
+      for (const c of unique(live.map((v) => v.color))) {
+        const vs = live.filter((v) => v.color === c);
+        const common = commonPrice(vs.map((v) => v.price));
+        for (const v of vs)
+          if (v.price !== common) gaps[variantKey({ color: c, size: v.size ?? "" })] = { price: formatMoneyInput(v.price) };
+      }
     for (const c of unique(live.map((v) => v.color)))
       for (const sz of unique(live.map((v) => v.size))) {
         const key = variantKey({ color: c, size: sz });
@@ -122,6 +150,11 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
   const base = parseMoney(basePrice);
   const extra = upcharge.trim() ? parseMoney(upcharge) : 0;
   const anyUpcharge = sizes.some((s) => UPCHARGE_SIZES.has(s));
+  // Made to order: styles stand where colors go, and nothing is stocked.
+  const noun = madeToOrder ? "style" : "color";
+  const shelfStock = (product?.variants ?? []).reduce((sum, v) => sum + Math.max(0, v.stock_quantity), 0);
+  const styleTotals = colors.map((c) => parseMoney(stylePrices[c] ?? "")).filter(Number.isFinite);
+  const styleBase = styleTotals.length ? Math.min(...styleTotals) : 0;
 
   const rows = colors.flatMap((color) =>
     sortSizes(sizes).map((size) => {
@@ -137,9 +170,15 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
         stock: ex?.stock_quantity,
         state: ex ? variantState(ex) : undefined,
         sku: ov.sku ?? ex?.sku ?? suggestSku(name.trim() || "Product", color, size),
-        price: ov.price ?? (ex ? formatMoneyInput(ex.price) : formatMoneyInput(auto)),
+        price:
+          ov.price ??
+          (madeToOrder
+            ? (stylePrices[color] ?? (ex ? formatMoneyInput(ex.price) : ""))
+            : ex
+              ? formatMoneyInput(ex.price)
+              : formatMoneyInput(auto)),
         threshold: ov.threshold ?? (ex ? String(ex.low_stock_threshold) : threshold),
-        opening: ov.opening ?? "0",
+        opening: madeToOrder ? "0" : (ov.opening ?? "0"),
         active: ov.active ?? ex?.is_active ?? true,
       };
     }),
@@ -177,7 +216,41 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
   const changeColors = (next: string[]) => {
     reactivate(sizes, next);
     setColors(next);
+    if (madeToOrder) {
+      // A preset style arrives with the shop's price for it.
+      const priced = next.filter((c) => !stylePrices[c] && jerseyStyle(c));
+      if (priced.length)
+        setStylePrices((sp) => ({ ...sp, ...Object.fromEntries(priced.map((c) => [c, formatMoneyInput(jerseyStyle(c)!.price)])) }));
+    }
     touch("variants");
+  };
+
+  const setStylePrice = (style: string, value: string) => {
+    setStylePrices((sp) => ({ ...sp, [style]: value }));
+    // The style's price is every size's price: drop per-size prices typed before.
+    const keys = sizes.map((size) => variantKey({ color: style, size }));
+    setOverrides((o) => {
+      const next = { ...o };
+      for (const k of keys) if (next[k]?.price !== undefined) next[k] = { ...next[k], price: undefined };
+      return next;
+    });
+    touch(`style_price.${style}`, ...keys.map((k) => `variants.${k}.price`));
+  };
+
+  const switchMadeToOrder = (on: boolean) => {
+    setMadeToOrder(on);
+    if (on) {
+      // Colors already picked become styles; each starts at the price its sizes have now.
+      const fresh: Record<string, string> = {};
+      for (const c of colors) {
+        if (stylePrices[c]) continue;
+        const preset = jerseyStyle(c);
+        const now = commonPrice(rows.filter((r) => r.color === c).map((r) => parseMoney(r.price)).filter(Number.isFinite));
+        fresh[c] = formatMoneyInput(preset?.price ?? now ?? base);
+      }
+      if (Object.keys(fresh).length) setStylePrices((sp) => ({ ...sp, ...fresh }));
+    }
+    touch("made_to_order", "base_price");
   };
 
   const saved = rows.filter((r) => r.id || r.active);
@@ -186,7 +259,9 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
     id,
     name,
     description,
-    base_price: base,
+    made_to_order: madeToOrder,
+    // A made-to-order product's base price is its lowest style price.
+    base_price: madeToOrder ? styleBase : base,
     tags,
     images: current.map((p) => ({ id: p.id, url: p.url, is_primary: p.is_primary })),
     known_image_urls: seenUrls,
@@ -203,7 +278,7 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
   });
 
   const focusFirst = (found: FieldErrors) => {
-    const order = ["name", "description", "tags", "images", "sizes", "variants", "base_price"];
+    const order = ["name", "description", "tags", "images", "made_to_order", "sizes", "variants", "style_price", "base_price"];
     const first = Object.keys(found).sort((a, b) => {
       const ia = order.indexOf(a.split(".")[0]);
       const ib = order.indexOf(b.split(".")[0]);
@@ -230,10 +305,18 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
       if (taken.has(sku)) found[k] = "Another product already uses this SKU.";
       else if (holder && holder !== `${r.color} ${r.size}`) found[k] = `${holder} of this product (hidden) still uses this SKU. Use a different one.`;
     }
-    if (sizes.length === 0 && colors.length === 0) found.variants = "Pick at least one size and add one color.";
+    if (sizes.length === 0 && colors.length === 0) found.variants = `Pick at least one size and add one ${noun}.`;
     else if (sizes.length === 0) found.variants = "Pick at least one size.";
-    else if (colors.length === 0) found.variants = "Add at least one color.";
-    else if (saved.length === 0) found.variants = "Turn on “Visible” for at least one size and color.";
+    else if (colors.length === 0) found.variants = `Add at least one ${noun}.`;
+    else if (saved.length === 0) found.variants = `Turn on “Visible” for at least one size and ${noun}.`;
+    if (madeToOrder) {
+      for (const c of colors) {
+        const price = parseMoney(stylePrices[c] ?? "");
+        if (!Number.isFinite(price) || price > LIMITS.price) found[`style_price.${c}`] = "Enter a price in pesos, like 680.";
+      }
+      if (shelfStock > 0 && !product?.made_to_order)
+        found.made_to_order = `This product still has ${shelfStock} in stock. Adjust every size to 0 first.`;
+    }
     setErrors(found);
     if (Object.keys(found).length) {
       setFormError("Some fields need a look before saving.");
@@ -288,6 +371,9 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
   };
 
   const err = (key: string) => errors[key];
+  const variantCols = madeToOrder
+    ? "md:grid-cols-[minmax(0,12rem)_minmax(0,1fr)_9rem_5rem]"
+    : "md:grid-cols-[minmax(0,9rem)_minmax(0,1fr)_9rem_7rem_5rem]";
   const backHref = isNew ? "/admin/products" : `/admin/products/${id}`;
 
   return (
@@ -407,8 +493,15 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
         </div>
       </Section>
 
-      <Section title="Sizes and colors">
-        <fieldset data-field={fieldAttr("variants")} tabIndex={-1} className="outline-none">
+      <Section title={madeToOrder ? "Sizes and styles" : "Sizes and colors"}>
+        <MadeToOrderSwitch
+          on={madeToOrder}
+          onChange={switchMadeToOrder}
+          shelfStock={product?.made_to_order ? 0 : shelfStock}
+          error={err("made_to_order")}
+        />
+
+        <fieldset data-field={fieldAttr("variants")} tabIndex={-1} className="mt-8 outline-none">
           <legend className="mb-3 text-[0.9375rem] font-semibold text-ink">Sizes</legend>
           <div className="flex flex-col gap-4">
             {groups.map((g) => (
@@ -438,25 +531,43 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
         </fieldset>
 
         <div className="mt-6 max-w-[40rem]">
-          <Field label="Colors" id="p-colors" hint="Type a color and press Enter. Colors already in the catalog are suggested.">
-            <ChipInput
-              id="p-colors"
-              values={colors}
-              onChange={changeColors}
-              suggestions={suggestions.colors}
-              placeholder="Add a color"
-              format={sentenceCase}
-              removeLabel={(c) => `Remove color ${c}`}
-            />
-          </Field>
+          {madeToOrder ? (
+            <Field label="Styles" id="p-colors" hint="Tap a jersey style to add it with its price, or type your own and press Enter.">
+              <ChipInput
+                id="p-colors"
+                values={colors}
+                onChange={changeColors}
+                suggestions={JERSEY_STYLES.map((st) => st.name)}
+                placeholder="Add a style"
+                format={styleName}
+                removeLabel={(c) => `Remove style ${c}`}
+              />
+            </Field>
+          ) : (
+            <Field label="Colors" id="p-colors" hint="Type a color and press Enter. Colors already in the catalog are suggested.">
+              <ChipInput
+                id="p-colors"
+                values={colors}
+                onChange={changeColors}
+                suggestions={suggestions.colors}
+                placeholder="Add a color"
+                format={sentenceCase}
+                removeLabel={(c) => `Remove color ${c}`}
+              />
+            </Field>
+          )}
         </div>
+        {madeToOrder && <StyleChips picked={colors} onAdd={(names) => changeColors([...colors, ...names])} />}
         {err("variants") && (
           <p className="mt-3 flex gap-2 text-[0.875rem] font-semibold leading-snug text-ink">
-            <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-amber" />
+            <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-signal" />
             {err("variants")}
           </p>
         )}
 
+        {madeToOrder ? (
+          <StylePrices styles={colors} prices={stylePrices} onChange={setStylePrice} error={(c) => err(`style_price.${c}`)} />
+        ) : (
         <div className="mt-6 grid gap-5 sm:grid-cols-3">
           <Field label="Base price" id="p-price" error={err("base_price")}>
             <MoneyInput
@@ -500,8 +611,10 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
             />
           </Field>
         </div>
+        )}
       </Section>
 
+      {!madeToOrder && (
       <Section title={isNew ? "Opening stock" : "Stock"}>
         {rows.length === 0 ? (
           <p className="text-[0.9375rem] text-ink-2">Pick sizes and add colors above to set up stock.</p>
@@ -561,21 +674,24 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
           </>
         )}
       </Section>
+      )}
 
       {rows.length > 0 && (
         <Section title="Variant details">
           <p className="mb-4 max-w-[62ch] text-[0.9375rem] text-ink-2">
-            SKUs and prices fill in for you; change any of them. Turn off “Visible” to hide one size and color from the shop.
+            {madeToOrder
+              ? "SKUs and prices fill in for you; a size priced differently from its style can be changed here. Turn off “Visible” to stop offering one size and style."
+              : "SKUs and prices fill in for you; change any of them. Turn off “Visible” to hide one size and color from the shop."}
           </p>
           {willHide > 0 && (
             <p className="mb-4 rounded-xl bg-ground-2 px-4 py-3 text-[0.9375rem] text-ink shadow-[inset_0_0_0_1px_var(--line)]">
-              {willHide} {willHide === 1 ? "size and color" : "sizes and colors"} you removed
+              {willHide} {willHide === 1 ? `size and ${noun}` : `sizes and ${noun}s`} you removed
               {hidingStock > 0 ? `, holding ${hidingStock} in stock,` : ""} will be hidden from the shop. They aren’t deleted, and
               their stock history stays.
             </p>
           )}
-          <div className="hidden grid-cols-[minmax(0,9rem)_minmax(0,1fr)_9rem_7rem_5rem] gap-3 border-b border-line pb-2 text-[0.8125rem] text-ink-2 md:grid">
-            {["Variant", "SKU", "Price", "Alert at", "Visible"].map((h) => (
+          <div className={`hidden gap-3 border-b border-line pb-2 text-[0.8125rem] text-ink-2 md:grid ${variantCols}`}>
+            {(madeToOrder ? ["Variant", "SKU", "Price", "Visible"] : ["Variant", "SKU", "Price", "Alert at", "Visible"]).map((h) => (
               <span key={h} className="voice-label font-semibold">
                 {h}
               </span>
@@ -589,11 +705,13 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
               return (
                 <li
                   key={r.key}
-                  className="grid grid-cols-2 gap-x-3 gap-y-2 border-b border-line py-3 md:grid-cols-[minmax(0,9rem)_minmax(0,1fr)_9rem_7rem_5rem] md:items-start"
+                  className={`grid grid-cols-2 gap-x-3 gap-y-2 border-b border-line py-3 md:items-start ${variantCols}`}
                 >
                   <p className="col-span-2 pt-0 text-[0.9375rem] font-semibold text-ink md:col-span-1 md:pt-2.5">
-                    {r.color} · {r.size}
-                    {r.id && <span className="block text-[0.8125rem] font-normal text-ink-2 md:mt-0.5">{r.stock} in stock</span>}
+                    {madeToOrder ? `${r.color}, ${r.size}` : `${r.color} · ${r.size}`}
+                    {r.id && !madeToOrder && (
+                      <span className="block text-[0.8125rem] font-normal text-ink-2 md:mt-0.5">{r.stock} in stock</span>
+                    )}
                   </p>
                   <div className="col-span-2 md:col-span-1">
                     <label className="mb-1 block text-[0.75rem] text-ink-2 md:sr-only" htmlFor={`sku-${fieldAttr(r.key)}`}>
@@ -626,7 +744,7 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
                     />
                     {priceErr && <p className="mt-1 text-[0.8125rem] font-semibold text-ink">{priceErr}</p>}
                   </div>
-                  <div>
+                  <div className={madeToOrder ? "hidden" : ""}>
                     <label className="mb-1 block text-[0.75rem] text-ink-2 md:sr-only" htmlFor={`thr-${fieldAttr(r.key)}`}>
                       Alert at
                     </label>
@@ -653,7 +771,7 @@ export function ProductForm({ product, images, suggestions, takenSkus }: Props) 
               );
             })}
           </ul>
-          {Number.isFinite(base) && (
+          {!madeToOrder && Number.isFinite(base) && (
             <p className="mt-4 text-[0.875rem] text-ink-2">
               New variants start at {formatPeso(base)}
               {anyUpcharge && extra > 0 ? `, or ${formatPeso(base + extra)} for 2XL and up` : ""}.
@@ -681,12 +799,149 @@ function FormActions({ status, cancelHref, label }: { status: string | null; can
       <button
         type="submit"
         disabled={!!status}
-        className="press inline-flex h-11 items-center gap-2 rounded-xl bg-board px-5 text-[0.9375rem] font-semibold text-board-ink hover:bg-board-deep disabled:cursor-progress disabled:opacity-85"
+        className="press inline-flex h-11 items-center gap-2 rounded-xl bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep disabled:cursor-progress disabled:opacity-85"
       >
         {status && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
         <span aria-live="polite">{status ?? label}</span>
       </button>
     </div>
+  );
+}
+
+/** Turns a product into one that's made after it's ordered. Off while stock is on the shelf. */
+function MadeToOrderSwitch({
+  on,
+  onChange,
+  shelfStock,
+  error,
+}: {
+  on: boolean;
+  onChange: (on: boolean) => void;
+  /** Pieces in stock now; switching on waits until it's 0. */
+  shelfStock: number;
+  error?: string;
+}) {
+  const blocked = !on && shelfStock > 0;
+  return (
+    <div
+      data-field={fieldAttr("made_to_order")}
+      tabIndex={-1}
+      className={`flex flex-col gap-4 rounded-2xl bg-ground-2 p-4 outline-none sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-5 ${
+        error ? "shadow-[inset_0_0_0_2px_var(--ink)]" : "shadow-[inset_0_0_0_1px_var(--line)]"
+      }`}
+    >
+      <div className="min-w-0">
+        <p id="mto-label" className="text-[1rem] font-semibold text-ink">
+          Made to order
+        </p>
+        <p id="mto-desc" className="mt-1 max-w-[58ch] text-[0.9375rem] leading-relaxed text-ink-2">
+          {on
+            ? (
+              <>
+                Printed and sewn after it’s ordered. No stock is kept, and styles like{" "}
+                <span className="whitespace-nowrap">NBA cut · Set</span> take the place of colors.
+              </>
+            )
+            : "For designs printed after they’re ordered, like the shop’s sublimated jerseys. No stock is kept."}
+        </p>
+        {error ? (
+          <p className="mt-2 flex gap-2 text-[0.875rem] font-semibold leading-snug text-ink">
+            <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-signal" />
+            {error}
+          </p>
+        ) : (
+          blocked && (
+            <p className="mt-2 text-[0.875rem] leading-snug text-ink">
+              <span className="tabular font-semibold">{shelfStock}</span> still in stock. Adjust every size to 0 in Stock first.
+            </p>
+          )
+        )}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-labelledby="mto-label"
+        aria-describedby="mto-desc"
+        disabled={blocked}
+        onClick={() => onChange(!on)}
+        className="shop-toggle press shrink-0 self-start bg-ground disabled:cursor-not-allowed disabled:opacity-55 sm:self-auto"
+      >
+        <span aria-hidden="true" className="shop-toggle-track">
+          <span className="shop-toggle-thumb" />
+        </span>
+        <span className="w-6 text-left">{on ? "On" : "Off"}</span>
+      </button>
+    </div>
+  );
+}
+
+/** One-tap jersey styles, each arriving with the shop's price; only the ones not picked yet. */
+function StyleChips({ picked, onAdd }: { picked: string[]; onAdd: (names: string[]) => void }) {
+  const left = JERSEY_STYLES.filter((st) => !picked.some((p) => p.toLowerCase() === st.name.toLowerCase()));
+  if (!left.length) return null;
+  return (
+    <div role="group" aria-label="Jersey styles" className="mt-3 flex max-w-[48rem] flex-wrap items-center gap-1.5">
+      {left.map((st) => (
+        <button
+          key={st.name}
+          type="button"
+          onClick={() => onAdd([st.name])}
+          className="press inline-flex h-9 items-center gap-1.5 rounded-full pl-2.5 pr-3.5 text-[0.875rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2"
+        >
+          <Plus aria-hidden="true" className="size-4 text-ink-2" />
+          {st.name}
+          <span className="tabular font-normal text-ink-2">{formatPeso(st.price)}</span>
+        </button>
+      ))}
+      {left.length > 1 && (
+        <button
+          type="button"
+          onClick={() => onAdd(left.map((st) => st.name))}
+          className="press inline-flex h-9 items-center rounded-full px-3 text-[0.875rem] font-semibold text-ink underline-offset-4 hover:underline"
+        >
+          Add all {left.length}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** A made-to-order product's prices: one per style, for every size of it. */
+function StylePrices({
+  styles,
+  prices,
+  onChange,
+  error,
+}: {
+  styles: string[];
+  prices: Record<string, string>;
+  onChange: (style: string, value: string) => void;
+  error: (style: string) => string | undefined;
+}) {
+  if (!styles.length) return <p className="mt-6 text-[0.9375rem] text-ink-2">Add a style above to set its price.</p>;
+  return (
+    <fieldset className="mt-8 max-w-[40rem]">
+      <legend className="text-[0.9375rem] font-semibold text-ink">Price per style</legend>
+      <p className="mt-1 text-[0.875rem] text-ink-2">Every size of a style costs this, 2XL and up included.</p>
+      <ul className="mt-3 border-t border-line">
+        {styles.map((st) => {
+          const id = `sp-${fieldAttr(st)}`;
+          const e = error(st);
+          return (
+            <li key={st} className="grid grid-cols-[minmax(0,1fr)_9.5rem] items-start gap-4 border-b border-line py-2.5">
+              <label htmlFor={id} className="pt-2.5 text-[0.9375rem] font-semibold text-ink">
+                {st}
+              </label>
+              <div>
+                <MoneyInput id={id} field={`style_price.${st}`} value={prices[st] ?? ""} compact invalid={!!e} onChange={(v) => onChange(st, v)} />
+                {e && <p className="mt-1 text-[0.8125rem] font-semibold text-ink">{e}</p>}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </fieldset>
   );
 }
 
@@ -723,7 +978,7 @@ function Field({
       {children}
       {(error || hint) && (
         <p id={`${id}-msg`} className={`mt-2 flex gap-2 text-[0.875rem] leading-snug ${error ? "font-semibold text-ink" : "text-ink-2"}`}>
-          {error && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-amber" />}
+          {error && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-signal" />}
           {error ?? hint}
         </p>
       )}

@@ -9,7 +9,7 @@ export function OrderBand() {
         {/* The rule: horizontal on desktop, vertical on phones */}
         <span
           aria-hidden="true"
-          className="absolute bottom-2 left-[0.4375rem] top-2 w-0.5 bg-board-text md:bottom-auto md:left-0 md:right-0 md:top-[0.4375rem] md:h-0.5 md:w-auto"
+          className="absolute bottom-2 left-[0.4375rem] top-2 w-0.5 bg-accent md:bottom-auto md:left-0 md:right-0 md:top-[0.4375rem] md:h-0.5 md:w-auto"
         />
         <ol className="relative grid gap-9 md:grid-cols-6 md:gap-5">
           {ORDER_STAGES.map((s, i) => {
@@ -18,8 +18,8 @@ export function OrderBand() {
               <li key={s.word} className="relative pl-9 md:pl-0 md:pt-9">
                 <span
                   aria-hidden="true"
-                  className={`absolute left-0 top-1 size-4 rounded-full border-2 border-board-text md:top-0 ${
-                    last ? "bg-board-text" : "bg-ground"
+                  className={`absolute left-0 top-1 size-4 rounded-full border-2 border-accent md:top-0 ${
+                    last ? "bg-accent" : "bg-ground"
                   }`}
                 />
                 <p className="tabular text-[0.8125rem] text-ink-2">
@@ -36,7 +36,7 @@ export function OrderBand() {
 
       <div className="mt-12 flex flex-col gap-3 border-t border-line pt-6 text-[0.9375rem] text-ink-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="flex items-start gap-2.5">
-          <MessageCircle aria-hidden="true" className="mt-0.5 size-[1.1rem] shrink-0 text-board-text" strokeWidth={2} />
+          <MessageCircle aria-hidden="true" className="mt-0.5 size-[1.1rem] shrink-0 text-accent" strokeWidth={2} />
           <span>Questions along the way go to the chat inside your order, so the whole conversation stays with it.</span>
         </p>
         <p className="tabular shrink-0">Sample timeline · order {SAMPLE_ORDER.number}</p>

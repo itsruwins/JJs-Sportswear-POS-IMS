@@ -1,27 +1,27 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { CATEGORIES, inCategory, leadColor, type ShopProduct } from "@/features/customer/shop/model";
+import { available, CATEGORIES, inCategory, leadColor, MADE_TO_ORDER, type ShopProduct } from "@/features/customer/shop/model";
 import { GarmentArt } from "./garment-art";
 
 export function priceLabel(p: Pick<ShopProduct, "priceMin" | "priceMax">) {
   return p.priceMin === p.priceMax ? formatPeso(p.priceMin) : `From ${formatPeso(p.priceMin)}`;
 }
 
-/** "Basketball · 4 colors": the product's first category and how many colors it comes in. */
+/** "Basketball · 4 colors": the product's first category and how many colors it comes in. A design: "Made to order · 4 styles". */
 function subtitle(p: ShopProduct) {
-  const cat = CATEGORIES.find((c) => inCategory(p, c));
+  if (p.madeToOrder) return ["Made to order", p.colors.length > 1 ? `${p.colors.length} styles` : p.colors[0]].filter(Boolean).join(" · ");
+  const cat = CATEGORIES.find((c) => c.id !== MADE_TO_ORDER && inCategory(p, c));
   const colors = p.colors.length > 1 ? `${p.colors.length} colors` : p.colors[0] ?? null;
   return [cat?.label, colors].filter(Boolean).join(" · ");
 }
 
 export function ProductCard({ product: p }: { product: ShopProduct }) {
-  const soldOut = p.stock <= 0;
+  const soldOut = !available(p);
   return (
     <Link href={`/shop/${p.id}`} className="shop-card group block rounded-[1.125rem]">
       <div className="shop-tile aspect-[4/5]">
         <GarmentArt
-          art={p.art}
           image={p.image}
           color={leadColor(p)}
           name={p.name}
@@ -54,14 +54,14 @@ export function FeaturedBand({ product: p }: { product: ShopProduct }) {
             href={`/shop/${p.id}`}
             className="press inline-flex h-12 items-center gap-2 rounded-full bg-card-ink px-6 text-[0.9375rem] font-semibold text-card hover:opacity-90"
           >
-            View product
+            {p.madeToOrder ? "View design" : "View product"}
             <ArrowRight aria-hidden="true" className="size-4" />
           </Link>
           <span className="tabular text-[1rem] font-semibold text-card-ink">{priceLabel(p)}</span>
         </div>
       </div>
       <div className="order-1 aspect-[5/4] md:order-2 md:aspect-auto md:min-h-[26rem]">
-        <GarmentArt art={p.art} image={p.image} color={leadColor(p)} name={p.name} className="shop-featured-art" sizes="(min-width: 768px) 55vw, 100vw" />
+        <GarmentArt image={p.image} color={leadColor(p)} name={p.name} className="shop-featured-art" sizes="(min-width: 768px) 55vw, 100vw" />
       </div>
     </section>
   );
@@ -86,7 +86,7 @@ export function CategoryRail({ categories, current }: { categories: CategoryTile
             >
               <div className="shop-tile aspect-square" data-current={c.id === current ? "true" : undefined}>
                 {c.cover && (
-                  <GarmentArt art={c.cover.art} image={c.cover.image} color={leadColor(c.cover)} name={c.cover.name} className="shop-tile-art" sizes="12rem" />
+                  <GarmentArt image={c.cover.image} color={leadColor(c.cover)} name={c.cover.name} className="shop-tile-art" sizes="12rem" />
                 )}
               </div>
               <p className="mt-2.5 flex items-baseline justify-between gap-2 px-0.5">

@@ -461,7 +461,7 @@ export function PosScreen({
             <button
               type="submit"
               disabled={!canCharge}
-              className="press mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-board px-5 text-[1.0625rem] font-semibold text-board-ink hover:bg-board-deep disabled:opacity-50"
+              className="press mt-5 inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-action px-5 text-[1.0625rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-50"
             >
               {busy && <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />}
               {busy ? "Recording sale…" : `Charge ${formatPeso(total)}`}
@@ -508,7 +508,7 @@ export function PosScreen({
           <button
             type="button"
             onClick={showSale}
-            className="press flex h-14 w-full items-center justify-between gap-3 rounded-2xl bg-board px-5 text-board-ink shadow-[0_10px_30px_-12px_oklch(0.2_0.05_158/0.55)] hover:bg-board-deep"
+            className="press flex h-14 w-full items-center justify-between gap-3 rounded-2xl bg-action px-5 text-action-ink shadow-[0_10px_30px_-12px_oklch(0.4_0.12_37.5/0.45)] hover:bg-action-deep"
           >
             <span className="whitespace-nowrap text-[0.9375rem] font-semibold">
               {pieces} {pieces === 1 ? "piece" : "pieces"} · <span className="tabular">{formatPeso(total)}</span>
@@ -517,7 +517,7 @@ export function PosScreen({
             <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[0.9375rem] font-semibold">
               {hasIssue ? (
                 <>
-                  <span className="rounded-full bg-amber px-2.5 py-0.5 text-[0.8125rem] text-amber-ink">Check items</span>
+                  <span className="rounded-full bg-signal px-2.5 py-0.5 text-[0.8125rem] text-signal-ink">Check items</span>
                   <span className="sr-only">, review sale</span>
                 </>
               ) : (
@@ -667,7 +667,7 @@ function CartRow({
               const n = parseInt(e.target.value.replace(/\D/g, ""), 10);
               if (Number.isFinite(n) && n > 0) onQty(Math.min(n, Math.max(max, 1)));
             }}
-            className="tabular h-9 w-9 bg-transparent text-center text-[0.9375rem] font-semibold text-ink outline-none focus-visible:rounded-md focus-visible:shadow-[0_0_0_2px_var(--amber)]"
+            className="tabular h-9 w-9 bg-transparent text-center text-[0.9375rem] font-semibold text-ink outline-none focus-visible:rounded-md focus-visible:shadow-[0_0_0_2px_var(--focus)]"
           />
           <button
             type="button"

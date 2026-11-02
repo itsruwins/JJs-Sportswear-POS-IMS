@@ -5,7 +5,7 @@ const SIZES = ["S", "M", "L", "XL", "2XL"];
 
 const STATE_LABEL = { in: "in stock", low: "low stock", out: "sold out" } as const;
 
-/** A size run set into a strip of board: lit cards in stock, amber when low, an empty slot when sold out. */
+/** A size run set into a strip of board: lit cards in stock, yellow when low, an empty slot when sold out. */
 function SizeRail({ stock, labelled }: { stock: { size: string; qty: number }[]; labelled: boolean }) {
   return (
     <ul className="on-board grid grid-cols-5 gap-1.5 rounded-xl bg-board p-1.5" aria-label="Sizes">
