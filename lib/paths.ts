@@ -1,4 +1,4 @@
-/** Where customers land after logging in. */
+/** Where customers lands after logging in. */
 export const CUSTOMER_HOME = "/shop";
 
 /** Every customer route. Kept free of UI imports, since proxy.ts reads it on every request. */
