@@ -2,11 +2,13 @@
 
 import { useOptimistic, useState, useTransition } from "react";
 import Link from "next/link";
-import { ArrowRight, Store } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { PageHeader, pageShell } from "@/features/customer/shell/components/page-parts";
 import { setCartQuantity } from "@/features/customer/cart/actions";
 import { CART_MIGRATION, cartSummary, lineState, piecesLabel, type CartLine } from "@/features/customer/cart/model";
+import type { TicketSummary } from "@/features/customer/tickets/data";
+import { GetTicketButton } from "@/features/customer/tickets/components/ticket-parts";
 import { CartRow, SectionTitle, ShopDetails } from "./cart-parts";
 
 type Change = { line: CartLine; quantity: number };
@@ -19,7 +21,16 @@ type Removed = { line: CartLine; label: string };
  * estimated total and the shop's details. Changes show at once and save behind the scenes;
  * the page then re-reads the cart, so another device's changes land here too.
  */
-export function CartView({ lines, problem }: { lines: CartLine[]; problem: "missing" | "error" | null }) {
+export function CartView({
+  lines,
+  problem,
+  openTicket,
+}: {
+  lines: CartLine[];
+  problem: "missing" | "error" | null;
+  /** A ticket already waiting for the counter: a new one takes its items in. */
+  openTicket: TicketSummary | null;
+}) {
   const [shown, apply] = useOptimistic(lines, (state: CartLine[], { line, quantity }: Change) => {
     if (quantity <= 0) return state.filter((l) => l.variantId !== line.variantId);
     // Undo puts a removed line back at the end, where the saved cart will have it too.
@@ -58,6 +69,8 @@ export function CartView({ lines, problem }: { lines: CartLine[]; problem: "miss
         title="Your cart"
         sub="What you plan to buy at the shop. Pieces aren’t set aside, so stock can change before you get there."
       />
+
+      {openTicket && !problem && <OpenTicketRow ticket={openTicket} cartEmpty={shown.length === 0} />}
 
       {problem ? (
         <p role="alert" className="auth-alert max-w-[46rem] rounded-2xl px-5 py-4 text-[0.9375rem]">
@@ -115,18 +128,11 @@ export function CartView({ lines, problem }: { lines: CartLine[]; problem: "miss
               <p className="mt-2 max-w-[38ch] text-[0.875rem] leading-relaxed text-ink-2">
                 The counter charges the day’s price. Sold-out pieces aren’t counted.
               </p>
-              <div className="mt-6 rounded-2xl bg-ground-2 px-4 py-4 shadow-[inset_0_0_0_1px_var(--line)]">
-                <p className="flex items-center gap-2 text-[0.9375rem] font-semibold text-ink">
-                  <Store aria-hidden="true" className="size-4 shrink-0" />
-                  Buying it at the shop
-                </p>
-                <p className="mt-1.5 text-[0.875rem] leading-relaxed text-ink-2">
-                  Show this cart at the counter, and staff will pull your sizes from the rack.
-                </p>
-                <p className="voice-label mt-3 inline-flex items-center gap-2 text-[0.8125rem] text-ink-2">
-                  <span aria-hidden="true" className="size-1.5 rounded-full bg-ink-2" />
-                  A counter ticket for your cart comes in the next update
-                </p>
+              <div className="mt-6">
+                <GetTicketButton disabled={pieces === 0} folds={openTicket?.code ?? null} />
+                {pieces > 0 && needsLook > 0 && (
+                  <p className="mt-2 text-[0.875rem] leading-relaxed text-ink-2">Sold-out items stay in your cart.</p>
+                )}
               </div>
             </section>
 
@@ -137,6 +143,31 @@ export function CartView({ lines, problem }: { lines: CartLine[]; problem: "miss
           </aside>
         </div>
       )}
+    </div>
+  );
+}
+
+/** A ticket already made: where to find it, and what a new one does with it. */
+function OpenTicketRow({ ticket: t, cartEmpty }: { ticket: TicketSummary; cartEmpty: boolean }) {
+  return (
+    <div className="mb-8 flex max-w-[46rem] flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-2xl bg-ground-2 py-3 pl-4 pr-2 shadow-[inset_0_0_0_1px_var(--line)]">
+      <p className="min-w-0 text-[0.9375rem] leading-snug text-ink">
+        <span className="font-semibold">
+          Ticket <span className="tabular whitespace-nowrap">{t.code}</span> is ready for the counter
+        </span>
+        <span className="text-ink-2">
+          {" "}
+          · <span className="tabular">{piecesLabel(t.pieces)}</span>
+          {cartEmpty ? "." : ". A new ticket takes its items in."}
+        </span>
+      </p>
+      <Link
+        href={`/orders/tickets/${t.code}`}
+        className="press inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-3 text-[0.9375rem] font-semibold text-ink underline underline-offset-4 hover:bg-ground hover:no-underline"
+      >
+        View ticket
+        <ArrowRight aria-hidden="true" className="size-4" />
+      </Link>
     </div>
   );
 }

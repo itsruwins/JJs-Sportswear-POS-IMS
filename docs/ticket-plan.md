@@ -33,6 +33,13 @@ Goal: a customer fills a cart in the shop and gets a ticket: a short code and a 
 - A new migration (a follow-up file; applied migrations are never edited): tickets and their lines, a function that creates a ticket from a cart with a unique short code, RLS so customers see only their own tickets, and expiry after 3 days.
 - "Get my ticket" turns the cart into a ticket. The ticket page shows the code, its QR, the items, and the estimated total. Tickets are listed under Orders, and a ticket can be cancelled.
 - **Done when:** a ticket is created with a unique code, other customers can't read it, it expires on time, and cancelling works.
+- **Decided (2026-11-09):** the cart's items move into the ticket (the cart empties); "Change items in my cart" and "Cancel ticket" both put them back. One open ticket at a time: a new ticket folds the open one's items in. Codes are `JJ-` plus 5 of 31 letters and numbers with no look-alikes (0/O, 1/I/L); the prefix, case, spaces, and dashes don't matter when typing. An open ticket leads the Orders tab under "Ready for the counter", and closed ones join Past orders. Each ticket's page is `/orders/tickets/[code]`.
+- **Built 2026-11-09 (uncommitted):**
+  - Migration `20261024000000_counter_tickets.sql`: `counter_tickets` (code, status open / cancelled / replaced / paid, good for 3 days; expired means open past its time, worked out when read) and `counter_ticket_items` (name, size, color, and price as they were, plus the variant). Customers read their own and staff read all (for T3); every write goes through `rpc('create_counter_ticket')` and `rpc('return_counter_ticket', id)`. Making a ticket moves only the lines on the rack (capped at stock); sold-out and no-longer-sold lines stay in the cart. An expired ticket isn't folded into a new one, but it can still go back to the cart.
+  - `features/shared/tickets/model.ts` holds the code rules, `normalizeTicketCode` (for the POS in T3), states, and times. `features/customer/tickets/` holds the data, actions (`createTicket` opens the new ticket; `returnTicket` goes to the cart or stays), `qr.ts` (the QR as a server-drawn SVG through the new `qrcode` package), and components.
+  - Cart: the orange "Get my ticket" replaces the not-yet note, and a row names an open ticket. Orders: tickets join the list. DESIGN.md has a Counter tickets section.
+  - Tested in PGlite against all 29 migrations with Supabase's default grants: 56 checks (25 cart, 31 tickets: codes, capping, what stays in the cart, RLS for customers and staff, direct writes denied, folding, returning, expiry, deleted variants, anon, re-running). Code normalization checked separately. Screens checked through a temporary preview (deleted), and the QR decodes to its code in light, dark, and on a phone.
+- **Left for T3:** linking a sale to its ticket and marking it paid (the `paid` status is ready for it), and what voiding that sale does to the ticket.
 
 ### Phase T3: Load a ticket at the counter (staff)
 - "Load ticket" in the POS: type the code or scan the QR. Its lines fill the POS cart, and anything that changed (sold out, short, price change, removed item) is flagged.
@@ -42,5 +49,4 @@ Goal: a customer fills a cart in the shop and gets a ticket: a short code and a 
 
 ## Left open for the phase where it matters
 
-- T2: the code's alphabet and length, the QR package (or none), and whether a customer can hold more than one open ticket.
 - T3: a scanner in the POS (camera or a USB scanner typing the code), and what voiding a ticket's sale does to the ticket.
