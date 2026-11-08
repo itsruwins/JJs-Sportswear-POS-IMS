@@ -2,6 +2,7 @@
 
 import { refresh } from "next/cache";
 import { requireCustomer } from "@/features/customer/shell/session";
+import { DESIGN_TICKETS_MIGRATION } from "@/features/shared/tickets/model";
 import { CART_MIGRATION, MAX_PER_LINE } from "./model";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -43,4 +44,33 @@ export async function addToCart(variantId: string, quantity = 1): Promise<CartRe
 /** Sets a line's quantity; 0 removes it. */
 export async function setCartQuantity(variantId: string, quantity: number): Promise<CartResult> {
   return cartSet(variantId, quantity, false);
+}
+
+export type RunResult = { ok: true; pieces: number } | { ok: false; message: string };
+
+/**
+ * Adds a design's size run (S ×3, M ×5, …) in one step: every size goes in, or none does.
+ * Each size caps at 99 in the cart. Returns the pieces now in the cart for those sizes.
+ */
+export async function addRunToCart(sizes: { variantId: string; quantity: number }[]): Promise<RunResult> {
+  const { supabase } = await requireCustomer();
+  const ok =
+    Array.isArray(sizes) &&
+    sizes.length >= 1 &&
+    sizes.length <= 20 &&
+    new Set(sizes.map((s) => s?.variantId)).size === sizes.length &&
+    sizes.every((s) => typeof s?.variantId === "string" && UUID.test(s.variantId) && Number.isInteger(s.quantity) && s.quantity >= 1 && s.quantity <= MAX_PER_LINE);
+  if (!ok) return { ok: false, message: `Pick at least one size, up to ${MAX_PER_LINE} pieces each.` };
+  const { data, error } = await supabase.rpc("cart_add_run", {
+    p_items: sizes.map((s) => ({ variant_id: s.variantId, quantity: s.quantity })),
+  });
+  refresh();
+  if (error) {
+    if (error.code === "PGRST202") {
+      return { ok: false, message: `Designs in the cart need the latest database update (${DESIGN_TICKETS_MIGRATION}). Ask the shop to run it.` };
+    }
+    const r = explain(error);
+    return { ok: false, message: r.ok ? "" : r.message };
+  }
+  return { ok: true, pieces: Number(data) };
 }

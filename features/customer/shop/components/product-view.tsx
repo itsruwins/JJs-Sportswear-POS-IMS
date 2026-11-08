@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { pageShell } from "@/features/customer/shell/components/page-parts";
-import { SHOP } from "@/lib/shop";
 import { available, CATEGORIES, inCategory, MADE_TO_ORDER, type ShopProduct } from "@/features/customer/shop/model";
 import { DesignDetail } from "./design-detail";
 import { ProductDetail } from "./product-detail";
@@ -26,7 +25,6 @@ export function ProductView({
   const related = category
     ? products.filter((p) => p.id !== product.id && inCategory(p, category) && available(p)).slice(0, 4)
     : [];
-  const shop = { name: SHOP.name, address: SHOP.address, city: SHOP.city, phone: SHOP.phone, hours: SHOP.hours };
 
   return (
     <div className={pageShell}>
@@ -37,7 +35,7 @@ export function ProductView({
       </Link>
 
       {product.madeToOrder ? (
-        <DesignDetail product={product} shop={shop} />
+        <DesignDetail product={product} inCart={inCart} />
       ) : (
         <ProductDetail product={product} category={category?.label ?? null} inCart={inCart} />
       )}

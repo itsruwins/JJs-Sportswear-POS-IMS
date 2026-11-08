@@ -2,7 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CartLine } from "./model";
 
 // The cart is the customer's own rows in cart_items (RLS). Variants and products come
-// through the shop's own read rules, so an archived item arrives as null.
+// through the shop's own read rules, so an archived item arrives as null. Designs are
+// in it too (from 20261027000000_design_tickets.sql); before that, none get added.
 
 type CartRow = {
   variant_id: string;
@@ -38,7 +39,7 @@ export const cartMissing = (error: { code?: string } | null) => error?.code === 
 function toLine(r: CartRow): CartLine {
   const v = r.product_variants;
   const p = v?.products;
-  const sellable = v && p && v.is_active && p.is_active && !p.made_to_order;
+  const sellable = v && p && v.is_active && p.is_active;
   if (!sellable) return { variantId: r.variant_id, quantity: r.quantity, item: null };
   const photo = [...(p.product_images ?? [])].sort(
     (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.created_at.localeCompare(b.created_at),
@@ -55,7 +56,8 @@ function toLine(r: CartRow): CartLine {
       color: v.color ?? "One color",
       price: Number(v.price),
       stock,
-      low: stock > 0 && stock <= v.low_stock_threshold,
+      low: !p.made_to_order && stock > 0 && stock <= v.low_stock_threshold,
+      madeToOrder: !!p.made_to_order,
     },
   };
 }

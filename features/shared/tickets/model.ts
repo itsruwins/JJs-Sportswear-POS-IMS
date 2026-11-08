@@ -2,6 +2,18 @@
 // Shared because the customer makes them and the POS loads them (T3). No database here.
 
 export const TICKETS_MIGRATION = "supabase/migrations/20261024000000_counter_tickets.sql";
+/** Designs in the cart, design tickets, and their team details arrive with this update. */
+export const DESIGN_TICKETS_MIGRATION = "supabase/migrations/20261027000000_design_tickets.sql";
+
+/** A ticket holds one kind: ready-made items (charged as a sale) or designs (taken as an order). */
+export type TicketKind = "ready" | "design";
+
+/** The least a design order takes down at the counter: half the total, rounded up to the peso. */
+export const downPaymentOf = (total: number) => Math.ceil(total / 2);
+
+/** Team details a customer can put on a design ticket, as the database limits them. */
+export const TEAM_NAME_MAX = 80;
+export const ROSTER_MAX = 1500;
 
 /** How long a ticket stays good, as the database sets it. */
 export const TICKET_DAYS = 3;

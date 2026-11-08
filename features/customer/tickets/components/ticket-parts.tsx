@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { ChevronRight, LoaderCircle, Ticket as TicketIcon, X } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
-import { TICKET_STATE_TEXT, ticketState, ticketTime, type TicketState } from "@/features/shared/tickets/model";
+import { TICKET_STATE_TEXT, TICKET_DAYS, ticketState, ticketTime, type TicketKind, type TicketState } from "@/features/shared/tickets/model";
 import { createTicket, returnTicket } from "@/features/customer/tickets/actions";
 import type { TicketSummary } from "@/features/customer/tickets/data";
 
@@ -42,7 +42,8 @@ export function TicketRow({ ticket: t, now }: { ticket: TicketSummary; now: numb
             {t.names.length > 2 && ` +${t.names.length - 2}`}
           </p>
           <p className="mt-0.5 text-[0.875rem] text-ink-2">
-            Counter ticket · <span className="tabular">{t.pieces}</span> {t.pieces === 1 ? "piece" : "pieces"} ·{" "}
+            {t.kind === "design" ? "Design ticket" : "Counter ticket"}
+            {t.team && ` · ${t.team}`} · <span className="tabular">{t.pieces}</span> {t.pieces === 1 ? "piece" : "pieces"} ·{" "}
             <span className="tabular">{formatPeso(t.total)}</span>
           </p>
           <p className="tabular mt-0.5 text-[0.8125rem] text-ink-2">
@@ -57,15 +58,29 @@ export function TicketRow({ ticket: t, now }: { ticket: TicketSummary; now: numb
   );
 }
 
-/** The cart's one main action: seal what's on the rack into a ticket, then open it. */
-export function GetTicketButton({ disabled, folds }: { disabled: boolean; folds: string | null }) {
+/**
+ * Seals one part of the cart into a ticket, then opens it: what's on the rack, or the designs.
+ * Orange when it's the cart's only ticket button; ink when ready-made and designs each have one.
+ */
+export function GetTicketButton({
+  kind = "ready",
+  disabled,
+  folds,
+  tone = "action",
+}: {
+  kind?: TicketKind;
+  disabled: boolean;
+  folds: string | null;
+  tone?: "action" | "ink";
+}) {
   const [making, startMaking] = useTransition();
   const [problem, setProblem] = useState<string | null>(null);
+  const design = kind === "design";
   const make = () => {
     if (making) return;
     setProblem(null);
     startMaking(async () => {
-      const r = await createTicket();
+      const r = await createTicket(kind);
       // Success navigates to the ticket; only a refusal comes back.
       if (r && !r.ok) setProblem(r.message);
     });
@@ -77,10 +92,12 @@ export function GetTicketButton({ disabled, folds }: { disabled: boolean; folds:
         onClick={make}
         disabled={disabled}
         aria-busy={making || undefined}
-        className="press inline-flex h-14 w-full items-center justify-center gap-2 rounded-full bg-action px-6 text-[1rem] font-semibold text-action-ink hover:bg-action-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
+        className={`press inline-flex h-14 w-full items-center justify-center gap-2 rounded-full px-6 text-[1rem] font-semibold disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)] ${
+          tone === "action" ? "bg-action text-action-ink hover:bg-action-deep" : "bg-ink text-ground hover:opacity-90 disabled:opacity-100"
+        }`}
       >
         {making ? <LoaderCircle aria-hidden="true" className="size-[1.125rem] animate-spin" /> : <TicketIcon aria-hidden="true" className="size-[1.125rem]" />}
-        {making ? "Making your ticket…" : "Get my ticket"}
+        {making ? "Making your ticket…" : design ? "Get my design ticket" : "Get my ticket"}
       </button>
       <div aria-live="polite">
         {problem ? (
@@ -91,12 +108,14 @@ export function GetTicketButton({ disabled, folds }: { disabled: boolean; folds:
               "Nothing here is on the rack right now."
             ) : folds ? (
               <>
-                Your items move onto one new ticket, together with everything on{" "}
-                <span className="tabular whitespace-nowrap font-semibold text-ink">{folds}</span>. Staff scan it at the counter and you pay
-                there.
+                {design ? "Your designs" : "Your items"} move onto one new ticket, together with everything on{" "}
+                <span className="tabular whitespace-nowrap font-semibold text-ink">{folds}</span>
+                {design ? ", and its team details carry over." : ". Staff scan it at the counter and you pay there."}
               </>
+            ) : design ? (
+              `Your designs move onto their own ticket. Add your team details there if you like. At the counter you pay at least half down. It’s good for ${TICKET_DAYS} days.`
             ) : (
-              "Your items move onto a ticket with a code. Staff scan it at the counter and you pay there. It’s good for 3 days."
+              `Your items move onto a ticket with a code. Staff scan it at the counter and you pay there. It’s good for ${TICKET_DAYS} days.`
             )}
           </p>
         )}

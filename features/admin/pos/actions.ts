@@ -118,6 +118,7 @@ export async function createSale(
       cancelled: "The customer cancelled this ticket.",
       replaced: "This ticket was replaced by a newer one. Ask the customer for their latest code.",
       missing: "This ticket doesn’t exist anymore.",
+      design: "This is a design ticket; it’s taken as an order on the Designs tab, not charged here.",
     };
     return {
       ok: false,
@@ -452,6 +453,7 @@ type TicketRow = {
   id: string;
   code: string;
   status: TicketStatus;
+  kind?: "ready" | "design";
   expires_at: string;
   closed_at: string | null;
   profiles: { full_name: string | null; username: string } | null;
@@ -464,13 +466,17 @@ export async function loadTicket(input: string): Promise<LoadTicketResult> {
   const code = typeof input === "string" ? normalizeTicketCode(input) : null;
   if (!code) return { ok: false, message: "That isn’t a ticket code. Codes look like JJ-7K3QM." };
 
-  const { data, error } = await supabase
-    .from("counter_tickets")
-    .select(
-      "id, code, status, expires_at, closed_at, profiles!counter_tickets_customer_id_fkey (full_name, username), counter_ticket_items (position, variant_id, quantity, product_name, size, color, unit_price)",
-    )
-    .eq("code", code)
-    .maybeSingle<TicketRow>();
+  // A ticket's kind comes with 20261027000000_design_tickets.sql; before it, every ticket is ready-made.
+  const run = (withKind: boolean) =>
+    supabase
+      .from("counter_tickets")
+      .select(
+        `id, code, status, expires_at, closed_at, ${withKind ? "kind, " : ""}profiles!counter_tickets_customer_id_fkey (full_name, username), counter_ticket_items (position, variant_id, quantity, product_name, size, color, unit_price)`,
+      )
+      .eq("code", code)
+      .maybeSingle<TicketRow>();
+  let { data, error } = await run(true);
+  if (error?.code === "42703") ({ data, error } = await run(false));
   if (error) {
     if (error.code === "PGRST205" || error.code === "42P01") {
       return { ok: false, message: "Counter tickets need the latest database update (supabase/migrations/20261024000000_counter_tickets.sql)." };
@@ -478,6 +484,10 @@ export async function loadTicket(input: string): Promise<LoadTicketResult> {
     return { ok: false, message: "We couldn’t look up the ticket. Check the connection and try again." };
   }
   if (!data) return { ok: false, message: `No ticket ${code}. Check the code with the customer.` };
+  // Design tickets become orders on the Designs tab, not sales (loading them there comes next).
+  if (data.kind === "design") {
+    return { ok: false, message: `${code} is a design ticket. Take the order on the Designs tab with the customer; loading design tickets there comes in the next update.` };
+  }
 
   const customer = data.profiles?.full_name?.trim() || (data.profiles ? `@${data.profiles.username}` : "Customer");
   const state = ticketState({ status: data.status, expiresAt: data.expires_at, closedAt: data.closed_at });

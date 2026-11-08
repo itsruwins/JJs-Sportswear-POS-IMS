@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { GarmentArt } from "@/features/customer/shop/components/garment-art";
-import { lineState, MAX_PER_LINE, type CartLine } from "@/features/customer/cart/model";
+import { lineState, MAX_PER_LINE, piecesLabel, type CartLine, type DesignRun } from "@/features/customer/cart/model";
 import { SHOP } from "@/lib/shop";
 
 export function SectionTitle({ id, children, aside }: { id: string; children: React.ReactNode; aside?: React.ReactNode }) {
@@ -112,8 +112,89 @@ export function CartRow({ line: l, onQuantity }: { line: CartLine; onQuantity: (
   );
 }
 
-/** − / count / +, the count typed too (saved on Enter or leaving the field). */
-function Stepper({ label, quantity, max, onQuantity }: { label: string; quantity: number; max: number; onQuantity: (q: number) => void }) {
+/**
+ * One design in one style: its photo, name and style, each size with its own stepper, the run's
+ * total, and Remove for the whole run. A size's − at 1 takes that size out.
+ */
+export function DesignCard({
+  run,
+  onQuantity,
+  onRemove,
+}: {
+  run: DesignRun;
+  onQuantity: (line: CartLine, quantity: number) => void;
+  onRemove: () => void;
+}) {
+  const prices = run.lines.map((l) => l.item.price);
+  const each = Math.min(...prices) === Math.max(...prices) ? formatPeso(prices[0]) : `${formatPeso(Math.min(...prices))}–${formatPeso(Math.max(...prices))}`;
+  const title = `${run.name}, ${run.style}`;
+  return (
+    <li className="flex gap-4 border-b border-line py-4 sm:gap-5">
+      <Link href={`/shop/${run.productId}`} tabIndex={-1} aria-hidden="true" className="shop-tile size-20 shrink-0 rounded-xl sm:size-24">
+        <GarmentArt image={run.image} color={null} name={run.name} className="shop-thumb-art" sizes="6rem" />
+      </Link>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <Link href={`/shop/${run.productId}`} className="text-[1rem] font-semibold leading-snug text-ink hover:underline hover:underline-offset-4">
+              {run.name}
+            </Link>
+            <p className="tabular mt-0.5 text-[0.9375rem] text-ink-2">
+              {run.style} · {each} each · {piecesLabel(run.pieces)}
+            </p>
+          </div>
+          <p className="tabular shrink-0 text-right text-[1rem] font-semibold text-ink">{formatPeso(run.total)}</p>
+        </div>
+
+        <ul aria-label={`${title}, sizes`} className="mt-3 flex flex-wrap gap-x-4 gap-y-2.5">
+          {run.lines.map((l) => (
+            <li key={l.variantId} className="flex items-center gap-2">
+              <span className="tabular w-9 text-right text-[0.9375rem] font-semibold text-ink">{l.item.size}</span>
+              <Stepper
+                key={l.quantity}
+                label={`${title}, size ${l.item.size}`}
+                quantity={l.quantity}
+                max={MAX_PER_LINE}
+                onQuantity={(q) => onQuantity(l, q)}
+                removable
+              />
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-2 flex justify-end">
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Remove ${title}, every size`}
+            className="press -mr-2 inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-[0.9375rem] font-semibold text-ink-2 hover:bg-ground-2 hover:text-ink"
+          >
+            <Trash2 aria-hidden="true" className="size-4" />
+            Remove
+          </button>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+/**
+ * − / count / +, the count typed too (saved on Enter or leaving the field). − stops at 1, unless
+ * the line is one size of a design (`removable`), where it takes that size out.
+ */
+function Stepper({
+  label,
+  quantity,
+  max,
+  onQuantity,
+  removable = false,
+}: {
+  label: string;
+  quantity: number;
+  max: number;
+  onQuantity: (q: number) => void;
+  removable?: boolean;
+}) {
   const [draft, setDraft] = useState(String(quantity));
   const commit = () => {
     const n = parseInt(draft, 10);
@@ -126,8 +207,8 @@ function Stepper({ label, quantity, max, onQuantity }: { label: string; quantity
       <button
         type="button"
         onClick={() => onQuantity(quantity - 1)}
-        disabled={quantity <= 1}
-        aria-label="One fewer"
+        disabled={quantity <= (removable ? 0 : 1)}
+        aria-label={removable && quantity <= 1 ? `Take out ${label}` : "One fewer"}
         className="press grid size-10 place-items-center rounded-full text-ink hover:bg-ground-2 disabled:text-ink-2 disabled:opacity-50 disabled:hover:bg-transparent"
       >
         <Minus aria-hidden="true" className="size-4" />

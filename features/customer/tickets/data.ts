@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { TicketStatus } from "@/features/shared/tickets/model";
+import type { TicketKind, TicketStatus } from "@/features/shared/tickets/model";
 
 // The customer's own counter tickets (RLS). Lines keep the name, size, color, and price
 // from when the ticket was made; the live variant says whether it's still on the rack.
@@ -7,6 +7,7 @@ import type { TicketStatus } from "@/features/shared/tickets/model";
 export type TicketSummary = {
   id: string;
   code: string;
+  kind: TicketKind;
   status: TicketStatus;
   createdAt: string;
   expiresAt: string;
@@ -15,6 +16,10 @@ export type TicketSummary = {
   /** At the prices the ticket was made with. */
   total: number;
   names: string[];
+  /** Design tickets: the optional team details (all null on a ready-made ticket). */
+  team: string | null;
+  neededBy: string | null;
+  roster: string | null;
 };
 
 export type TicketLine = {
@@ -25,8 +30,10 @@ export type TicketLine = {
   color: string | null;
   price: number;
   quantity: number;
-  /** Pieces on the rack now; null when the shop no longer sells it. */
+  /** Pieces on the rack now; null when the shop no longer sells it. A design keeps no stock (0). */
   stockNow: number | null;
+  /** A made-to-order design's size: made after ordering, so stock never runs short. */
+  design: boolean;
 };
 
 export type Ticket = TicketSummary & { lines: TicketLine[] };
@@ -49,6 +56,10 @@ type ItemRow = {
 type TicketRow = {
   id: string;
   code: string;
+  kind?: TicketKind;
+  team_name?: string | null;
+  needed_by?: string | null;
+  roster?: string | null;
   status: TicketStatus;
   created_at: string;
   expires_at: string;
@@ -56,9 +67,14 @@ type TicketRow = {
   counter_ticket_items: ItemRow[] | null;
 };
 
-const SUMMARY = "id, code, status, created_at, expires_at, closed_at, counter_ticket_items (position, product_name, size, color, unit_price, quantity)";
-const DETAIL =
-  "id, code, status, created_at, expires_at, closed_at, counter_ticket_items (position, variant_id, product_name, size, color, unit_price, quantity, product_variants (stock_quantity, is_active, products (is_active, made_to_order)))";
+// Kind and team details come with 20261027000000_design_tickets.sql; before it, every ticket is ready-made.
+const BASE = "id, code, status, created_at, expires_at, closed_at";
+const KIND = "kind, team_name, needed_by, roster";
+const SUMMARY_ITEMS = "counter_ticket_items (position, product_name, size, color, unit_price, quantity)";
+const DETAIL_ITEMS =
+  "counter_ticket_items (position, variant_id, product_name, size, color, unit_price, quantity, product_variants (stock_quantity, is_active, products (is_active, made_to_order)))";
+const select = (items: string, withKind: boolean) => `${BASE}, ${withKind ? `${KIND}, ` : ""}${items}`;
+const olderTickets = (e: { code?: string } | null) => e?.code === "42703";
 
 /** The tables aren't there until the tickets migration runs. */
 export const ticketsMissing = (error: { code?: string } | null) => error?.code === "PGRST205" || error?.code === "42P01";
@@ -68,6 +84,7 @@ function toSummary(r: TicketRow): TicketSummary {
   return {
     id: r.id,
     code: r.code,
+    kind: r.kind ?? "ready",
     status: r.status,
     createdAt: r.created_at,
     expiresAt: r.expires_at,
@@ -75,12 +92,16 @@ function toSummary(r: TicketRow): TicketSummary {
     pieces: items.reduce((n, i) => n + i.quantity, 0),
     total: items.reduce((n, i) => n + i.quantity * Number(i.unit_price), 0),
     names: [...new Set(items.map((i) => i.product_name))],
+    team: r.team_name ?? null,
+    neededBy: r.needed_by ?? null,
+    roster: r.roster ?? null,
   };
 }
 
 function toLine(i: ItemRow): TicketLine {
   const v = i.product_variants;
-  const sold = v && v.is_active && v.products?.is_active && !v.products.made_to_order;
+  const design = !!v?.products?.made_to_order;
+  const sold = v && v.is_active && v.products?.is_active;
   return {
     position: i.position,
     variantId: i.variant_id ?? null,
@@ -89,31 +110,33 @@ function toLine(i: ItemRow): TicketLine {
     color: i.color,
     price: Number(i.unit_price),
     quantity: i.quantity,
-    stockNow: sold ? Math.max(0, v.stock_quantity) : null,
+    stockNow: sold ? (design ? 0 : Math.max(0, v.stock_quantity)) : null,
+    design,
   };
 }
 
 /** Every ticket but the ones folded into a newer ticket, newest first. */
 export async function fetchMyTickets(supabase: SupabaseClient, customerId: string) {
-  const { data, error } = await supabase
-    .from("counter_tickets")
-    .select(SUMMARY)
-    .eq("customer_id", customerId)
-    .neq("status", "replaced")
-    .order("created_at", { ascending: false })
-    .limit(50)
-    .returns<TicketRow[]>();
+  const run = (withKind: boolean) =>
+    supabase
+      .from("counter_tickets")
+      .select(select(SUMMARY_ITEMS, withKind))
+      .eq("customer_id", customerId)
+      .neq("status", "replaced")
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .returns<TicketRow[]>();
+  let { data, error } = await run(true);
+  if (olderTickets(error)) ({ data, error } = await run(false));
   return { tickets: (data ?? []).map(toSummary), error, missing: ticketsMissing(error) };
 }
 
 /** One ticket by its code, with its lines against today's stock. */
 export async function fetchMyTicket(supabase: SupabaseClient, customerId: string, code: string) {
-  const { data, error } = await supabase
-    .from("counter_tickets")
-    .select(DETAIL)
-    .eq("customer_id", customerId)
-    .eq("code", code)
-    .maybeSingle<TicketRow>();
+  const run = (withKind: boolean) =>
+    supabase.from("counter_tickets").select(select(DETAIL_ITEMS, withKind)).eq("customer_id", customerId).eq("code", code).maybeSingle<TicketRow>();
+  let { data, error } = await run(true);
+  if (olderTickets(error)) ({ data, error } = await run(false));
   if (!data) return { ticket: null, error };
   const ticket: Ticket = {
     ...toSummary(data),
@@ -122,18 +145,22 @@ export async function fetchMyTicket(supabase: SupabaseClient, customerId: string
   return { ticket, error };
 }
 
-/** The ticket waiting to be shown at the counter, if there is one (open and not expired). */
-export async function fetchOpenTicket(supabase: SupabaseClient, customerId: string) {
-  const { data } = await supabase
-    .from("counter_tickets")
-    .select(SUMMARY)
-    .eq("customer_id", customerId)
-    .eq("status", "open")
-    .gt("expires_at", new Date().toISOString())
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .returns<TicketRow[]>();
-  return data?.[0] ? toSummary(data[0]) : null;
+/** The tickets waiting to be shown at the counter (open and not expired): one of each kind at most. */
+export async function fetchOpenTickets(supabase: SupabaseClient, customerId: string): Promise<Record<TicketKind, TicketSummary | null>> {
+  const run = (withKind: boolean) =>
+    supabase
+      .from("counter_tickets")
+      .select(select(SUMMARY_ITEMS, withKind))
+      .eq("customer_id", customerId)
+      .eq("status", "open")
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .returns<TicketRow[]>();
+  const first = await run(true);
+  const { data } = olderTickets(first.error) ? await run(false) : first;
+  const open = (data ?? []).map(toSummary);
+  return { ready: open.find((t) => t.kind === "ready") ?? null, design: open.find((t) => t.kind === "design") ?? null };
 }
 
 export type TicketReceipt = {
