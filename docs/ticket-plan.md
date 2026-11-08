@@ -46,7 +46,10 @@ Goal: a customer fills a cart in the shop and gets a ticket: a short code and a 
 - Charging links the sale to the ticket and marks the ticket paid. An expired, cancelled, or already-paid ticket is refused with a clear message.
 - The customer's ticket shows "Paid" and links to its receipt.
 - **Done when:** a ticket goes from customer to POS to a paid sale, a ticket can't be charged twice, and voiding the sale is handled.
-
-## Left open for the phase where it matters
-
-- T3: a scanner in the POS (camera or a USB scanner typing the code), and what voiding a ticket's sale does to the ticket.
+- **Decided (2026-11-09):** scanning is the live camera with a photo as backup (Vercel serves https, which the camera needs), and typing the code or a USB scanner always works. A sale that already has items asks "replace or add". Voiding a ticket's sale reopens the ticket (it reads as expired once its 3 days are up). The customer's bell says when the ticket is paid and opens it, with the receipt on the ticket page.
+- **Built (2026-11-09, uncommitted):**
+  - Migration `20261025000000_ticket_sales.sql`: `counter_tickets.sale_id`; `rpc('create_ticket_sale', ticket, items, payments, key)` checks the ticket is open and not expired, records the sale through `create_pos_sale`, marks the ticket paid, and notifies the customer, in one step (a retried Charge with the same key returns the same sale; refusals carry DETAIL `ticket:<state>`); voiding the sale reopens the ticket and tells the customer; customers read the sale, lines, and payments of their own paid ticket; `counter_tickets` joins realtime.
+  - POS (`features/admin/pos`): `loadTicket(code)` and `createSale(..., ticketId)` in `actions.ts`; `ticket.ts` merges a ticket into the sale at most what's on the rack and notes what changed; `components/pos-ticket-scan.tsx` (camera viewfinder through the new `jsqr` package, loaded on first open, photo fallback) and `components/pos-ticket.tsx` (the ticket chip and the replace-or-add sheet). The ticket is kept with the sale in the tab (sessionStorage) and goes with Clear or the last item.
+  - Customer: the bell's `ticket` type opens the ticket; a paid ticket's page shows the receipt (`fetchTicketReceipt`); the ticket page and Orders follow `counter_tickets` live.
+  - Tested in PGlite against all migrations: 80 checks (22 for ticket sales: only staff charge; charging marks it paid, takes stock, and notifies once; a retry returns the same sale; a second charge, an expired, a cancelled, and an unknown ticket are refused; a refused payment leaves the ticket open; voiding reopens it, notifies, and it can be charged again; the customer reads their receipt and no one else's). Screens checked through a temporary preview (deleted), including the fake camera feed.
+- **Not done:** the admin receipt doesn't name the ticket it paid.

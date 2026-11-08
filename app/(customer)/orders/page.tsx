@@ -7,7 +7,8 @@ import { requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = { title: "Orders · J&J Sportswear" };
 
-const LIVE_TABLES = ["custom_orders", "payments"] as const;
+// Orders and payments move, and a ticket turns Paid at the counter; the list follows them.
+const LIVE_TABLES = ["custom_orders", "payments", "counter_tickets"] as const;
 
 export default async function OrdersPage() {
   const { supabase, profile } = await requireCustomer();

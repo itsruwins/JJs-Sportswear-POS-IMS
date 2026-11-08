@@ -7,10 +7,13 @@ import { fetchProviders } from "@/features/shared/payments/data";
 import { cleanReference, GCASH } from "@/features/shared/payments/model";
 import { geminiConfigured, GeminiError, readReceiptImage } from "@/features/admin/pos/gemini";
 import { checkReading, type ScanFailure, type ScanResult } from "@/features/admin/pos/scan";
+import { normalizeTicketCode, ticketState, ticketTime, type TicketStatus } from "@/features/shared/tickets/model";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // The sale function with payment parts arrives with this update (after 20261016000000_e_payment_methods.sql).
 const MIGRATION = "supabase/migrations/20261016120000_e_payments.sql";
+// Charging a customer's counter ticket arrives with this update.
+const TICKET_SALES_MIGRATION = "supabase/migrations/20261025000000_ticket_sales.sql";
 
 export type CartItem = { variantId: string; quantity: number };
 
@@ -31,17 +34,30 @@ export type PaymentPart =
 /** A refused item points back to its cart line, so the cart can offer the fix. */
 export type LineProblem = { variantId?: string; sku?: string; kind: "short"; available: number } | { variantId?: string; sku?: string; kind: "unavailable" };
 
-export type SaleResult = { ok: true; id: string } | { ok: false; message: string; problem?: LineProblem };
+export type SaleResult =
+  | { ok: true; id: string }
+  | {
+      ok: false;
+      message: string;
+      problem?: LineProblem;
+      /** The ticket can't be charged anymore (paid, expired, cancelled): sell without it or ask the customer. */
+      ticketClosed?: boolean;
+    };
 export type VoidResult = { ok: true } | { ok: false; message: string };
 
 const amountOk = (n: unknown) => typeof n === "number" && Number.isFinite(n) && n > 0 && n < 10_000_000;
 
-/** Records a counter sale through create_pos_sale; prices, stock, and references are checked by the database. */
+/**
+ * Records a counter sale through create_pos_sale; prices, stock, and references are checked by the
+ * database. With a ticket, create_ticket_sale charges it in the same step and marks it paid.
+ */
 export async function createSale(
   items: CartItem[],
   payments: PaymentPart[],
   /** One key per sale from the register; a retried Charge with the same key returns the same sale. */
   requestId: string,
+  /** The customer's counter ticket this sale pays, if it came from one. */
+  ticketId: string | null = null,
 ): Promise<SaleResult> {
   const { supabase } = await requireStaff();
 
@@ -68,7 +84,8 @@ export async function createSale(
             (p.overrideId == null || (typeof p.overrideId === "string" && UUID.test(p.overrideId))))),
     ) &&
     typeof requestId === "string" &&
-    UUID.test(requestId);
+    UUID.test(requestId) &&
+    (ticketId === null || (typeof ticketId === "string" && UUID.test(ticketId)));
   if (!valid) return { ok: false, message: "This sale doesn’t look right. Check the cart and try again." };
 
   const p_payments = payments.map((p) =>
@@ -86,10 +103,31 @@ export async function createSale(
   if (p_payments.some((p) => p.method === "e_payment" && !p.reference)) return { ok: false, message: "Enter the reference number from the customer’s receipt." };
 
   const p_items = items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity }));
-  let { data, error } = await supabase.rpc("create_pos_sale", { p_items, p_payments, p_request_id: requestId });
+  let { data, error } = ticketId
+    ? await supabase.rpc("create_ticket_sale", { p_ticket_id: ticketId, p_items, p_payments, p_request_id: requestId })
+    : await supabase.rpc("create_pos_sale", { p_items, p_payments, p_request_id: requestId });
+  if (ticketId && error?.code === "PGRST202") {
+    return { ok: false, message: `Charging tickets needs the latest database update (${TICKET_SALES_MIGRATION}). Remove the ticket to sell these items as a regular sale.` };
+  }
+  // A ticket that can't be charged: say what happened to it.
+  const ticketDetail = (error?.details ?? "").match(/^ticket:([a-z]+)$/)?.[1];
+  if (ticketDetail) {
+    const why: Record<string, string> = {
+      paid: "This ticket was already paid.",
+      expired: "This ticket expired.",
+      cancelled: "The customer cancelled this ticket.",
+      replaced: "This ticket was replaced by a newer one. Ask the customer for their latest code.",
+      missing: "This ticket doesn’t exist anymore.",
+    };
+    return {
+      ok: false,
+      message: `${why[ticketDetail] ?? "This ticket can’t be charged."} Nothing was charged. Remove the ticket to sell the items as a regular sale.`,
+      ticketClosed: true,
+    };
+  }
   // Before the update runs, only the cash-or-GCash function exists. A sale paid in one go by cash
   // or GCash still works through it; other providers and split payments wait.
-  if (error?.code === "PGRST202") {
+  if (!ticketId && error?.code === "PGRST202") {
     const [only] = p_payments;
     if (p_payments.length !== 1 || (only.method === "e_payment" && (only.provider !== GCASH || only.scan_id))) {
       return { ok: false, message: `This payment needs the latest database update (${MIGRATION}). Cash and GCash work in the meantime.` };
@@ -401,3 +439,64 @@ const overrideError = (code?: string) =>
   code === "PGRST205" || code === "42P01"
     ? "Approvals need the latest database update (supabase/migrations/20261018000000_e_payment_checks.sql)."
     : "We couldn’t save the approval. Try again.";
+
+// ---------------------------------------------------------------------------
+// Counter tickets: a customer's cart, sealed into a code, loaded into the sale
+// ---------------------------------------------------------------------------
+
+export type TicketLine = { variantId: string | null; quantity: number; name: string; size: string | null; color: string | null; price: number };
+export type LoadedTicket = { id: string; code: string; customer: string; expiresAt: string; lines: TicketLine[] };
+export type LoadTicketResult = { ok: true; ticket: LoadedTicket } | { ok: false; message: string };
+
+type TicketRow = {
+  id: string;
+  code: string;
+  status: TicketStatus;
+  expires_at: string;
+  closed_at: string | null;
+  profiles: { full_name: string | null; username: string } | null;
+  counter_ticket_items: { position: number; variant_id: string | null; quantity: number; product_name: string; size: string | null; color: string | null; unit_price: number | string }[] | null;
+};
+
+/** Looks up a ticket by its code (typed, scanned, or read off the customer's phone) for the sale. */
+export async function loadTicket(input: string): Promise<LoadTicketResult> {
+  const { supabase } = await requireStaff();
+  const code = typeof input === "string" ? normalizeTicketCode(input) : null;
+  if (!code) return { ok: false, message: "That isn’t a ticket code. Codes look like JJ-7K3QM." };
+
+  const { data, error } = await supabase
+    .from("counter_tickets")
+    .select(
+      "id, code, status, expires_at, closed_at, profiles!counter_tickets_customer_id_fkey (full_name, username), counter_ticket_items (position, variant_id, quantity, product_name, size, color, unit_price)",
+    )
+    .eq("code", code)
+    .maybeSingle<TicketRow>();
+  if (error) {
+    if (error.code === "PGRST205" || error.code === "42P01") {
+      return { ok: false, message: "Counter tickets need the latest database update (supabase/migrations/20261024000000_counter_tickets.sql)." };
+    }
+    return { ok: false, message: "We couldn’t look up the ticket. Check the connection and try again." };
+  }
+  if (!data) return { ok: false, message: `No ticket ${code}. Check the code with the customer.` };
+
+  const customer = data.profiles?.full_name?.trim() || (data.profiles ? `@${data.profiles.username}` : "Customer");
+  const state = ticketState({ status: data.status, expiresAt: data.expires_at, closedAt: data.closed_at });
+  switch (state) {
+    case "paid":
+      return { ok: false, message: `${code} was already paid${data.closed_at ? ` on ${ticketTime(data.closed_at)}` : ""}.` };
+    case "expired":
+      return {
+        ok: false,
+        message: `${code} expired on ${ticketTime(data.expires_at)}. ${customer} can put its items back in their cart and make a new ticket.`,
+      };
+    case "cancelled":
+      return { ok: false, message: `${customer} cancelled ${code}. Ask for their latest ticket.` };
+    case "replaced":
+      return { ok: false, message: `${code} was replaced by a newer ticket. Ask ${customer} for their latest code.` };
+  }
+
+  const lines = [...(data.counter_ticket_items ?? [])]
+    .sort((a, b) => a.position - b.position)
+    .map((i) => ({ variantId: i.variant_id, quantity: i.quantity, name: i.product_name, size: i.size, color: i.color, price: Number(i.unit_price) }));
+  return { ok: true, ticket: { id: data.id, code: data.code, customer, expiresAt: data.expires_at, lines } };
+}

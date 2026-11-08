@@ -2083,3 +2083,26 @@ button.admin-dock-item[data-current="true"]:hover {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+/* ---------- POS ticket scan ---------- */
+
+/* Four corner brackets frame where the QR should sit; the live view stays readable around them. */
+.pos-scan-target {
+  position: absolute;
+  inset: 18%;
+  pointer-events: none;
+  --c: var(--board-ink);
+  --l: 2.25rem;
+  --w: 3px;
+  background:
+    linear-gradient(var(--c), var(--c)) top left / var(--l) var(--w),
+    linear-gradient(var(--c), var(--c)) top left / var(--w) var(--l),
+    linear-gradient(var(--c), var(--c)) top right / var(--l) var(--w),
+    linear-gradient(var(--c), var(--c)) top right / var(--w) var(--l),
+    linear-gradient(var(--c), var(--c)) bottom left / var(--l) var(--w),
+    linear-gradient(var(--c), var(--c)) bottom left / var(--w) var(--l),
+    linear-gradient(var(--c), var(--c)) bottom right / var(--l) var(--w),
+    linear-gradient(var(--c), var(--c)) bottom right / var(--w) var(--l);
+  background-repeat: no-repeat;
+  border-radius: 0.75rem;
+  box-shadow: 0 0 0 100vmax oklch(0 0 0 / 0.32);
+}

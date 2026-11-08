@@ -4,8 +4,10 @@ import { uuid } from "@/lib/uuid";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, ChevronDown, LoaderCircle, Minus, Plus, Search, Trash2, X } from "lucide-react";
-import { createSale, type LineProblem, type PaymentPart } from "@/features/admin/pos/actions";
+import { ArrowLeft, ArrowRight, ChevronDown, LoaderCircle, Minus, Plus, ScanLine, Search, Ticket as TicketIcon, Trash2, X } from "lucide-react";
+import { createSale, loadTicket, type LineProblem, type LoadedTicket, type PaymentPart } from "@/features/admin/pos/actions";
+import { mergeTicket, type SaleTicket } from "@/features/admin/pos/ticket";
+import { normalizeTicketCode } from "@/features/shared/tickets/model";
 import { ProductThumb } from "@/features/admin/products/components/product-parts";
 import { FlipText } from "@/features/shared/ui/flip-text";
 import { formatPeso } from "@/features/shared/catalog/catalog";
@@ -14,6 +16,8 @@ import { parseAmount, roundPeso } from "@/features/admin/pos/amounts";
 import type { EPayment } from "@/features/admin/pos/scan";
 import { PosPayments } from "@/features/admin/pos/components/pos-payments";
 import { PosScanSheet, type ReceiptPhoto, type ScanSession } from "@/features/admin/pos/components/pos-scan-sheet";
+import { TicketChip, TicketChoice } from "@/features/admin/pos/components/pos-ticket";
+import { TicketScanSheet } from "@/features/admin/pos/components/pos-ticket-scan";
 
 export type PosVariant = {
   id: string;
@@ -31,7 +35,7 @@ type Line = CartLine & { product: PosProduct | null; variant: PosVariant | null 
 type Issue = { kind: "short"; available: number } | { kind: "unavailable" } | null;
 
 /** The sale in progress, kept for this browser tab so a stray tap or a refresh doesn't lose it (receipt photos aren't kept). */
-type Saved = { cart: CartLine[]; cashOn: boolean; cash: string; ePayments: EPayment[]; key: string };
+type Saved = { cart: CartLine[]; cashOn: boolean; cash: string; ePayments: EPayment[]; key: string; ticket?: SaleTicket | null; ticketNotes?: string[] };
 /** A sale saved by an earlier version: one method ("gcash" before e-payments), and no list of e-payments. */
 type OldSaved = Partial<Saved> & { method?: "cash" | "e_payment" | "gcash" };
 const STORE = "jj-pos-sale";
@@ -88,11 +92,19 @@ export function PosScreen({
   const [saleKey, setSaleKey] = useState(newKey);
   const [restored, setRestored] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<{ text: string; unsure?: boolean } | null>(null);
+  const [error, setError] = useState<{ text: string; unsure?: boolean; ticket?: boolean } | null>(null);
   // What the database said about a line at checkout, until that line changes.
   const [refused, setRefused] = useState<Record<string, LineProblem>>({});
   const [flash, setFlash] = useState<string | null>(null);
   const [said, setSaid] = useState("");
+  // A customer's counter ticket: the one this sale charges, what changed since they made it,
+  // one waiting on "replace or add", the lookup in flight, and the camera sheet.
+  const [ticket, setTicket] = useState<SaleTicket | null>(null);
+  const [ticketNotes, setTicketNotes] = useState<string[]>([]);
+  const [pending, setPending] = useState<LoadedTicket | null>(null);
+  const [looking, setLooking] = useState<string | null>(null);
+  const [ticketMsg, setTicketMsg] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
 
   // Bring back a sale left open in this tab (after hydration, so server and browser render the same first).
   useEffect(() => {
@@ -105,6 +117,10 @@ export function PosScreen({
         setCash(saved.cash ?? "");
         setEPayments((saved.ePayments ?? []).filter((p) => providers.some((x) => x.code === p.provider)));
         if (saved.key) setSaleKey(saved.key);
+        if (saved.ticket) {
+          setTicket(saved.ticket);
+          setTicketNotes(saved.ticketNotes ?? []);
+        }
       }
     } catch {
       // Storage unavailable (private mode, blocked): the sale just isn't kept across reloads.
@@ -117,12 +133,12 @@ export function PosScreen({
   useEffect(() => {
     if (!restored) return;
     try {
-      if (cart.length) sessionStorage.setItem(STORE, JSON.stringify({ cart, cashOn, cash, ePayments, key: saleKey } satisfies Saved));
+      if (cart.length) sessionStorage.setItem(STORE, JSON.stringify({ cart, cashOn, cash, ePayments, key: saleKey, ticket, ticketNotes } satisfies Saved));
       else sessionStorage.removeItem(STORE);
     } catch {
       // See above.
     }
-  }, [restored, cart, cashOn, cash, ePayments, saleKey]);
+  }, [restored, cart, cashOn, cash, ePayments, saleKey, ticket, ticketNotes]);
 
   // Counters with a keyboard start typing straight away; phones don't get the keyboard thrown up.
   useEffect(() => {
@@ -142,6 +158,10 @@ export function PosScreen({
     for (const p of products) for (const v of p.variants) m.set(v.id, { product: p, variant: v });
     return m;
   }, [products]);
+
+  // A ticket code typed, or typed by a USB scanner: anything starting with JJ that makes a whole code.
+  const typedTicket = /^\s*jj/i.test(query) ? normalizeTicketCode(query) : null;
+  const typingTicket = !typedTicket && /^\s*jj[-\s]?[0-9a-z]{0,4}\s*$/i.test(query);
 
   const shown = useMemo(() => {
     const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
@@ -202,6 +222,8 @@ export function PosScreen({
     setError(null);
     setRefused((r) => Object.fromEntries(Object.entries(r).filter(([id]) => id !== variantId)));
     setCart((c) => (qty <= 0 ? c.filter((x) => x.variantId !== variantId) : c.map((x) => (x.variantId === variantId ? { ...x, qty } : x))));
+    // The last item out takes the ticket with it: an empty sale charges nothing.
+    if (qty <= 0 && cart.length === 1 && cart[0].variantId === variantId) dropTicket();
     const name = l ? `${l.product?.name ?? "Item"}, ${l.variant ? variantName(l.variant) : ""}` : "Item";
     setSaid(qty <= 0 ? `Removed ${name}.` : `${name}: ${qty}.`);
     if (qty > 0) setFlash(variantId);
@@ -216,8 +238,17 @@ export function PosScreen({
     setSaid(`Added ${p.name}, ${variantName(v)}. ${now + 1} in the sale.`);
   };
 
+  const dropTicket = () => {
+    setTicket(null);
+    setTicketNotes([]);
+    // A refusal about the ticket goes with it.
+    setError((e) => (e?.ticket ? null : e));
+  };
+
   const clear = () => {
     setCart([]);
+    dropTicket();
+    setTicketMsg(null);
     setRefused({});
     setCash("");
     setCashOn(true);
@@ -240,6 +271,50 @@ export function PosScreen({
     requestAnimationFrame(() => searchRef.current?.focus({ preventScroll: true }));
   };
 
+  // Put a looked-up ticket's lines into the sale, at most what's on the rack.
+  const applyTicket = (t: LoadedTicket, mode: "replace" | "add") => {
+    setPending(null);
+    const { cart: next, notes, added } = mergeTicket(mode === "replace" ? [] : cart, t, (id) => {
+      const v = index.get(id)?.variant;
+      return v ? { stock: v.stock, price: v.price } : null;
+    });
+    if (added === 0) {
+      setTicketMsg(`Nothing on ${t.code} is on the rack right now. ${notes.join(" ")}`);
+      return;
+    }
+    setCart(next);
+    setRefused({});
+    setError(null);
+    setTicketMsg(null);
+    setTicket({ id: t.id, code: t.code, customer: t.customer });
+    setTicketNotes(notes);
+    setQuery("");
+    setOpen(null);
+    setSaid(`Loaded ${t.customer}’s ticket ${t.code}.${notes.length ? ` ${notes.length} ${notes.length === 1 ? "note" : "notes"} on it.` : ""}`);
+    showSale();
+  };
+
+  const findTicket = async (code: string) => {
+    if (looking) return;
+    setScanning(false);
+    setTicketMsg(null);
+    if (ticket?.code === code) {
+      setTicketMsg(`${code} is already in this sale.`);
+      return;
+    }
+    setLooking(code);
+    try {
+      const r = await loadTicket(code);
+      if (!r.ok) setTicketMsg(r.message);
+      else if (cart.length) setPending(r.ticket);
+      else applyTicket(r.ticket, "replace");
+    } catch {
+      setTicketMsg("We couldn’t look up the ticket. Check the connection and try again.");
+    } finally {
+      setLooking(null);
+    }
+  };
+
   const charge = async () => {
     if (!canCharge) return;
     setBusy(true);
@@ -260,16 +335,18 @@ export function PosScreen({
         lines.map((l) => ({ variantId: l.variantId, quantity: l.qty })),
         payments,
         saleKey,
+        ticket?.id ?? null,
       );
       if (result.ok) {
         try {
           sessionStorage.removeItem(STORE);
         } catch {}
         setCart([]);
+        setTicket(null);
         router.push(`/admin/sales/${result.id}?new=1`);
         return;
       }
-      setError({ text: result.message });
+      setError({ text: result.message, ticket: result.ticketClosed });
       const p = result.problem;
       if (p) {
         const line = lines.find((l) => (p.variantId ? l.variantId === p.variantId : p.sku && l.variant?.sku === p.sku));
@@ -295,49 +372,106 @@ export function PosScreen({
       <section aria-label="Find items" className={view === "cart" ? "hidden lg:block" : undefined}>
         {/* The page header sits in this column, so the sale panel starts at the top on desktop. */}
         {header}
-        <div className="relative">
-          <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 size-[1.125rem] -translate-y-1/2 text-ink-2" />
-          <label htmlFor={searchId} className="sr-only">
-            Search items
-          </label>
-          <input
-            ref={searchRef}
-            id={searchId}
-            type="search"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setOpen(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Escape" && query) {
-                e.preventDefault();
-                setQuery("");
+        <div className="flex gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 size-[1.125rem] -translate-y-1/2 text-ink-2" />
+            <label htmlFor={searchId} className="sr-only">
+              Search items
+            </label>
+            <input
+              ref={searchRef}
+              id={searchId}
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
                 setOpen(null);
-              }
-            }}
-            placeholder="Name, SKU, size, or color"
-            autoComplete="off"
-            spellCheck={false}
-            className="auth-input pl-11 pr-11"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("");
-                setOpen(null);
-                searchRef.current?.focus();
               }}
-              aria-label="Clear search"
-              className="press absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full text-ink-2 hover:text-ink"
-            >
-              <X aria-hidden="true" className="size-4" />
-            </button>
+              onKeyDown={(e) => {
+                if (e.key === "Escape" && query) {
+                  e.preventDefault();
+                  setQuery("");
+                  setOpen(null);
+                  setTicketMsg(null);
+                }
+                // A USB scanner types the code and presses Enter.
+                if (e.key === "Enter" && typedTicket) {
+                  e.preventDefault();
+                  findTicket(typedTicket);
+                }
+              }}
+              placeholder="Item or ticket code"
+              autoComplete="off"
+              spellCheck={false}
+              className="auth-input pl-11 pr-11"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setOpen(null);
+                  searchRef.current?.focus();
+                }}
+                aria-label="Clear search"
+                className="press absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full text-ink-2 hover:text-ink"
+              >
+                <X aria-hidden="true" className="size-4" />
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setTicketMsg(null);
+              setScanning(true);
+            }}
+            className={`${outline} h-12 shrink-0 px-4 text-[0.9375rem]`}
+          >
+            <ScanLine aria-hidden="true" className="size-[1.125rem]" />
+            <span className="max-sm:sr-only">Scan ticket</span>
+          </button>
+        </div>
+
+        <div aria-live="polite">
+          {ticketMsg && (
+            <p role="alert" className="auth-alert mt-3 rounded-xl px-4 py-3 text-[0.9375rem]">
+              {ticketMsg}
+            </p>
+          )}
+          {looking && !typedTicket && (
+            <p className="mt-3 inline-flex items-center gap-2 text-[0.9375rem] text-ink-2">
+              <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+              Looking up <span className="tabular">{looking}</span>…
+            </p>
           )}
         </div>
 
-        {products.length === 0 ? (
+        {typedTicket ? (
+          <button
+            type="button"
+            onClick={() => findTicket(typedTicket)}
+            disabled={!!looking}
+            className="press mt-4 flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-left shadow-[inset_0_0_0_1.5px_var(--ink)] hover:bg-ground-2 disabled:opacity-70"
+          >
+            {looking ? (
+              <LoaderCircle aria-hidden="true" className="size-5 shrink-0 animate-spin text-ink" />
+            ) : (
+              <TicketIcon aria-hidden="true" className="size-5 shrink-0 text-ink" />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block text-[1rem] font-semibold text-ink">
+                {looking ? "Looking up" : "Load ticket"} <span className="tabular whitespace-nowrap">{typedTicket}</span>
+              </span>
+              <span className="block text-[0.875rem] text-ink-2">The customer’s items go into the sale.</span>
+            </span>
+            <kbd className="hidden shrink-0 rounded-md px-2 py-0.5 font-sans text-[0.75rem] font-semibold text-ink-2 shadow-[inset_0_0_0_1px_var(--line)] lg:block">
+              Enter
+            </kbd>
+          </button>
+        ) : typingTicket && shown.length === 0 ? (
+          <p className="py-8 text-[0.9375rem] text-ink-2">Ticket codes are JJ- and 5 letters or numbers, like JJ-7K3QM.</p>
+        ) : products.length === 0 ? (
           <p className="py-8 text-[0.9375rem] text-ink-2">Nothing is on sale yet. Add products and stock first.</p>
         ) : shown.length === 0 ? (
           <p className="py-8 text-[0.9375rem] text-ink-2">No items match “{query.trim()}”. Try the name, a size, or a color.</p>
@@ -380,24 +514,37 @@ export function PosScreen({
         </div>
 
         {lines.length === 0 ? (
-          <p className="py-6 text-[0.9375rem] text-ink-2">Tap an item, then a size, to add it here.</p>
+          <p className="py-6 text-[0.9375rem] text-ink-2">Tap an item, then a size, to add it here. Or scan the customer’s ticket.</p>
         ) : (
-          // The bottom edge fades on desktop, so a longer sale reads as "more below".
-          <ul className="lg:-mx-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-1 lg:pb-4 lg:[mask-image:linear-gradient(to_bottom,black_calc(100%-1.5rem),transparent)]">
-            {lines.map((l) => (
-              <CartRow
-                key={l.variantId}
-                line={l}
-                issue={issueOf(l)}
-                flash={flash === l.variantId}
-                onQty={(q) => setQty(l.variantId, q)}
-                rowRef={(el) => {
-                  if (el) lineRefs.current.set(l.variantId, el);
-                  else lineRefs.current.delete(l.variantId);
+          // The bottom edge fades on desktop, so a longer sale reads as "more below". A ticket and
+          // its notes scroll with the lines, so total, payment, and Charge always stay in view.
+          <div className="lg:-mx-1 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:px-1 lg:pb-4 lg:[mask-image:linear-gradient(to_bottom,black_calc(100%-1.5rem),transparent)]">
+            {ticket && (
+              <TicketChip
+                ticket={ticket}
+                notes={ticketNotes}
+                onRemove={() => {
+                  dropTicket();
+                  setSaid(`Removed ticket ${ticket.code}. The items stay in the sale.`);
                 }}
               />
-            ))}
-          </ul>
+            )}
+            <ul>
+              {lines.map((l) => (
+                <CartRow
+                  key={l.variantId}
+                  line={l}
+                  issue={issueOf(l)}
+                  flash={flash === l.variantId}
+                  onQty={(q) => setQty(l.variantId, q)}
+                  rowRef={(el) => {
+                    if (el) lineRefs.current.set(l.variantId, el);
+                    else lineRefs.current.delete(l.variantId);
+                  }}
+                />
+              ))}
+            </ul>
+          </div>
         )}
 
         {lines.length > 0 && (
@@ -501,6 +648,9 @@ export function PosScreen({
         }}
         onClose={() => setSession(null)}
       />
+
+      <TicketScanSheet open={scanning} onClose={() => setScanning(false)} onCode={findTicket} />
+      <TicketChoice ticket={pending} current={ticket} onChoose={(mode) => pending && applyTicket(pending, mode)} onClose={() => setPending(null)} />
 
       {/* Phones and tablets: the sale is one tap away while picking. */}
       {lines.length > 0 && view === "pick" && (

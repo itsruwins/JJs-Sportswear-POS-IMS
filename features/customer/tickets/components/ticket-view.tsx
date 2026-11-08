@@ -6,7 +6,7 @@ import { ticketState, ticketTime, type TicketState } from "@/features/shared/tic
 import { pageShell } from "@/features/customer/shell/components/page-parts";
 import { SectionTitle, ShopDetails } from "@/features/customer/cart/components/cart-parts";
 import { piecesLabel } from "@/features/customer/cart/model";
-import type { Ticket, TicketLine } from "@/features/customer/tickets/data";
+import type { Ticket, TicketLine, TicketReceipt } from "@/features/customer/tickets/data";
 import { TicketActions, TicketPill } from "./ticket-parts";
 
 /** The line under the title: what this ticket is for now, in a sentence. */
@@ -33,13 +33,69 @@ function stockNote(l: TicketLine) {
   return null;
 }
 
+const variantOf = (size: string | null, color: string | null) => [size, color].filter(Boolean).join(" · ");
+
+/** What the counter rang up, on a paper slip: the lines as charged, the total, and how it was paid. */
+function ReceiptSlip({ receipt: r }: { receipt: TicketReceipt }) {
+  const rule = "border-t border-dashed border-[color-mix(in_oklch,var(--card-ink)_28%,transparent)]";
+  // The slip is paper in both themes, so its quiet text is mixed from its own ink, not the page's.
+  const quiet = "text-[color-mix(in_oklch,var(--card-ink)_64%,transparent)]";
+  return (
+    <div className="rounded-2xl bg-card px-5 py-5 text-card-ink shadow-[0_1px_2px_oklch(0_0_0/0.08),0_8px_24px_-16px_oklch(0_0_0/0.25)] sm:px-6">
+      <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-[0.875rem]">
+        <dt className={quiet}>Receipt no.</dt>
+        <dd className="tabular text-right font-semibold">{r.receiptNumber}</dd>
+        <dt className={quiet}>Paid</dt>
+        <dd className="tabular text-right">{ticketTime(r.paidAt)}</dd>
+      </dl>
+      <ul className={`mt-4 ${rule}`}>
+        {r.lines.map((l) => (
+          <li key={l.key} className="flex items-start justify-between gap-4 py-3">
+            <div className="min-w-0">
+              <p className="text-[0.9375rem] font-semibold leading-snug">{l.name}</p>
+              <p className={`tabular mt-0.5 text-[0.875rem] ${quiet}`}>
+                {variantOf(l.size, l.color) && `${variantOf(l.size, l.color)} · `}
+                {l.quantity} × {formatPeso(l.price)}
+              </p>
+            </div>
+            <p className="tabular shrink-0 text-[0.9375rem] font-semibold">{formatPeso(l.subtotal)}</p>
+          </li>
+        ))}
+      </ul>
+      <div className={`flex items-baseline justify-between gap-3 pt-3.5 ${rule}`}>
+        <p className="font-semibold">Total</p>
+        <p className="voice-board tabular text-[1.5rem] leading-none">{formatPeso(r.total)}</p>
+      </div>
+      <dl className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 text-[0.875rem]">
+        {r.payments.map((p) => (
+          <div key={p.key} className="contents">
+            <dt className={`min-w-0 truncate ${quiet}`}>
+              {p.label}
+              {p.reference && <span className="tabular"> · Ref {p.reference}</span>}
+            </dt>
+            <dd className="tabular text-right">{formatPeso(p.amount)}</dd>
+          </div>
+        ))}
+        {r.change > 0 && (
+          <>
+            <dt className={quiet}>Change</dt>
+            <dd className="tabular text-right">{formatPeso(r.change)}</dd>
+          </>
+        )}
+      </dl>
+    </div>
+  );
+}
+
 /**
  * A counter ticket: the code on a piece of the scoreboard with its QR, the lines it holds,
- * the estimated total, and what the customer can still do with it.
+ * the estimated total, and what the customer can still do with it. Once paid, the receipt
+ * takes the place of the lines.
  */
-export function TicketView({ ticket: t, qr, now }: { ticket: Ticket; qr: string | null; now: number }) {
+export function TicketView({ ticket: t, qr, now, receipt }: { ticket: Ticket; qr: string | null; now: number; receipt: TicketReceipt | null }) {
   const state = ticketState(t, now);
   const live = state === "ready";
+  const paid = state === "paid" ? receipt : null;
 
   return (
     <div className={pageShell}>
@@ -85,41 +141,54 @@ export function TicketView({ ticket: t, qr, now }: { ticket: Ticket; qr: string 
             </div>
           </section>
 
-          <section aria-labelledby="ticket-items-title">
-            <SectionTitle id="ticket-items-title" aside={<span className="tabular text-[0.9375rem] text-ink-2">{piecesLabel(t.pieces)}</span>}>
-              Items
-            </SectionTitle>
-            <ul>
-              {t.lines.map((l) => {
-                const note = live ? stockNote(l) : null;
-                return (
-                  <li key={l.position} className="flex items-start justify-between gap-4 border-b border-line py-3.5">
-                    <div className="min-w-0">
-                      <p className="text-[1rem] font-semibold leading-snug text-ink">{l.name}</p>
-                      <p className="tabular mt-0.5 text-[0.9375rem] text-ink-2">
-                        {[l.size, l.color].filter(Boolean).join(" · ")} · {l.quantity} × {formatPeso(l.price)}
-                      </p>
-                      {note && <p className="mt-1.5 text-[0.875rem] font-semibold text-ink">{note}</p>}
-                    </div>
-                    <p className="tabular shrink-0 text-[1rem] font-semibold text-ink">{formatPeso(l.quantity * l.price)}</p>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+          {paid ? (
+            <section aria-labelledby="ticket-receipt-title">
+              <SectionTitle id="ticket-receipt-title">Receipt</SectionTitle>
+              <div className="mt-3">
+                <ReceiptSlip receipt={paid} />
+              </div>
+            </section>
+          ) : (
+            <section aria-labelledby="ticket-items-title">
+              <SectionTitle id="ticket-items-title" aside={<span className="tabular text-[0.9375rem] text-ink-2">{piecesLabel(t.pieces)}</span>}>
+                Items
+              </SectionTitle>
+              <ul>
+                {t.lines.map((l) => {
+                  const note = live ? stockNote(l) : null;
+                  return (
+                    <li key={l.position} className="flex items-start justify-between gap-4 border-b border-line py-3.5">
+                      <div className="min-w-0">
+                        <p className="text-[1rem] font-semibold leading-snug text-ink">{l.name}</p>
+                        <p className="tabular mt-0.5 text-[0.9375rem] text-ink-2">
+                          {[l.size, l.color].filter(Boolean).join(" · ")} · {l.quantity} × {formatPeso(l.price)}
+                        </p>
+                        {note && <p className="mt-1.5 text-[0.875rem] font-semibold text-ink">{note}</p>}
+                      </div>
+                      <p className="tabular shrink-0 text-[1rem] font-semibold text-ink">{formatPeso(l.quantity * l.price)}</p>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
         </div>
 
         <aside className="flex min-w-0 flex-col gap-12">
           <section aria-labelledby="ticket-total-title">
-            <SectionTitle id="ticket-total-title">{state === "paid" ? "Ticket total" : "Estimated total"}</SectionTitle>
+            <SectionTitle id="ticket-total-title">{paid ? "You paid" : state === "paid" ? "Ticket total" : "Estimated total"}</SectionTitle>
             <dl className="mt-1 text-[0.9375rem]">
               <div className="flex items-baseline justify-between gap-3 py-2.5">
                 <dt className="font-semibold text-ink">Total</dt>
-                <dd className="voice-board tabular text-[1.75rem] leading-none text-ink">{formatPeso(t.total)}</dd>
+                <dd className="voice-board tabular text-[1.75rem] leading-none text-ink">{formatPeso(paid ? paid.total : t.total)}</dd>
               </div>
             </dl>
             <p className="mt-1 max-w-[38ch] text-[0.875rem] leading-relaxed text-ink-2">
-              {state === "paid" ? "At the prices when the ticket was made. Your receipt has what you paid." : `At the prices on ${ticketTime(t.createdAt)}. The counter charges the day’s price.`}
+              {paid
+                ? `What the counter charged for ${piecesLabel(paid.lines.reduce((n, l) => n + l.quantity, 0))}, at the day’s prices.`
+                : state === "paid"
+                  ? "At the prices when the ticket was made. Your receipt has what you paid."
+                  : `At the prices on ${ticketTime(t.createdAt)}. The counter charges the day’s price.`}
             </p>
             {(live || state === "expired") && (
               <div className="mt-6">
