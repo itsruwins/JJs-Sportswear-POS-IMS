@@ -9,15 +9,25 @@ import { usePopoverOpen } from "@/features/shared/ui/use-popover-open";
 import { Wordmark } from "@/features/shared/ui/wordmark";
 import { ThemeButton } from "@/features/shared/ui/theme-button";
 import { CUSTOMER_HOME, CUSTOMER_TABS, isActiveTab } from "@/features/customer/shell/nav";
+import { CartButton } from "@/features/customer/cart/components/cart-button";
 import { Avatar } from "./avatar";
 import { useLogOut } from "./log-out-button";
 
-type Props = { userId: string; username: string; fullName: string | null; initials: string; avatarUrl: string | null; activeHref?: string };
+type Props = {
+  userId: string;
+  username: string;
+  fullName: string | null;
+  initials: string;
+  avatarUrl: string | null;
+  /** Pieces in the cart, for the bag. */
+  cartCount: number;
+  activeHref?: string;
+};
 
 const menuItem =
   "press flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[0.9375rem] font-medium text-ink hover:bg-ground-2";
 
-export function CustomerTopBar({ userId, username, fullName, initials, avatarUrl, activeHref }: Props) {
+export function CustomerTopBar({ userId, username, fullName, initials, avatarUrl, cartCount, activeHref }: Props) {
   const current = usePathname();
   const pathname = activeHref ?? current;
   const [scrolled, setScrolled] = useState(false);
@@ -57,6 +67,7 @@ export function CustomerTopBar({ userId, username, fullName, initials, avatarUrl
         </nav>
 
         <div className="ml-auto flex items-center gap-1">
+          <CartButton count={cartCount} current={isActiveTab("/cart", pathname)} />
           <NotificationBell userId={userId} variant="customer" />
           <ThemeButton />
         </div>

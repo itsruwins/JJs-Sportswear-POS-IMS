@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { Store, X } from "lucide-react";
+import { ArrowRight, Check, LoaderCircle, ShoppingBag } from "lucide-react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { garmentColor } from "@/features/shared/catalog/colors";
 import type { ShopProduct } from "@/features/customer/shop/model";
 import { AskShop } from "@/features/customer/chat/components/ask-shop";
+import { addToCart } from "@/features/customer/cart/actions";
 import { GarmentArt } from "./garment-art";
 
 export type ShopInfo = { name: string; address: string | null; city: string; phone: string | null; hours: string | null };
@@ -15,18 +16,32 @@ function piecesLeft(n: number) {
   return n === 1 ? "1 left" : `${n} left`;
 }
 
+/** What the last tap on Add to cart did, said under the button. */
+type AddNote = { kind: "added"; label: string; quantity: number } | { kind: "problem"; text: string };
+
 /**
  * The product page's working half: the garment, color swatches, a size grid with the
- * pieces left in the chosen color, and the two ways forward (buy at the shop, or have a
- * custom version made). Picking a color recolors the garment and updates every count.
+ * pieces left in the chosen color, and the two ways forward (add it to the cart to buy at
+ * the shop, or have a custom version made). Picking a color recolors the garment and
+ * updates every count.
  */
-export function ProductDetail({ product: p, category, shop }: { product: ShopProduct; category: string | null; shop: ShopInfo }) {
+export function ProductDetail({
+  product: p,
+  category,
+  inCart,
+}: {
+  product: ShopProduct;
+  category: string | null;
+  /** Pieces already in the customer's cart, per variant id. */
+  inCart: Record<string, number>;
+}) {
   const firstInStock = p.colors.find((c) => p.variants.some((v) => v.color === c && v.stock > 0)) ?? p.colors[0] ?? null;
   const [color, setColor] = useState<string | null>(firstInStock);
   const [size, setSize] = useState<string | null>(p.sizes.length === 1 ? p.sizes[0] : null);
   const [needSize, setNeedSize] = useState(false);
   const sizeGroup = useRef<HTMLFieldSetElement>(null);
-  const sheet = useRef<HTMLDialogElement>(null);
+  const [adding, startAdding] = useTransition();
+  const [note, setNote] = useState<AddNote | null>(null);
 
   const forColor = p.variants.filter((v) => v.color === color);
   const variantOf = (s: string) => forColor.find((v) => v.size === s) ?? null;
@@ -45,13 +60,27 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
     if (size && !p.variants.some((v) => v.color === c && v.size === size && v.stock > 0) && p.sizes.length > 1) setSize(null);
   };
 
-  const buy = () => {
+  const chosenInCart = chosen ? (inCart[chosen.id] ?? 0) : 0;
+
+  const add = () => {
+    if (adding) return;
     if (!chosen) {
       setNeedSize(true);
       sizeGroup.current?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
       return;
     }
-    sheet.current?.showModal();
+    const label = `${chosen.size} · ${chosen.color}`;
+    const before = chosenInCart;
+    if (before >= chosen.stock) {
+      setNote({ kind: "problem", text: `All ${chosen.stock} in ${label} are already in your cart.` });
+      return;
+    }
+    startAdding(async () => {
+      const r = await addToCart(chosen.id, 1);
+      if (!r.ok) setNote({ kind: "problem", text: r.message });
+      else if (r.quantity <= before) setNote({ kind: "problem", text: `All ${r.quantity} in ${label} are already in your cart.` });
+      else setNote({ kind: "added", label, quantity: r.quantity });
+    });
   };
 
   return (
@@ -143,6 +172,7 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
                   {chosen.low ? `Only ${piecesLeft(chosen.stock)}` : piecesLeft(chosen.stock)}
                 </span>{" "}
                 in {chosen.size} · {chosen.color}, as of now.
+                {chosenInCart > 0 && <span className="tabular"> {chosenInCart} in your cart.</span>}
               </span>
             </>
           ) : colorStock > 0 ? (
@@ -157,13 +187,20 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
         <div className="mt-7 flex flex-col gap-2.5">
           <button
             type="button"
-            onClick={buy}
+            onClick={add}
             disabled={p.stock <= 0}
+            aria-busy={adding || undefined}
+            aria-describedby="cart-note"
             className="press inline-flex h-14 items-center justify-center gap-2 rounded-full bg-action px-6 text-[1rem] font-semibold text-action-ink hover:bg-action-deep disabled:bg-ground-2 disabled:text-ink-2 disabled:shadow-[inset_0_0_0_1px_var(--line)]"
           >
-            <Store aria-hidden="true" className="size-[1.125rem]" />
-            {p.stock <= 0 ? "Sold out at the shop" : "Buy at the shop"}
+            {adding ? (
+              <LoaderCircle aria-hidden="true" className="size-[1.125rem] animate-spin" />
+            ) : (
+              <ShoppingBag aria-hidden="true" className="size-[1.125rem]" />
+            )}
+            {p.stock <= 0 ? "Sold out at the shop" : adding ? "Adding…" : "Add to cart"}
           </button>
+          <CartNote note={note} />
           <Link
             href={`/orders/new?product=${p.id}${color ? `&color=${encodeURIComponent(color)}` : ""}`}
             className="press inline-flex h-14 items-center justify-center rounded-full px-6 text-[1rem] font-semibold text-ink shadow-[inset_0_0_0_1.5px_var(--ink)] hover:bg-ground-2"
@@ -190,107 +227,39 @@ export function ProductDetail({ product: p, category, shop }: { product: ShopPro
           <dt className="text-ink-2">Colors</dt>
           <dd className="text-ink">{p.colors.join(", ")}</dd>
           <dt className="text-ink-2">How to buy</dt>
-          <dd className="text-ink">At the shop, cash or GCash</dd>
+          <dd className="text-ink">Add it to your cart, then pay at the shop counter: cash or e-payment</dd>
         </dl>
       </div>
-
-      <BuySheet sheetRef={sheet} product={p} color={color} variant={chosen} shop={shop} />
     </div>
   );
 }
 
-function BuySheet({
-  sheetRef,
-  product: p,
-  color,
-  variant,
-  shop,
-}: {
-  sheetRef: React.RefObject<HTMLDialogElement | null>;
-  product: ShopProduct;
-  color: string | null;
-  variant: ShopProduct["variants"][number] | null;
-  shop: ShopInfo;
-}) {
-  const close = () => sheetRef.current?.close();
-  const placeholders = !shop.address || !shop.hours || !shop.phone;
-
+/** The answer to the last Add to cart, in place, so shopping carries on from here. */
+function CartNote({ note }: { note: AddNote | null }) {
   return (
-    <dialog
-      ref={sheetRef}
-      className="auth-dialog"
-      aria-labelledby="buy-title"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) close();
-      }}
-    >
-      <div className="auth-sheet px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 sm:px-7 sm:pb-7">
-        <div className="flex items-start justify-between gap-4">
-          <h2 id="buy-title" className="voice-display text-[1.875rem]">
-            Buy it at the shop
-          </h2>
-          <button type="button" onClick={close} className="press -mr-2 -mt-1 grid size-10 place-items-center rounded-full text-ink-2 hover:bg-ground-2 hover:text-ink">
-            <X aria-hidden="true" className="size-5" />
-            <span className="sr-only">Close</span>
-          </button>
+    <div id="cart-note" aria-live="polite" className="empty:hidden">
+      {note?.kind === "added" ? (
+        <div className="cart-note flex items-center gap-3 rounded-2xl bg-ground-2 py-2.5 pl-3.5 pr-2 shadow-[inset_0_0_0_1px_var(--line)]">
+          <span aria-hidden="true" className="grid size-6 shrink-0 place-items-center rounded-full bg-ink text-ground">
+            <Check className="size-3.5" strokeWidth={3} />
+          </span>
+          <p className="min-w-0 flex-1 text-[0.9375rem] leading-snug text-ink">
+            <span className="font-semibold">Added to cart.</span>{" "}
+            <span className="tabular text-ink-2">
+              {note.label} · {note.quantity} in your cart
+            </span>
+          </p>
+          <Link
+            href="/cart"
+            className="press inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-3 text-[0.9375rem] font-semibold text-ink underline underline-offset-4 hover:bg-ground hover:no-underline"
+          >
+            View cart
+            <ArrowRight aria-hidden="true" className="size-4" />
+          </Link>
         </div>
-
-        {variant && (
-          <div className="mt-5 flex items-center gap-4 rounded-2xl bg-ground-2 p-3 shadow-[inset_0_0_0_1px_var(--line)]">
-            <div className="shop-tile size-20 shrink-0 rounded-xl">
-              <GarmentArt image={p.image} color={color} name={p.name} className="shop-thumb-art" sizes="5rem" />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-[0.9375rem] font-semibold text-ink">{p.name}</p>
-              <p className="text-[0.875rem] text-ink-2">
-                {variant.color} · Size {variant.size}
-              </p>
-              <p className="tabular mt-1 text-[0.9375rem] text-ink">
-                <span className="font-semibold">{formatPeso(variant.price)}</span>
-                <span className="text-ink-2"> · {piecesLeft(variant.stock)} right now</span>
-              </p>
-            </div>
-          </div>
-        )}
-
-        <p className="mt-5 text-[0.9375rem] leading-relaxed text-ink-2">
-          Show this at the counter and staff will pull it from the rack. Stock can change before you get there.
-        </p>
-
-        <dl className="mt-5 divide-y divide-line border-y border-line text-[0.9375rem]">
-          <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-3">
-            <dt className="text-ink-2">Where</dt>
-            <dd className="text-ink">
-              {shop.name}
-              <br />
-              {shop.address ?? <span className="text-ink-2">Street address to follow</span>}, {shop.city}
-            </dd>
-          </div>
-          <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-3">
-            <dt className="text-ink-2">Hours</dt>
-            <dd className={shop.hours ? "text-ink" : "text-ink-2"}>{shop.hours ?? "Store hours to follow"}</dd>
-          </div>
-          <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-3">
-            <dt className="text-ink-2">Phone</dt>
-            <dd className={shop.phone ? "text-ink" : "text-ink-2"}>{shop.phone ?? "Contact number to follow"}</dd>
-          </div>
-          <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-3">
-            <dt className="text-ink-2">Pay with</dt>
-            <dd className="text-ink">Cash or GCash at the counter</dd>
-          </div>
-        </dl>
-        {placeholders && (
-          <p className="mt-4 text-[0.8125rem] text-ink-2">The shop’s address, hours, and phone go here once they’re confirmed.</p>
-        )}
-
-        <button
-          type="button"
-          onClick={close}
-          className="press mt-6 inline-flex h-12 w-full items-center justify-center rounded-xl bg-ink px-5 text-[1rem] font-semibold text-ground hover:opacity-90"
-        >
-          Got it
-        </button>
-      </div>
-    </dialog>
+      ) : note?.kind === "problem" ? (
+        <p className="cart-note px-1 text-[0.9375rem] font-semibold text-ink">{note.text}</p>
+      ) : null}
+    </div>
   );
 }
