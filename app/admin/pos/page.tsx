@@ -9,6 +9,7 @@ import { fetchCatalog, sortColors, sortSizes } from "@/features/shared/catalog/c
 import { fetchProviders } from "@/features/shared/payments/data";
 import { geminiConfigured } from "@/features/admin/pos/gemini";
 import { requireStaff } from "@/features/admin/shell/session";
+import { normalizeTicketCode } from "@/features/shared/tickets/model";
 
 export const metadata: Metadata = { title: "Point of sale · J&J Sportswear Admin" };
 
@@ -18,7 +19,10 @@ export const metadata: Metadata = { title: "Point of sale · J&J Sportswear Admi
  */
 export default async function PosPage({ searchParams }: PageProps<"/admin/pos">) {
   const { supabase, profile } = await requireStaff();
-  const tab = (await searchParams).tab === "designs" ? "designs" : "shelf";
+  const params = await searchParams;
+  const tab = params.tab === "designs" ? "designs" : "shelf";
+  // A ticket code handed from one tab to the other (a design code scanned on Shelf, or a ready-made one on Designs).
+  const ticket = typeof params.ticket === "string" ? normalizeTicketCode(params.ticket) : null;
   const [{ products, error }, { providers }] = await Promise.all([fetchCatalog(supabase), fetchProviders(supabase)]);
 
   // Only what can be sold off the shelf: products in the catalog and their visible sizes and colors.
@@ -60,7 +64,7 @@ export default async function PosPage({ searchParams }: PageProps<"/admin/pos">)
         <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">Point of sale</h1>
         <p className="mt-2 max-w-[60ch] text-[0.9375rem] text-ink-2">
           {tab === "designs"
-            ? "Take an order for a design: pick its styles and sizes, the buyer, and at least half down."
+            ? "Take an order for a design, or load the customer’s design ticket: styles and sizes, the buyer, and at least half down."
             : "Find the item, tap its size, and take payment. Stock updates the moment it sells."}
         </p>
         <nav aria-label="What to sell" className="mt-4 inline-flex gap-1 rounded-xl bg-ground-2 p-1 shadow-[inset_0_0_0_1px_var(--line)]">
@@ -101,10 +105,11 @@ export default async function PosPage({ searchParams }: PageProps<"/admin/pos">)
               providers={providers.filter((p) => p.isActive)}
               reader={geminiConfigured()}
               isOwner={profile.role === "owner"}
+              initialTicket={ticket}
             />
           </>
         ) : (
-          <PosScreen products={forSale} providers={providers.filter((p) => p.isActive)} reader={geminiConfigured()} isOwner={profile.role === "owner"} header={header} />
+          <PosScreen products={forSale} providers={providers.filter((p) => p.isActive)} reader={geminiConfigured()} isOwner={profile.role === "owner"} header={header} initialTicket={ticket} />
         )
       )}
     </div>

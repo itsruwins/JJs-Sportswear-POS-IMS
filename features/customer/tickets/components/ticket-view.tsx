@@ -26,6 +26,8 @@ function lead(t: Ticket, state: TicketState) {
       return "Its items moved onto your newer ticket, so this code no longer works.";
     case "paid":
       return `Paid at the counter${t.closedAt ? ` on ${ticketTime(t.closedAt)}` : ""}. Thanks for shopping with us.`;
+    case "ordered":
+      return `Ordered at the counter${t.closedAt ? ` on ${ticketTime(t.closedAt)}` : ""}. The shop calls you when it’s ready for pickup.`;
   }
 }
 
@@ -267,7 +269,7 @@ export function TicketView({ ticket: t, qr, now, receipt }: { ticket: Ticket; qr
 
         <aside className="flex min-w-0 flex-col gap-12">
           <section aria-labelledby="ticket-total-title">
-            <SectionTitle id="ticket-total-title">{paid ? "You paid" : state === "paid" ? "Ticket total" : "Estimated total"}</SectionTitle>
+            <SectionTitle id="ticket-total-title">{paid ? "You paid" : state === "paid" || state === "ordered" ? "Ticket total" : "Estimated total"}</SectionTitle>
             <dl className="mt-1 text-[0.9375rem]">
               <div className="flex items-baseline justify-between gap-3 py-2.5">
                 <dt className="font-semibold text-ink">Total</dt>
@@ -285,6 +287,8 @@ export function TicketView({ ticket: t, qr, now, receipt }: { ticket: Ticket; qr
                 ? `What the counter charged for ${piecesLabel(paid.lines.reduce((n, l) => n + l.quantity, 0))}, at the day’s prices.`
                 : state === "paid"
                   ? "At the prices when the ticket was made. Your receipt has what you paid."
+                  : state === "ordered"
+                    ? "At the prices when the ticket was made. The counter took the order at the day’s price."
                   : design
                     ? `At the prices on ${ticketTime(t.createdAt)}. The counter charges the day’s price: at least half when you order, the rest at pickup.`
                     : `At the prices on ${ticketTime(t.createdAt)}. The counter charges the day’s price.`}

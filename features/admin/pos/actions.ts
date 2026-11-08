@@ -7,7 +7,7 @@ import { fetchProviders } from "@/features/shared/payments/data";
 import { cleanReference, GCASH } from "@/features/shared/payments/model";
 import { geminiConfigured, GeminiError, readReceiptImage } from "@/features/admin/pos/gemini";
 import { checkReading, type ScanFailure, type ScanResult } from "@/features/admin/pos/scan";
-import { normalizeTicketCode, ticketState, ticketTime, type TicketStatus } from "@/features/shared/tickets/model";
+import { normalizeTicketCode, ticketState, ticketTime, type TicketKind, type TicketStatus } from "@/features/shared/tickets/model";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // The sale function with payment parts arrives with this update (after 20261016000000_e_payment_methods.sql).
@@ -446,32 +446,47 @@ const overrideError = (code?: string) =>
 // ---------------------------------------------------------------------------
 
 export type TicketLine = { variantId: string | null; quantity: number; name: string; size: string | null; color: string | null; price: number };
-export type LoadedTicket = { id: string; code: string; customer: string; expiresAt: string; lines: TicketLine[] };
+/** What a design ticket brings to the Designs tab besides its pieces: the buyer from the account, and the team details. */
+export type DesignTicketInfo = { name: string; phone: string; team: string; neededBy: string; roster: string };
+export type LoadedTicket = {
+  id: string;
+  code: string;
+  customer: string;
+  expiresAt: string;
+  /** Ready-made tickets are charged on the Shelf tab; design tickets are taken as orders on the Designs tab. */
+  kind: TicketKind;
+  lines: TicketLine[];
+  /** Design tickets only. */
+  design: DesignTicketInfo | null;
+};
 export type LoadTicketResult = { ok: true; ticket: LoadedTicket } | { ok: false; message: string };
 
 type TicketRow = {
   id: string;
   code: string;
   status: TicketStatus;
-  kind?: "ready" | "design";
+  kind?: TicketKind;
+  team_name?: string | null;
+  needed_by?: string | null;
+  roster?: string | null;
   expires_at: string;
   closed_at: string | null;
-  profiles: { full_name: string | null; username: string } | null;
+  profiles: { full_name: string | null; username: string; phone: string | null } | null;
   counter_ticket_items: { position: number; variant_id: string | null; quantity: number; product_name: string; size: string | null; color: string | null; unit_price: number | string }[] | null;
 };
 
-/** Looks up a ticket by its code (typed, scanned, or read off the customer's phone) for the sale. */
+/** Looks up a ticket by its code (typed, scanned, or read off the customer's phone), of either kind. */
 export async function loadTicket(input: string): Promise<LoadTicketResult> {
   const { supabase } = await requireStaff();
   const code = typeof input === "string" ? normalizeTicketCode(input) : null;
   if (!code) return { ok: false, message: "That isn’t a ticket code. Codes look like JJ-7K3QM." };
 
-  // A ticket's kind comes with 20261027000000_design_tickets.sql; before it, every ticket is ready-made.
+  // A ticket's kind and team details come with 20261027000000_design_tickets.sql; before it, every ticket is ready-made.
   const run = (withKind: boolean) =>
     supabase
       .from("counter_tickets")
       .select(
-        `id, code, status, expires_at, closed_at, ${withKind ? "kind, " : ""}profiles!counter_tickets_customer_id_fkey (full_name, username), counter_ticket_items (position, variant_id, quantity, product_name, size, color, unit_price)`,
+        `id, code, status, expires_at, closed_at, ${withKind ? "kind, team_name, needed_by, roster, " : ""}profiles!counter_tickets_customer_id_fkey (full_name, username, phone), counter_ticket_items (position, variant_id, quantity, product_name, size, color, unit_price)`,
       )
       .eq("code", code)
       .maybeSingle<TicketRow>();
@@ -484,20 +499,20 @@ export async function loadTicket(input: string): Promise<LoadTicketResult> {
     return { ok: false, message: "We couldn’t look up the ticket. Check the connection and try again." };
   }
   if (!data) return { ok: false, message: `No ticket ${code}. Check the code with the customer.` };
-  // Design tickets become orders on the Designs tab, not sales (loading them there comes next).
-  if (data.kind === "design") {
-    return { ok: false, message: `${code} is a design ticket. Take the order on the Designs tab with the customer; loading design tickets there comes in the next update.` };
-  }
 
+  const kind: TicketKind = data.kind === "design" ? "design" : "ready";
   const customer = data.profiles?.full_name?.trim() || (data.profiles ? `@${data.profiles.username}` : "Customer");
   const state = ticketState({ status: data.status, expiresAt: data.expires_at, closedAt: data.closed_at });
+  const when = data.closed_at ? ` on ${ticketTime(data.closed_at)}` : "";
   switch (state) {
     case "paid":
-      return { ok: false, message: `${code} was already paid${data.closed_at ? ` on ${ticketTime(data.closed_at)}` : ""}.` };
+      return { ok: false, message: `${code} was already paid${when}.` };
+    case "ordered":
+      return { ok: false, message: `${code} was already taken as an order${when}. Find it in Custom orders.` };
     case "expired":
       return {
         ok: false,
-        message: `${code} expired on ${ticketTime(data.expires_at)}. ${customer} can put its items back in their cart and make a new ticket.`,
+        message: `${code} expired on ${ticketTime(data.expires_at)}. ${customer} can put its ${kind === "design" ? "designs" : "items"} back in their cart and make a new ticket.`,
       };
     case "cancelled":
       return { ok: false, message: `${customer} cancelled ${code}. Ask for their latest ticket.` };
@@ -508,5 +523,15 @@ export async function loadTicket(input: string): Promise<LoadTicketResult> {
   const lines = [...(data.counter_ticket_items ?? [])]
     .sort((a, b) => a.position - b.position)
     .map((i) => ({ variantId: i.variant_id, quantity: i.quantity, name: i.product_name, size: i.size, color: i.color, price: Number(i.unit_price) }));
-  return { ok: true, ticket: { id: data.id, code: data.code, customer, expiresAt: data.expires_at, lines } };
+  const design =
+    kind === "design"
+      ? {
+          name: data.profiles?.full_name?.trim() ?? "",
+          phone: data.profiles?.phone?.trim() ?? "",
+          team: data.team_name?.trim() ?? "",
+          neededBy: data.needed_by ?? "",
+          roster: data.roster?.trim() ?? "",
+        }
+      : null;
+  return { ok: true, ticket: { id: data.id, code: data.code, customer, expiresAt: data.expires_at, kind, lines, design } };
 }

@@ -13,7 +13,7 @@ export function TicketPill({ state }: { state: TicketState }) {
   const tone =
     state === "ready"
       ? "bg-ink text-ground"
-      : state === "paid"
+      : state === "paid" || state === "ordered"
         ? "text-ink shadow-[inset_0_0_0_1.5px_var(--ink)]"
         : "bg-ground-2 text-ink-2 shadow-[inset_0_0_0_1px_var(--line)]";
   return (
@@ -50,6 +50,7 @@ export function TicketRow({ ticket: t, now }: { ticket: TicketSummary; now: numb
             Made {shortDay(t.createdAt)}
             {state === "ready" && ` · Good until ${ticketTime(t.expiresAt)}`}
             {state === "paid" && t.closedAt && ` · Paid ${shortDay(t.closedAt)}`}
+            {state === "ordered" && t.closedAt && ` · Ordered ${shortDay(t.closedAt)}`}
           </p>
         </div>
         <ChevronRight aria-hidden="true" className="size-5 shrink-0 text-ink-2 transition-transform group-hover:translate-x-0.5" />

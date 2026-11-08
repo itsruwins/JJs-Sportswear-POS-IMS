@@ -3,7 +3,7 @@
 import { uuid } from "@/lib/uuid";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, LoaderCircle, Search, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, LoaderCircle, ScanLine, Search, Ticket as TicketIcon, X } from "lucide-react";
 import { FlipText } from "@/features/shared/ui/flip-text";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import type { PaymentProvider } from "@/features/shared/payments/model";
@@ -11,6 +11,12 @@ import { parseAmount, roundPeso } from "@/features/admin/pos/amounts";
 import type { EPayment } from "@/features/admin/pos/scan";
 import { PosPayments } from "@/features/admin/pos/components/pos-payments";
 import { PosScanSheet, type ReceiptPhoto, type ScanSession } from "@/features/admin/pos/components/pos-scan-sheet";
+import { loadTicket, type LoadedTicket } from "@/features/admin/pos/actions";
+import type { SaleTicket } from "@/features/admin/pos/ticket";
+import { TicketChip, TicketChoice } from "@/features/admin/pos/components/pos-ticket";
+import { TicketScanSheet } from "@/features/admin/pos/components/pos-ticket-scan";
+import { normalizeTicketCode } from "@/features/shared/tickets/model";
+import { orderFromTicket } from "@/features/admin/design-orders/ticket";
 import { placeCounterOrder, type CounterPayment, type PlaceField } from "@/features/admin/design-orders/actions";
 import {
   blankBuyer,
@@ -28,13 +34,26 @@ import { DesignPhoto, DesignTile, OrderSummary, PiecesEditor, StepStrip, type St
 
 const STORE = "jj-pos-design-order";
 type View = "designs" | "design" | Step;
-type Saved = { pieces: Pieces; designOrder: string[]; buyer: Buyer; amount: string; cashOn: boolean; cash: string; ePayments: EPayment[]; key: string };
+type Saved = {
+  pieces: Pieces;
+  designOrder: string[];
+  buyer: Buyer;
+  amount: string;
+  cashOn: boolean;
+  cash: string;
+  ePayments: EPayment[];
+  key: string;
+  ticket?: SaleTicket | null;
+  ticketNotes?: string[];
+};
 
 const primary =
   "press inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-action px-5 text-[1.0625rem] font-semibold text-action-ink hover:bg-action-deep disabled:opacity-50";
 const outlined =
   "press inline-flex h-14 w-full items-center justify-center gap-2 rounded-2xl px-5 text-[1.0625rem] font-semibold text-ink shadow-[inset_0_0_0_1.5px_var(--line)] hover:bg-ground-2";
 const back = "press inline-flex items-center gap-1.5 self-start py-1 text-[0.9375rem] font-semibold text-ink hover:underline";
+const outline =
+  "press inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-[0.9375rem] font-semibold text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2";
 
 function matches(d: Design, tokens: string[]) {
   const text = [d.name, d.number !== null ? `design ${d.number} d${d.number}` : "", ...d.tags].join(" \u0000 ").toLowerCase();
@@ -45,17 +64,22 @@ function matches(d: Design, tokens: string[]) {
  * Design orders at the counter: pick designs and their pieces, take the buyer's details, then take
  * at least half down (cash, e-payment, or both) and place the order. Everything stays in this tab
  * (sessionStorage) until it's placed, so a refresh or a detour to Shelf loses nothing.
+ * A customer's design ticket (typed, scanned, or handed over from Shelf) fills the order in;
+ * placing it closes the ticket in the same step.
  */
 export function DesignOrderScreen({
   designs,
   providers,
   reader,
   isOwner,
+  initialTicket = null,
 }: {
   designs: Design[];
   providers: PaymentProvider[];
   reader: boolean;
   isOwner: boolean;
+  /** A design ticket code handed over from the Shelf tab, loaded once the page is up. */
+  initialTicket?: string | null;
 }) {
   const router = useRouter();
   const ids = { search: useId(), name: useId(), phone: useId(), team: useId(), needed: useId(), notes: useId(), amount: useId() };
@@ -73,10 +97,18 @@ export function DesignOrderScreen({
   const [session, setSession] = useState<ScanSession | null>(null);
   const [key, setKey] = useState(() => uuid());
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<{ text: string; field?: PlaceField } | null>(null);
+  const [error, setError] = useState<{ text: string; field?: PlaceField; ticket?: boolean } | null>(null);
   const [touched, setTouched] = useState(false);
   const [restored, setRestored] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
+  // A customer's design ticket: the one this order takes, what changed since they made it,
+  // one waiting on "replace?", the lookup in flight, and the camera sheet.
+  const [ticket, setTicket] = useState<SaleTicket | null>(null);
+  const [ticketNotes, setTicketNotes] = useState<string[]>([]);
+  const [pending, setPending] = useState<LoadedTicket | null>(null);
+  const [looking, setLooking] = useState<string | null>(null);
+  const [ticketMsg, setTicketMsg] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
 
   // Bring back an order in progress from this tab.
   useEffect(() => {
@@ -92,6 +124,8 @@ export function DesignOrderScreen({
         setCash(saved.cash ?? "");
         setEPayments(saved.ePayments ?? []);
         setKey(saved.key);
+        setTicket(saved.ticket ?? null);
+        setTicketNotes(saved.ticketNotes ?? []);
       }
     } catch {}
     setRestored(true);
@@ -105,11 +139,14 @@ export function DesignOrderScreen({
   useEffect(() => {
     if (!restored) return;
     try {
-      if (count || buyer.name || buyer.phone) {
-        sessionStorage.setItem(STORE, JSON.stringify({ pieces, designOrder, buyer, amount, cashOn, cash, ePayments, key } satisfies Saved));
+      if (count || buyer.name || buyer.phone || ticket) {
+        sessionStorage.setItem(
+          STORE,
+          JSON.stringify({ pieces, designOrder, buyer, amount, cashOn, cash, ePayments, key, ticket, ticketNotes } satisfies Saved),
+        );
       } else sessionStorage.removeItem(STORE);
     } catch {}
-  }, [restored, pieces, designOrder, buyer, amount, cashOn, cash, ePayments, key, count]);
+  }, [restored, pieces, designOrder, buyer, amount, cashOn, cash, ePayments, key, count, ticket, ticketNotes]);
 
   const go = (v: View, design?: string) => {
     if (design) setOpenId(design);
@@ -141,10 +178,11 @@ export function DesignOrderScreen({
       delete rest[id];
       return rest;
     });
-  const startOver = () => {
-    setPieces({});
-    setDesignOrder([]);
-    setBuyer(blankBuyer());
+  // A fresh order: nothing in it, no payment, a new key. With `next`, it's filled in from that ticket.
+  const reset = (next?: { pieces: Pieces; designOrder: string[]; buyer: Buyer }) => {
+    setPieces(next?.pieces ?? {});
+    setDesignOrder(next?.designOrder ?? []);
+    setBuyer(next?.buyer ?? blankBuyer());
     setAmount("");
     setCash("");
     setCashOn(true);
@@ -152,8 +190,72 @@ export function DesignOrderScreen({
     setEPayments([]);
     setKey(uuid());
     setTouched(false);
+    setTicket(null);
+    setTicketNotes([]);
+  };
+  const startOver = () => {
+    reset();
+    setTicketMsg(null);
     go("designs");
   };
+
+  // The order takes a ticket only while it's attached; removing it keeps the order as it is.
+  const dropTicket = () => {
+    setTicket(null);
+    setTicketNotes([]);
+    setError((e) => (e?.ticket ? null : e));
+  };
+
+  // A looked-up design ticket fills the order in, in place of what was there.
+  const applyTicket = (t: LoadedTicket) => {
+    setPending(null);
+    const next = orderFromTicket(t, designs);
+    if (!next.added) {
+      setTicketMsg(`None of the designs on ${t.code} are offered anymore. ${next.notes.join(" ")} Take the order with ${t.customer} from the designs here.`);
+      return;
+    }
+    reset(next);
+    setTicket({ id: t.id, code: t.code, customer: t.customer });
+    setTicketNotes(next.notes);
+    setTicketMsg(null);
+    setQuery("");
+    go("buyer");
+  };
+
+  const findTicket = async (code: string) => {
+    if (looking) return;
+    setScanning(false);
+    setTicketMsg(null);
+    if (ticket?.code === code) {
+      setQuery("");
+      go("buyer");
+      return;
+    }
+    setLooking(code);
+    try {
+      const r = await loadTicket(code);
+      if (!r.ok) setTicketMsg(r.message);
+      // A ready-made ticket is charged as a sale: the Shelf tab loads it.
+      else if (r.ticket.kind === "ready") router.push(`/admin/pos?ticket=${r.ticket.code}`);
+      else if (count || buyer.name.trim() || buyer.phone.trim() || ticket) setPending(r.ticket);
+      else applyTicket(r.ticket);
+    } catch {
+      setTicketMsg("We couldn’t look up the ticket. Check the connection and try again.");
+    } finally {
+      setLooking(null);
+    }
+  };
+
+  // A code handed over from the Shelf tab: load it once the saved order is back, then drop it from the address.
+  const handedOver = useRef(false);
+  useEffect(() => {
+    if (!restored || !initialTicket || handedOver.current) return;
+    handedOver.current = true;
+    router.replace("/admin/pos?tab=designs", { scroll: false });
+    findTicket(initialTicket);
+    // Once: findTicket reads this render's order, which is the restored one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restored, initialTicket]);
 
   // Money: what's paid now is at least half, at most the total. E-payments count first; cash makes up the rest.
   const typed = amount.trim() ? parseAmount(amount) : half;
@@ -196,6 +298,7 @@ export function DesignOrderScreen({
         details: { team: buyer.team, neededBy: buyer.neededBy, notes: buyer.notes },
         payments,
         requestId: key,
+        ticketId: ticket?.id ?? null,
       });
       if (result.ok) {
         try {
@@ -207,7 +310,7 @@ export function DesignOrderScreen({
         return;
       }
       if (result.unavailable) router.refresh();
-      setError({ text: result.message, field: result.field });
+      setError({ text: result.message, field: result.field, ticket: result.ticketClosed });
       if (result.field === "name" || result.field === "phone" || result.field === "needed_by") go("buyer");
       setBusy(false);
     } catch {
@@ -217,6 +320,9 @@ export function DesignOrderScreen({
     }
   };
 
+  // A ticket code typed, or typed by a USB scanner: anything starting with JJ that makes a whole code.
+  const typedTicket = /^\s*jj/i.test(query) ? normalizeTicketCode(query) : null;
+  const typingTicket = !typedTicket && /^\s*jj[-\s]?[0-9a-z]{0,4}\s*$/i.test(query);
   const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shown = designs.filter((d) => matches(d, tokens));
   const open = designs.find((d) => d.id === openId) ?? null;
@@ -253,40 +359,97 @@ export function DesignOrderScreen({
         <h2 ref={headingRef} tabIndex={-1} className="sr-only outline-none">
           Designs
         </h2>
-        <div className="relative max-w-[36rem]">
-          <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 size-[1.125rem] -translate-y-1/2 text-ink-2" />
-          <label htmlFor={ids.search} className="sr-only">
-            Search designs
-          </label>
-          <input
-            id={ids.search}
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape" && query) {
-                e.preventDefault();
-                setQuery("");
-              }
+        <div className="flex max-w-[40rem] gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 size-[1.125rem] -translate-y-1/2 text-ink-2" />
+            <label htmlFor={ids.search} className="sr-only">
+              Search designs, or type a ticket code
+            </label>
+            <input
+              id={ids.search}
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape" && query) {
+                  e.preventDefault();
+                  setQuery("");
+                  setTicketMsg(null);
+                }
+                // A USB scanner types the code and presses Enter.
+                if (e.key === "Enter" && typedTicket) {
+                  e.preventDefault();
+                  findTicket(typedTicket);
+                }
+              }}
+              placeholder="Team, design number, or ticket code"
+              autoComplete="off"
+              spellCheck={false}
+              className="auth-input pl-11 pr-11"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+                className="press absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full text-ink-2 hover:text-ink"
+              >
+                <X aria-hidden="true" className="size-4" />
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setTicketMsg(null);
+              setScanning(true);
             }}
-            placeholder="Team name, design number, or color"
-            autoComplete="off"
-            spellCheck={false}
-            className="auth-input pl-11 pr-11"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label="Clear search"
-              className="press absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full text-ink-2 hover:text-ink"
-            >
-              <X aria-hidden="true" className="size-4" />
-            </button>
+            className={outline}
+          >
+            <ScanLine aria-hidden="true" className="size-[1.125rem]" />
+            <span className="max-sm:sr-only">Scan ticket</span>
+          </button>
+        </div>
+
+        <div aria-live="polite" className="max-w-[40rem]">
+          {ticketMsg && (
+            <p role="alert" className="auth-alert mt-3 rounded-xl px-4 py-3 text-[0.9375rem]">
+              {ticketMsg}
+            </p>
+          )}
+          {looking && !typedTicket && (
+            <p className="mt-3 inline-flex items-center gap-2 text-[0.9375rem] text-ink-2">
+              <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+              Looking up <span className="tabular">{looking}</span>…
+            </p>
           )}
         </div>
 
-        {designs.length === 0 ? (
+        {typedTicket ? (
+          <button
+            type="button"
+            onClick={() => findTicket(typedTicket)}
+            disabled={!!looking}
+            className="press mt-4 flex w-full max-w-[40rem] items-center gap-4 rounded-2xl px-4 py-3.5 text-left shadow-[inset_0_0_0_1.5px_var(--ink)] hover:bg-ground-2 disabled:opacity-70"
+          >
+            {looking ? (
+              <LoaderCircle aria-hidden="true" className="size-5 shrink-0 animate-spin text-ink" />
+            ) : (
+              <TicketIcon aria-hidden="true" className="size-5 shrink-0 text-ink" />
+            )}
+            <span className="min-w-0 flex-1">
+              <span className="block text-[1rem] font-semibold text-ink">
+                {looking ? "Looking up" : "Load ticket"} <span className="tabular whitespace-nowrap">{typedTicket}</span>
+              </span>
+              <span className="block text-[0.875rem] text-ink-2">The customer’s designs, sizes, and team details fill in the order.</span>
+            </span>
+            <kbd className="hidden shrink-0 rounded-md px-2 py-0.5 font-sans text-[0.75rem] font-semibold text-ink-2 shadow-[inset_0_0_0_1px_var(--line)] lg:block">
+              Enter
+            </kbd>
+          </button>
+        ) : typingTicket && shown.length === 0 ? (
+          <p className="py-8 text-[0.9375rem] text-ink-2">Ticket codes are JJ- and 5 letters or numbers, like JJ-7K3QM.</p>
+        ) : designs.length === 0 ? (
           <p className="py-8 text-[0.9375rem] text-ink-2">No designs yet. Made-to-order products show up here once the owner adds them.</p>
         ) : shown.length === 0 ? (
           <p className="py-8 text-[0.9375rem] text-ink-2">No designs match “{query.trim()}”. Try the team name, its number, or a color.</p>
@@ -300,6 +463,8 @@ export function DesignOrderScreen({
           </ul>
         )}
         {orderBar}
+        <TicketScanSheet open={scanning} onClose={() => setScanning(false)} onCode={findTicket} />
+        <TicketChoice forOrder ticket={pending} current={ticket} onChoose={() => pending && applyTicket(pending)} onClose={() => setPending(null)} />
       </div>
     );
   }
@@ -356,6 +521,11 @@ export function DesignOrderScreen({
           Start over
         </button>
       </div>
+      {ticket && (
+        <div className="-mt-3 mb-4">
+          <TicketChip forOrder ticket={ticket} notes={ticketNotes} onRemove={dropTicket} />
+        </div>
+      )}
       {lines.length === 0 ? (
         <p className="border-t border-line py-6 text-[0.9375rem] text-ink-2">No pieces yet. Pick a design to start.</p>
       ) : (
@@ -421,7 +591,11 @@ export function DesignOrderScreen({
             <h2 ref={headingRef} tabIndex={-1} className="voice-display text-[clamp(2rem,4vw,2.75rem)] outline-none">
               Buyer
             </h2>
-            <p className="mt-1 max-w-[52ch] text-[0.9375rem] text-ink-2">Who the order is for. The shop calls this number when it’s ready.</p>
+            <p className="mt-1 max-w-[52ch] text-[0.9375rem] text-ink-2">
+              {ticket
+                ? `Filled in from ${ticket.customer}’s account and ticket. Check them with the customer; the shop calls this number when it’s ready.`
+                : "Who the order is for. The shop calls this number when it’s ready."}
+            </p>
             {error && !error.field?.startsWith("pay") && (
               <p role="alert" className="auth-alert mt-5 rounded-xl px-4 py-3 text-[0.9375rem]">
                 {error.text}

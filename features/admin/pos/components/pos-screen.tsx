@@ -63,6 +63,7 @@ export function PosScreen({
   reader,
   isOwner,
   header,
+  initialTicket = null,
 }: {
   products: PosProduct[];
   providers: PaymentProvider[];
@@ -71,6 +72,8 @@ export function PosScreen({
   /** The owner is ringing up the sale (approvals need only a reason). */
   isOwner: boolean;
   header?: React.ReactNode;
+  /** A ready-made ticket code handed over from the Designs tab, loaded once the page is up. */
+  initialTicket?: string | null;
 }) {
   const router = useRouter();
   const searchId = useId();
@@ -306,6 +309,8 @@ export function PosScreen({
     try {
       const r = await loadTicket(code);
       if (!r.ok) setTicketMsg(r.message);
+      // A design ticket is taken as an order: the Designs tab loads it.
+      else if (r.ticket.kind === "design") router.push(`/admin/pos?tab=designs&ticket=${r.ticket.code}`);
       else if (cart.length) setPending(r.ticket);
       else applyTicket(r.ticket, "replace");
     } catch {
@@ -314,6 +319,17 @@ export function PosScreen({
       setLooking(null);
     }
   };
+
+  // A code handed over from the Designs tab: load it once the saved sale is back, then drop it from the address.
+  const handedOver = useRef(false);
+  useEffect(() => {
+    if (!restored || !initialTicket || handedOver.current) return;
+    handedOver.current = true;
+    router.replace("/admin/pos", { scroll: false });
+    findTicket(initialTicket);
+    // Once: findTicket reads this render's sale, which is the restored one.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restored, initialTicket]);
 
   const charge = async () => {
     if (!canCharge) return;

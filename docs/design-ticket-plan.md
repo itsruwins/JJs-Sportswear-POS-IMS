@@ -30,6 +30,12 @@ Goal: made-to-order designs join the cart and ticket flow from `docs/ticket-plan
 - Loading a design ticket's code in the POS (typed, USB scanner, or camera) opens the **Designs** tab with the pieces, team details, and the buyer's name and phone filled in. A design code on the Shelf tab, or a ready-made code on Designs, goes to the right tab.
 - Taking the order (at least half down) marks the ticket ordered and records the order on it, in one step, so a ticket can't make two orders.
 - **Done when:** a design ticket goes from customer to POS to an order in production, and can't be used twice.
+- **Decided (2026-11-09):** an order in progress on the Designs tab asks first (replace it or cancel); staff can change everything once the ticket is loaded (it's an ordinary Designs order, and the ticket points to the order actually taken); the ticket stays **ordered** for good, even if that order is later cancelled; the buyer's name and phone come from the profile and stay editable.
+- **Built (2026-11-09, uncommitted):**
+  - Migration `20261028000000_design_ticket_orders.sql`: `counter_tickets.status` gains `ordered`; `counter_tickets.custom_order_id` (one order per ticket); `rpc('create_ticket_order')` checks the design ticket is open and not expired, places the order through `create_counter_order` unchanged, marks the ticket ordered, and notifies the customer (bell, type `ticket`: "Ordered at the counter with ₱X down. The rest, ₱Y, is paid at pickup."), all in one step; a retry with the same key hands back the same order. Refusals carry DETAIL `ticket:ordered|paid|expired|cancelled|replaced|missing|ready|taken`.
+  - POS: `loadTicket` returns both kinds (with the buyer's name and phone, and the team details for designs); Shelf sends a design code to `/admin/pos?tab=designs&ticket=…`, and Designs sends a ready-made code to `/admin/pos?ticket=…`. Designs tab: ticket code in the search, Scan ticket, the replace dialog, the ticket chip with notes (`orderFromTicket` in `features/admin/design-orders/ticket.ts`), and Place order with the ticket.
+  - Customer: the `ordered` status reads "Ordered" (outlined pill, lead "Ordered at the counter on …"), enough for M2; M3 adds the order number, the down payment, and the balance.
+  - Tested in PGlite against all migrations: 135 checks (25 new for M2). Screens checked through a temporary preview (deleted) in light, dark, and on a phone.
 
 ### Phase M3: The customer after ordering
 - The design ticket shows **Ordered**: the order number, what was paid down, and the balance due at pickup. The bell says so.
@@ -39,5 +45,4 @@ Goal: made-to-order designs join the cart and ticket flow from `docs/ticket-plan
 ## Left open for the phase where it matters
 
 - M1: how a size run edits in the cart (per size, or the whole run at once), and the most pieces a design line can hold.
-- M2: what cancelling the counter order does to the ticket, and whether staff can change the pieces before taking the order.
 - M3: whether "Ordered" says more than the order number (production steps aren't visible, since the order is a walk-in).

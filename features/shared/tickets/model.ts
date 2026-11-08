@@ -4,6 +4,8 @@
 export const TICKETS_MIGRATION = "supabase/migrations/20261024000000_counter_tickets.sql";
 /** Designs in the cart, design tickets, and their team details arrive with this update. */
 export const DESIGN_TICKETS_MIGRATION = "supabase/migrations/20261027000000_design_tickets.sql";
+/** Taking a design ticket as a counter order (and the 'ordered' status) arrives with this update. */
+export const TICKET_ORDERS_MIGRATION = "supabase/migrations/20261028000000_design_ticket_orders.sql";
 
 /** A ticket holds one kind: ready-made items (charged as a sale) or designs (taken as an order). */
 export type TicketKind = "ready" | "design";
@@ -32,10 +34,10 @@ export function normalizeTicketCode(input: string) {
   return TICKET_CODE.test(code) ? code : null;
 }
 
-export type TicketStatus = "open" | "cancelled" | "replaced" | "paid";
+export type TicketStatus = "open" | "cancelled" | "replaced" | "paid" | "ordered";
 
 /** What a ticket means to people: open past its time reads as expired. */
-export type TicketState = "ready" | "expired" | "cancelled" | "replaced" | "paid";
+export type TicketState = "ready" | "expired" | "cancelled" | "replaced" | "paid" | "ordered";
 
 export function ticketState(t: { status: TicketStatus; expiresAt: string; closedAt: string | null }, now = Date.now()): TicketState {
   if (t.status === "open") return new Date(t.expiresAt).getTime() > now ? "ready" : "expired";
@@ -50,6 +52,7 @@ export const TICKET_STATE_TEXT: Record<TicketState, string> = {
   cancelled: "Cancelled",
   replaced: "Replaced",
   paid: "Paid",
+  ordered: "Ordered",
 };
 
 /** "Wed, Nov 12 · 5:30 PM", in the shop's time. */
