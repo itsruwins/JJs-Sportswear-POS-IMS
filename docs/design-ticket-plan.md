@@ -41,8 +41,12 @@ Goal: made-to-order designs join the cart and ticket flow from `docs/ticket-plan
 - The design ticket shows **Ordered**: the order number, what was paid down, and the balance due at pickup. The bell says so.
 - Orders lists it with the other tickets.
 - **Done when:** the customer can see their design ticket was ordered and what's left to pay.
+- **Decided (2026-11-09):** the customer reads the order through their ticket (a read-only rule; the order stays a walk-in, so they can't pay or cancel it online); the ticket shows the same stage strip and status pill as their own orders; the bell carries the order's status and payment notices; an ordered ticket sits under In progress on Orders until the order is picked up or stopped, then in Past orders.
+- **Built (2026-11-09, uncommitted):**
+  - Migration `20261029000000_ticket_order_view.sql`: select policies on `custom_orders`, `custom_order_items`, and `payments` for the customer whose ticket made the order. The before-insert trigger on notifications with no recipient now sends a notice about such an order (or a payment on it) to the ticket's customer as type `ticket`, pointing at the ticket; other recipient-less notices are still dropped. Notices from taking the order aren't doubled (the order is linked to the ticket only after it's placed).
+  - Customer: an ordered ticket's page shows the order number on the board, **Your order** (status pill, the stage strip starting at "Ordered", and what the counter took, sizes in the shop's order), the order's team details, and **Payment** (total, each payment recorded, the balance at pickup or "In full"), with a lead that follows the order (in production, ready with the balance to bring, picked up, stopped). It refreshes live as the shop works. The Orders list rows show the order number, its status pill, and a yellow "₱X balance due" once it's ready. The customer's own order list, order page, and chat order picker leave these walk-in orders out.
+  - Tested in PGlite against all migrations: 152 checks (17 new for M3). Screens checked through a temporary preview (deleted) in light, dark, and on a phone.
 
 ## Left open for the phase where it matters
 
 - M1: how a size run edits in the cart (per size, or the whole run at once), and the most pieces a design line can hold.
-- M3: whether "Ordered" says more than the order number (production steps aren't visible, since the order is a walk-in).

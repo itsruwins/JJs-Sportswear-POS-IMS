@@ -31,13 +31,19 @@ export function OrdersListView({
   migrated: boolean;
 }) {
   const ready = tickets.filter((t) => ticketState(t, now) === "ready");
-  const inProgress = orders.filter((o) => !CLOSED.has(o.status));
+  // A design ticket taken at the counter is followed through its order: in progress until it's picked up or stopped.
+  const ordering = (t: TicketSummary) => ticketState(t, now) === "ordered" && !!t.order && !CLOSED.has(t.order.status);
+  const newestFirst = (a: { at: string }, b: { at: string }) => new Date(b.at).getTime() - new Date(a.at).getTime();
+  const inProgress = [
+    ...orders.filter((o) => !CLOSED.has(o.status)).map((o) => ({ at: o.created_at, row: <OrderRow key={o.id} order={o} /> })),
+    ...tickets.filter(ordering).map((t) => ({ at: t.closedAt ?? t.createdAt, row: <TicketRow key={t.id} ticket={t} now={now} /> })),
+  ].sort(newestFirst);
   const past = [
     ...orders.filter((o) => CLOSED.has(o.status)).map((o) => ({ at: o.created_at, key: o.id, row: <OrderRow key={o.id} order={o} /> })),
     ...tickets
-      .filter((t) => ticketState(t, now) !== "ready")
+      .filter((t) => ticketState(t, now) !== "ready" && !ordering(t))
       .map((t) => ({ at: t.createdAt, key: t.id, row: <TicketRow key={t.id} ticket={t} now={now} /> })),
-  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  ].sort(newestFirst);
 
   return (
     <div className={pageShell}>
@@ -79,11 +85,23 @@ export function OrdersListView({
             </section>
           )}
 
-          {orders.length === 0 ? (
+          {inProgress.length > 0 && (
+            <section aria-label="In progress">
+              <h2 className="voice-display mb-1 text-[1.5rem]">In progress</h2>
+              <ul className="divide-y divide-line border-y border-line">{inProgress.map((p) => p.row)}</ul>
+            </section>
+          )}
+
+          {orders.length === 0 && (
             <div className="max-w-[46rem]">
-              <StageStrip status={null} />
-              <section className="mt-6 rounded-[1.25rem] bg-ground-2 px-5 py-6 shadow-[inset_0_0_0_1px_var(--line)] sm:px-7 sm:py-7">
-                <h2 className="text-[1.125rem] font-semibold leading-snug text-ink">No custom orders yet.</h2>
+              {/* With something in progress above, the idle board would only repeat it; this is the invitation to ask for more. */}
+              {inProgress.length === 0 && <StageStrip status={null} />}
+              <section
+                className={`${inProgress.length === 0 ? "mt-6" : ""} rounded-[1.25rem] bg-ground-2 px-5 py-6 shadow-[inset_0_0_0_1px_var(--line)] sm:px-7 sm:py-7`}
+              >
+                <h2 className="text-[1.125rem] font-semibold leading-snug text-ink">
+                  {inProgress.length === 0 ? "No custom orders yet." : "Need something of your own made?"}
+                </h2>
                 <p className="mt-2 max-w-[56ch] text-[0.9375rem] leading-relaxed text-ink-2">
                   Send the shop what you need: garments, colors, and a size run for your team. It moves along this board as the shop
                   prices it, makes it, and gets it ready for pickup.
@@ -94,17 +112,6 @@ export function OrdersListView({
                 </Link>
               </section>
             </div>
-          ) : (
-            inProgress.length > 0 && (
-              <section aria-label="In progress">
-                <h2 className="voice-display mb-1 text-[1.5rem]">In progress</h2>
-                <ul className="divide-y divide-line border-y border-line">
-                  {inProgress.map((o) => (
-                    <OrderRow key={o.id} order={o} />
-                  ))}
-                </ul>
-              </section>
-            )
           )}
 
           {past.length > 0 && (

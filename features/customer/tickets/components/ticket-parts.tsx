@@ -7,6 +7,7 @@ import { formatPeso } from "@/features/shared/catalog/catalog";
 import { TICKET_STATE_TEXT, TICKET_DAYS, ticketState, ticketTime, type TicketKind, type TicketState } from "@/features/shared/tickets/model";
 import { createTicket, returnTicket } from "@/features/customer/tickets/actions";
 import type { TicketSummary } from "@/features/customer/tickets/data";
+import { StatusPill } from "@/features/customer/orders/components/order-parts";
 
 /** Ready is solid ink, the same as a custom order that's ready; paid is outlined; the rest recede. */
 export function TicketPill({ state }: { state: TicketState }) {
@@ -26,16 +27,27 @@ export function TicketPill({ state }: { state: TicketState }) {
 const shortDay = (iso: string) =>
   new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric", year: "numeric", timeZone: "Asia/Manila" }).format(new Date(iso));
 
-/** A ticket on the Orders list, ruled like a custom order's row. */
+/** A ticket on the Orders list, ruled like a custom order's row. An ordered one shows its order's status. */
 export function TicketRow({ ticket: t, now }: { ticket: TicketSummary; now: number }) {
   const state = ticketState(t, now);
+  const order = state === "ordered" ? t.order : null;
+  // Owed at pickup once it's ready: the one thing on the row the customer has to act on.
+  const due = order && (order.status === "ready" || order.status === "completed") && order.balance > 0 ? order.balance : 0;
   return (
     <li>
       <Link href={`/orders/tickets/${t.code}`} className="group flex items-center gap-4 py-4 hover:bg-ground-2/60 sm:px-2">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <span className="tabular text-[0.875rem] font-semibold text-ink-2">{t.code}</span>
-            <TicketPill state={state} />
+            <span className="tabular text-[0.875rem] font-semibold text-ink-2">
+              {t.code}
+              {order && ` · ${order.number}`}
+            </span>
+            {order ? <StatusPill status={order.status} /> : <TicketPill state={state} />}
+            {due > 0 && (
+              <span className="tabular inline-flex h-7 items-center rounded-full bg-signal px-3 text-[0.8125rem] font-semibold text-signal-ink">
+                {formatPeso(due)} balance due
+              </span>
+            )}
           </div>
           <p className="mt-1.5 truncate text-[1.0625rem] font-semibold text-ink">
             {t.names.slice(0, 2).join(", ")}
@@ -44,7 +56,7 @@ export function TicketRow({ ticket: t, now }: { ticket: TicketSummary; now: numb
           <p className="mt-0.5 text-[0.875rem] text-ink-2">
             {t.kind === "design" ? "Design ticket" : "Counter ticket"}
             {t.team && ` · ${t.team}`} · <span className="tabular">{t.pieces}</span> {t.pieces === 1 ? "piece" : "pieces"} ·{" "}
-            <span className="tabular">{formatPeso(t.total)}</span>
+            <span className="tabular">{formatPeso(order ? order.total : t.total)}</span>
           </p>
           <p className="tabular mt-0.5 text-[0.8125rem] text-ink-2">
             Made {shortDay(t.createdAt)}

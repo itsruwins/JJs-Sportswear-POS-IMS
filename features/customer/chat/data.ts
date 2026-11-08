@@ -89,7 +89,12 @@ export async function fetchChatUnread(supabase: SupabaseClient, uid: string) {
 
 /** The customer's orders, newest first, for "Ask about my order". */
 export async function fetchChatOrders(supabase: SupabaseClient) {
-  const { data } = await supabase.from("custom_orders").select("id, order_number, status").order("created_at", { ascending: false }).limit(20);
+  const { data } = await supabase
+    .from("custom_orders")
+    .select("id, order_number, status")
+    .not("customer_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(20);
   return ((data ?? []) as { id: string; order_number: string; status: OrderStatus }[]).map((o) => ({ id: o.id, number: o.order_number, status: o.status }));
 }
 

@@ -5,13 +5,14 @@ import { FlipText } from "@/features/shared/ui/flip-text";
 import { downPaymentOf, ticketState, ticketTime, type TicketState } from "@/features/shared/tickets/model";
 import { pageShell } from "@/features/customer/shell/components/page-parts";
 import { SectionTitle, ShopDetails } from "@/features/customer/cart/components/cart-parts";
-import { piecesLabel, runLabel } from "@/features/customer/cart/model";
-import type { Ticket, TicketLine, TicketReceipt } from "@/features/customer/tickets/data";
+import { piecesLabel } from "@/features/customer/cart/model";
+import type { Ticket, TicketLine, TicketOrder, TicketReceipt } from "@/features/customer/tickets/data";
 import { TicketActions, TicketPill } from "./ticket-parts";
 import { TeamDetailsForm } from "./ticket-team";
+import { DesignRuns, TicketOrderMoney, TicketOrderSection } from "./ticket-order";
 
 /** The line under the title: what this ticket is for now, in a sentence. */
-function lead(t: Ticket, state: TicketState) {
+function lead(t: Ticket, state: TicketState, order: TicketOrder | null) {
   const design = t.kind === "design";
   switch (state) {
     case "ready":
@@ -26,8 +27,24 @@ function lead(t: Ticket, state: TicketState) {
       return "Its items moved onto your newer ticket, so this code no longer works.";
     case "paid":
       return `Paid at the counter${t.closedAt ? ` on ${ticketTime(t.closedAt)}` : ""}. Thanks for shopping with us.`;
-    case "ordered":
-      return `Ordered at the counter${t.closedAt ? ` on ${ticketTime(t.closedAt)}` : ""}. The shop calls you when it’s ready for pickup.`;
+    case "ordered": {
+      const on = t.closedAt ? ` on ${ticketTime(t.closedAt)}` : "";
+      switch (order?.status) {
+        case "ready":
+          return order.balance > 0
+            ? `It’s ready for pickup. Bring ${formatPeso(order.balance)} for the balance.`
+            : "It’s ready for pickup, and it’s paid in full.";
+        case "completed":
+          return `Picked up${order.completedAt ? ` on ${ticketTime(order.completedAt)}` : ""}. Thanks for ordering with us.`;
+        case "cancelled":
+        case "declined":
+          return "The shop stopped this order. Message the shop if you have questions about it.";
+        case "in_progress":
+          return `Ordered at the counter${on}. It’s being made now; you’ll get a notice when it’s ready for pickup.`;
+        default:
+          return `Ordered at the counter${on}. You’ll get a notice as it’s made and when it’s ready for pickup.`;
+      }
+    }
   }
 }
 
@@ -42,9 +59,6 @@ function runsOf(lines: TicketLine[]) {
   }
   return [...runs.values()];
 }
-
-const each = (prices: number[]) =>
-  Math.min(...prices) === Math.max(...prices) ? `${formatPeso(prices[0])} each` : `${formatPeso(Math.min(...prices))}–${formatPeso(Math.max(...prices))} each`;
 
 /** A line's stock now, said only when it no longer covers the ticket. */
 function stockNote(l: TicketLine) {
@@ -114,12 +128,28 @@ function ReceiptSlip({ receipt: r }: { receipt: TicketReceipt }) {
  * the estimated total, and what the customer can still do with it. Once paid, the receipt
  * takes the place of the lines.
  */
-export function TicketView({ ticket: t, qr, now, receipt }: { ticket: Ticket; qr: string | null; now: number; receipt: TicketReceipt | null }) {
+export function TicketView({
+  ticket: t,
+  qr,
+  now,
+  receipt,
+  order,
+}: {
+  ticket: Ticket;
+  qr: string | null;
+  now: number;
+  receipt: TicketReceipt | null;
+  /** The order a design ticket made at the counter, once it's ordered. */
+  order: TicketOrder | null;
+}) {
   const state = ticketState(t, now);
   const live = state === "ready";
   const paid = state === "paid" ? receipt : null;
+  const ordered = state === "ordered" ? order : null;
   const design = t.kind === "design";
-  const hasDetails = !!(t.team || t.neededBy || t.roster);
+  // Once ordered, the details are the order's: staff checked (and may have changed) them at the counter.
+  const details = ordered ? { team: ordered.team, neededBy: ordered.neededBy, roster: ordered.notes } : { team: t.team, neededBy: t.neededBy, roster: t.roster };
+  const hasDetails = !!(details.team || details.neededBy || details.roster);
 
   return (
     <div className={pageShell}>
@@ -133,7 +163,7 @@ export function TicketView({ ticket: t, qr, now, receipt }: { ticket: Ticket; qr
           <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">{design ? "Design ticket" : "Counter ticket"}</h1>
           <TicketPill state={state} />
         </div>
-        <p className="mt-3 max-w-[52ch] text-[1.0625rem] leading-relaxed text-ink-2">{lead(t, state)}</p>
+        <p className="mt-3 max-w-[52ch] text-[1.0625rem] leading-relaxed text-ink-2">{lead(t, state, ordered)}</p>
       </header>
 
       <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-14">
@@ -151,6 +181,12 @@ export function TicketView({ ticket: t, qr, now, receipt }: { ticket: Ticket; qr
                   <dd className="tabular">{ticketTime(live || state === "expired" ? t.expiresAt : t.createdAt)}</dd>
                   <dt className="text-board-ink-2">Holds</dt>
                   <dd className="tabular">{piecesLabel(t.pieces)}</dd>
+                  {ordered && (
+                    <>
+                      <dt className="text-board-ink-2">Order</dt>
+                      <dd className="tabular">{ordered.number}</dd>
+                    </>
+                  )}
                 </dl>
               </div>
               {live && qr && (
@@ -172,33 +208,19 @@ export function TicketView({ ticket: t, qr, now, receipt }: { ticket: Ticket; qr
                 <ReceiptSlip receipt={paid} />
               </div>
             </section>
+          ) : ordered ? (
+            <TicketOrderSection order={ordered} />
           ) : design ? (
             <section aria-labelledby="ticket-items-title">
               <SectionTitle id="ticket-items-title" aside={<span className="tabular text-[0.9375rem] text-ink-2">{piecesLabel(t.pieces)}</span>}>
                 Designs
               </SectionTitle>
-              <ul>
-                {runsOf(t.lines).map((r) => {
-                  const pieces = r.lines.reduce((n, l) => n + l.quantity, 0);
-                  const gone = live && r.lines.some((l) => l.stockNow === null);
-                  return (
-                    <li key={r.key} className="flex items-start justify-between gap-4 border-b border-line py-4">
-                      <div className="min-w-0">
-                        <p className="text-[1rem] font-semibold leading-snug text-ink">
-                          {r.name}
-                          {r.style && <span className="font-normal text-ink-2"> · {r.style}</span>}
-                        </p>
-                        <p className="tabular mt-1 text-[0.9375rem] text-ink">{runLabel(r.lines.map((l) => ({ size: l.size ?? "One size", quantity: l.quantity })))}</p>
-                        <p className="tabular mt-0.5 text-[0.875rem] text-ink-2">
-                          {piecesLabel(pieces)} · {each(r.lines.map((l) => l.price))}
-                        </p>
-                        {gone && <p className="mt-1.5 text-[0.875rem] font-semibold text-ink">The shop took this design off. Staff will talk it through at the counter.</p>}
-                      </div>
-                      <p className="tabular shrink-0 text-[1rem] font-semibold text-ink">{formatPeso(r.lines.reduce((n, l) => n + l.quantity * l.price, 0))}</p>
-                    </li>
-                  );
-                })}
-              </ul>
+              <DesignRuns
+                runs={runsOf(t.lines).map((r) => ({
+                  ...r,
+                  note: live && r.lines.some((l) => l.stockNow === null) ? "The shop took this design off. Staff will talk it through at the counter." : null,
+                }))}
+              />
             </section>
           ) : (
             <section aria-labelledby="ticket-items-title">
@@ -239,26 +261,26 @@ export function TicketView({ ticket: t, qr, now, receipt }: { ticket: Ticket; qr
                 </>
               ) : (
                 <dl className="mt-1 text-[0.9375rem]">
-                  {t.team && (
+                  {details.team && (
                     <div className="grid grid-cols-[8rem_minmax(0,1fr)] gap-3 border-b border-line py-3">
                       <dt className="text-ink-2">Team</dt>
-                      <dd className="text-ink">{t.team}</dd>
+                      <dd className="text-ink">{details.team}</dd>
                     </div>
                   )}
-                  {t.neededBy && (
+                  {details.neededBy && (
                     <div className="grid grid-cols-[8rem_minmax(0,1fr)] gap-3 border-b border-line py-3">
                       <dt className="text-ink-2">Needed by</dt>
                       <dd className="tabular text-ink">
                         {new Intl.DateTimeFormat("en-PH", { weekday: "short", month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(
-                          new Date(`${t.neededBy}T00:00:00Z`),
+                          new Date(`${details.neededBy}T00:00:00Z`),
                         )}
                       </dd>
                     </div>
                   )}
-                  {t.roster && (
+                  {details.roster && (
                     <div className="grid grid-cols-[8rem_minmax(0,1fr)] gap-3 py-3">
                       <dt className="text-ink-2">Names and numbers</dt>
-                      <dd className="whitespace-pre-line text-ink">{t.roster}</dd>
+                      <dd className="whitespace-pre-line text-ink">{details.roster}</dd>
                     </div>
                   )}
                 </dl>
@@ -268,6 +290,9 @@ export function TicketView({ ticket: t, qr, now, receipt }: { ticket: Ticket; qr
         </div>
 
         <aside className="flex min-w-0 flex-col gap-12">
+          {ordered ? (
+            <TicketOrderMoney order={ordered} />
+          ) : (
           <section aria-labelledby="ticket-total-title">
             <SectionTitle id="ticket-total-title">{paid ? "You paid" : state === "paid" || state === "ordered" ? "Ticket total" : "Estimated total"}</SectionTitle>
             <dl className="mt-1 text-[0.9375rem]">
@@ -299,8 +324,9 @@ export function TicketView({ ticket: t, qr, now, receipt }: { ticket: Ticket; qr
               </div>
             )}
           </section>
+          )}
 
-          {live && (
+          {(live || (ordered && !["completed", "cancelled", "declined"].includes(ordered.status))) && (
             <section aria-labelledby="ticket-shop-title">
               <SectionTitle id="ticket-shop-title">At the shop</SectionTitle>
               <ShopDetails />
