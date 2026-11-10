@@ -44,6 +44,8 @@ export type SaleDetail = Omit<SaleSummary, "pieces" | "itemNames"> & {
   void_reason: string | null;
   voided_by: Person;
   lines: SaleLine[];
+  /** The customer's counter ticket this sale paid, if it came from one. */
+  ticketCode: string | null;
 };
 
 // Reads ask for the newest columns first and step back when the database is older (Postgres reports
@@ -226,6 +228,19 @@ export async function fetchSalesTotals(supabase: SupabaseClient, fromIso: string
   };
 }
 
+/**
+ * The code of the counter ticket a sale paid, or null. It's kept on the sale itself (from
+ * supabase/migrations/20261026000000_ticket_sale_code.sql), so a voided sale still has it;
+ * before that update, it's found through the ticket, which only links an unvoided sale.
+ * Before the ticket migrations run at all, there's simply none.
+ */
+async function fetchSaleTicket(supabase: SupabaseClient, saleId: string): Promise<string | null> {
+  const own = await supabase.from("sales").select("ticket_code").eq("id", saleId).maybeSingle<{ ticket_code: string | null }>();
+  if (!olderSchema(own.error)) return own.data?.ticket_code ?? null;
+  const { data } = await supabase.from("counter_tickets").select("code").eq("sale_id", saleId).maybeSingle<{ code: string }>();
+  return data?.code ?? null;
+}
+
 /** One sale with its lines, for the receipt. */
 export async function fetchSale(supabase: SupabaseClient, id: string) {
   const run = (level: Level) =>
@@ -238,11 +253,13 @@ export async function fetchSale(supabase: SupabaseClient, id: string) {
       )
       .eq("id", id)
       .maybeSingle();
+  const ticket = fetchSaleTicket(supabase, id);
   let res = await run(2);
   if (olderSchema(res.error)) res = await run(1);
   if (olderSchema(res.error)) res = await run(0);
   if (res.error) return { sale: null, error: res.error };
   if (!res.data) return { sale: null, error: null };
+  const ticketCode = await ticket;
 
   type DetailRow = Row & {
     sale_items:
@@ -267,6 +284,7 @@ export async function fetchSale(supabase: SupabaseClient, id: string) {
     void_reason: r.void_reason ?? null,
     voided_by: r.voided_by_profile ?? null,
     cashier: r.cashier,
+    ticketCode,
     lines: (r.sale_items ?? [])
       .map((i) => ({
         id: i.id,

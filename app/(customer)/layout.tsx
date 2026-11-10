@@ -4,6 +4,7 @@ import { CustomerDock } from "@/features/customer/shell/components/customer-dock
 import { CustomerTopBar } from "@/features/customer/shell/components/customer-top-bar";
 import { SHOP } from "@/lib/shop";
 import { fetchChatUnread } from "@/features/customer/chat/data";
+import { fetchCartCount } from "@/features/customer/cart/data";
 import { initials, requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = {
@@ -13,7 +14,8 @@ export const metadata: Metadata = {
 
 export default async function CustomerLayout({ children }: { children: React.ReactNode }) {
   const { supabase, profile } = await requireCustomer();
-  const unread = (await fetchChatUnread(supabase, profile.id)) ?? 0;
+  const [chatUnread, cartCount] = await Promise.all([fetchChatUnread(supabase, profile.id), fetchCartCount(supabase, profile.id)]);
+  const unread = chatUnread ?? 0;
   const firstName = profile.full_name?.replace(/\(.*?\)/g, "").trim().split(/\s+/)[0] || profile.username;
 
   return (
@@ -30,6 +32,7 @@ export default async function CustomerLayout({ children }: { children: React.Rea
         username={profile.username}
         fullName={profile.full_name}
         initials={initials(profile.full_name, profile.username)}
+        cartCount={cartCount}
       />
       {/* Room for the dock on phones and tablets; desktop has no dock. */}
       {/* Phones keep room for the chat bubble too, above the home indicator. */}

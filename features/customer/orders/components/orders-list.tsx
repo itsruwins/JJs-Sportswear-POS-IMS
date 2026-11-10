@@ -4,20 +4,54 @@ import { formatPeso } from "@/features/shared/catalog/catalog";
 import { REQUESTS_MIGRATION, type MyOrderSummary } from "@/features/customer/orders/data";
 import { downPaymentOf, payAction } from "@/features/customer/orders/model";
 import { pageShell } from "@/features/customer/shell/components/page-parts";
+import { ticketState } from "@/features/shared/tickets/model";
+import type { TicketSummary } from "@/features/customer/tickets/data";
+import { TicketRow } from "@/features/customer/tickets/components/ticket-parts";
 import { dayDate, shortDate, StageStrip, StatusPill } from "./order-parts";
 
 const newRequestButton =
   "press inline-flex h-12 items-center justify-center gap-2 rounded-full bg-action px-6 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep";
 
-/** The Orders tab: every request the customer has sent, newest first. */
-export function OrdersListView({ orders, error, migrated }: { orders: MyOrderSummary[]; error: boolean; migrated: boolean }) {
+/**
+ * The Orders tab: a counter ticket waiting to be shown leads, then custom orders in
+ * progress, then everything closed (orders and tickets together), newest first.
+ */
+export function OrdersListView({
+  orders,
+  tickets,
+  now,
+  error,
+  migrated,
+}: {
+  orders: MyOrderSummary[];
+  tickets: TicketSummary[];
+  /** The visit's clock, for which tickets have run out. */
+  now: number;
+  error: boolean;
+  migrated: boolean;
+}) {
+  const ready = tickets.filter((t) => ticketState(t, now) === "ready");
+  // A design ticket taken at the counter is followed through its order: in progress until it's picked up or stopped.
+  const ordering = (t: TicketSummary) => ticketState(t, now) === "ordered" && !!t.order && !CLOSED.has(t.order.status);
+  const newestFirst = (a: { at: string }, b: { at: string }) => new Date(b.at).getTime() - new Date(a.at).getTime();
+  const inProgress = [
+    ...orders.filter((o) => !CLOSED.has(o.status)).map((o) => ({ at: o.created_at, row: <OrderRow key={o.id} order={o} /> })),
+    ...tickets.filter(ordering).map((t) => ({ at: t.closedAt ?? t.createdAt, row: <TicketRow key={t.id} ticket={t} now={now} /> })),
+  ].sort(newestFirst);
+  const past = [
+    ...orders.filter((o) => CLOSED.has(o.status)).map((o) => ({ at: o.created_at, key: o.id, row: <OrderRow key={o.id} order={o} /> })),
+    ...tickets
+      .filter((t) => ticketState(t, now) !== "ready" && !ordering(t))
+      .map((t) => ({ at: t.createdAt, key: t.id, row: <TicketRow key={t.id} ticket={t} now={now} /> })),
+  ].sort(newestFirst);
+
   return (
     <div className={pageShell}>
       <header className="mb-8 flex flex-wrap items-end justify-between gap-5 sm:mb-10">
         <div>
           <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">Orders</h1>
           <p className="mt-3 max-w-[48ch] text-[1.0625rem] leading-relaxed text-ink-2">
-            Custom kits you’ve asked the shop to make, and where each one is.
+            Counter tickets for the shop and custom kits you’ve asked it to make, and where each one is.
           </p>
         </div>
         {orders.length > 0 && (
@@ -38,38 +72,54 @@ export function OrdersListView({ orders, error, migrated }: { orders: MyOrderSum
         <p role="alert" className="auth-alert max-w-[46rem] rounded-2xl px-5 py-4 text-[0.9375rem]">
           We couldn’t load your orders just now. Check your connection, then refresh the page.
         </p>
-      ) : orders.length === 0 ? (
-        <div className="max-w-[46rem]">
-          <StageStrip status={null} />
-          <section className="mt-6 rounded-[1.25rem] bg-ground-2 px-5 py-6 shadow-[inset_0_0_0_1px_var(--line)] sm:px-7 sm:py-7">
-            <h2 className="text-[1.125rem] font-semibold leading-snug text-ink">No custom orders yet.</h2>
-            <p className="mt-2 max-w-[56ch] text-[0.9375rem] leading-relaxed text-ink-2">
-              Send the shop what you need: garments, colors, and a size run for your team. It moves along this board as the shop
-              prices it, makes it, and gets it ready for pickup.
-            </p>
-            <Link href="/orders/new" className={`${newRequestButton} mt-6`}>
-              <Plus aria-hidden="true" className="size-[1.125rem]" />
-              Request a custom order
-            </Link>
-          </section>
-        </div>
       ) : (
         <div className="flex flex-col gap-12">
-          {[
-            { title: "In progress", list: orders.filter((o) => !CLOSED.has(o.status)) },
-            { title: "Past orders", list: orders.filter((o) => CLOSED.has(o.status)) },
-          ]
-            .filter((g) => g.list.length > 0)
-            .map((g) => (
-              <section key={g.title} aria-label={g.title}>
-                <h2 className="voice-display mb-1 text-[1.5rem]">{g.title}</h2>
-                <ul className="divide-y divide-line border-y border-line">
-                  {g.list.map((o) => (
-                    <OrderRow key={o.id} order={o} />
-                  ))}
-                </ul>
+          {ready.length > 0 && (
+            <section aria-label="Ready for the counter">
+              <h2 className="voice-display mb-1 text-[1.5rem]">Ready for the counter</h2>
+              <ul className="divide-y divide-line border-y border-line">
+                {ready.map((t) => (
+                  <TicketRow key={t.id} ticket={t} now={now} />
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {inProgress.length > 0 && (
+            <section aria-label="In progress">
+              <h2 className="voice-display mb-1 text-[1.5rem]">In progress</h2>
+              <ul className="divide-y divide-line border-y border-line">{inProgress.map((p) => p.row)}</ul>
+            </section>
+          )}
+
+          {orders.length === 0 && (
+            <div className="max-w-[46rem]">
+              {/* With something in progress above, the idle board would only repeat it; this is the invitation to ask for more. */}
+              {inProgress.length === 0 && <StageStrip status={null} />}
+              <section
+                className={`${inProgress.length === 0 ? "mt-6" : ""} rounded-[1.25rem] bg-ground-2 px-5 py-6 shadow-[inset_0_0_0_1px_var(--line)] sm:px-7 sm:py-7`}
+              >
+                <h2 className="text-[1.125rem] font-semibold leading-snug text-ink">
+                  {inProgress.length === 0 ? "No custom orders yet." : "Need something of your own made?"}
+                </h2>
+                <p className="mt-2 max-w-[56ch] text-[0.9375rem] leading-relaxed text-ink-2">
+                  Send the shop what you need: garments, colors, and a size run for your team. It moves along this board as the shop
+                  prices it, makes it, and gets it ready for pickup.
+                </p>
+                <Link href="/orders/new" className={`${newRequestButton} mt-6`}>
+                  <Plus aria-hidden="true" className="size-[1.125rem]" />
+                  Request a custom order
+                </Link>
               </section>
-            ))}
+            </div>
+          )}
+
+          {past.length > 0 && (
+            <section aria-label="Past orders">
+              <h2 className="voice-display mb-1 text-[1.5rem]">Past orders</h2>
+              <ul className="divide-y divide-line border-y border-line">{past.map((p) => p.row)}</ul>
+            </section>
+          )}
         </div>
       )}
     </div>

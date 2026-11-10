@@ -32,7 +32,7 @@ export type MyOrderSummary = {
   waiting: number;
 };
 
-/** The signed-in customer's orders, newest first (RLS limits the read to their own). */
+/** The signed-in customer's orders, newest first (RLS limits the read to their own and their tickets' orders). */
 export async function fetchMyOrders(supabase: SupabaseClient) {
   const run = (full: boolean) =>
     supabase
@@ -40,6 +40,8 @@ export async function fetchMyOrders(supabase: SupabaseClient) {
       .select(
         `id, order_number, status, description, total_price, created_at,${full ? " team_name, needed_by," : ""} custom_order_items (garment, quantity), payments (amount, status)`,
       )
+      // Their own orders: a counter order made from their design ticket is followed on the ticket instead.
+      .not("customer_id", "is", null)
       .order("created_at", { ascending: false })
       .limit(200);
   let res = await run(true);
@@ -116,6 +118,8 @@ export async function fetchMyOrder(supabase: SupabaseClient, id: string): Promis
   if (!migrated) res = await run(false, false);
   if (res.error) return { order: null, error: true };
   if (!res.data) return { order: null, error: false };
+  // A counter order from their design ticket (readable through the ticket) isn't theirs to manage here.
+  if (!(res.data as unknown as { customer_id: string | null }).customer_id) return { order: null, error: false };
 
   type Row = {
     id: string;

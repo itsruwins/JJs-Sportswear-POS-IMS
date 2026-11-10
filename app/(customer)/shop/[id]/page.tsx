@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { pageShell } from "@/features/customer/shell/components/page-parts";
 import { ProductView } from "@/features/customer/shop/components/product-view";
 import { fetchShop } from "@/features/customer/shop/data";
+import { fetchCartQuantities } from "@/features/customer/cart/data";
 import { requireCustomer } from "@/features/customer/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -18,10 +19,10 @@ export async function generateMetadata({ params }: PageProps<"/shop/[id]">): Pro
 export default async function ProductPage({ params }: PageProps<"/shop/[id]">) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();
-  const { supabase } = await requireCustomer();
+  const { supabase, profile } = await requireCustomer();
 
   // One catalog read serves the product and its "more like this" row.
-  const { products, error } = await fetchShop(supabase);
+  const [{ products, error }, inCart] = await Promise.all([fetchShop(supabase), fetchCartQuantities(supabase, profile.id)]);
   if (error) {
     return (
       <div className={pageShell}>
@@ -34,5 +35,5 @@ export default async function ProductPage({ params }: PageProps<"/shop/[id]">) {
   const product = products.find((p) => p.id === id);
   if (!product) notFound();
 
-  return <ProductView product={product} products={products} />;
+  return <ProductView product={product} products={products} inCart={inCart} />;
 }

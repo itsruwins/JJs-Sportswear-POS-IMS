@@ -4,6 +4,8 @@ import { sortSizes, unique } from "@/features/shared/catalog/catalog";
 // loading the catalog is in data.ts.
 
 export type ShopVariant = {
+  /** The variant's id: what a cart line points at. */
+  id: string;
   size: string;
   color: string;
   price: number;
