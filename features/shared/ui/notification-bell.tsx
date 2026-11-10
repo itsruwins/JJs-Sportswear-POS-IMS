@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, CheckCheck, ClipboardList, MessageCircle, TriangleAlert, Wallet, X, type LucideIcon } from "lucide-react";
+import { Bell, CheckCheck, ClipboardList, MessageCircle, Ticket, TriangleAlert, Wallet, X, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { usePopoverOpen } from "./use-popover-open";
 
@@ -22,6 +22,7 @@ const ICONS: Record<string, LucideIcon> = {
   order_status: ClipboardList,
   payment: Wallet,
   chat: MessageCircle,
+  ticket: Ticket,
 };
 
 /** Where each kind of notification opens. Low stock goes through its product (looked up on tap). */
@@ -41,12 +42,17 @@ const ACTION: Record<string, string> = {
 const opens = (n: Notification) => !!n.reference_id && (n.type === "low_stock" || Object.hasOwn(DIRECT, n.type));
 
 /**
- * The same bell in the customer app: orders, payments, and refunds (shop messages live in the
- * chat bubble instead). Everything opens the customer's own order page; payment news opens it
- * at "Price and payments".
+ * The same bell in the customer app: orders, payments, refunds, and counter tickets (shop
+ * messages live in the chat bubble instead). Order news opens the customer's own order page,
+ * payment news opens it at "Price and payments", and ticket news opens the ticket.
  */
 export type BellVariant = "admin" | "customer";
-const CUSTOMER_ACTION: Record<string, string> = { order_status: "View order", custom_order: "View order", payment: "View payment" };
+const CUSTOMER_ACTION: Record<string, string> = {
+  order_status: "View order",
+  custom_order: "View order",
+  payment: "View payment",
+  ticket: "View ticket",
+};
 const isRefund = (n: Notification) => n.type === "custom_order" && /refund/i.test(n.title);
 const customerOpens = (n: Notification) => !!n.reference_id && Object.hasOwn(CUSTOMER_ACTION, n.type);
 const actionFor = (variant: BellVariant, n: Notification) =>
@@ -169,6 +175,9 @@ export function NotificationBell({ userId, variant = "admin" }: { userId: string
         if (data?.order_id) href = `/orders/${data.order_id}#payments`;
       } else if (n.type === "order_status" || n.type === "custom_order") {
         href = `/orders/${n.reference_id}${isRefund(n) ? "#payments" : ""}`;
+      } else if (n.type === "ticket") {
+        const { data } = await createClient().from("counter_tickets").select("code").eq("id", n.reference_id).maybeSingle<{ code: string }>();
+        if (data?.code) href = `/orders/tickets/${data.code}`;
       }
     } else if (n.type === "low_stock") {
       const { data } = await createClient().from("product_variants").select("product_id").eq("id", n.reference_id).maybeSingle();

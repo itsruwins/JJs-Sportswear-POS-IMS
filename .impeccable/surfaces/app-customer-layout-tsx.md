@@ -9,6 +9,8 @@ related_targets: ["app/(customer)/shop/page.tsx","app/(customer)/orders/page.tsx
 
 Mode: Operate. Customers of J&J Sportswear (teams, schools, walk-in buyers), mostly on phones, light with dark following the system. Phase C1 of docs/customer-plan.md: everything except the landing page sits behind login; customers land on /shop after logging in; staff and owners are sent to /admin. Tabs not built yet show their honest empty state and say which update brings them. Code-led build, structure pinned by the user (phone-first app with a tab dock, top nav on desktop).
 
+Update (2026-11-09, Phase T1 of docs/ticket-plan.md): the user asked for a cart, so a bag icon with an ink count sits in the top bar before the bell. The "refuses a cart icon" line below is superseded.
+
 ## Direction contract
 
 THESIS: The customer gets their own seat at the shop's scoreboard: the same court-green world and the same dock the counter uses, so both sides of the counter read as one system. It refuses the storefront default of a mega-menu header, promo banners, and a cart icon.

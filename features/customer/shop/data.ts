@@ -21,6 +21,7 @@ function sortStyles(styles: string[]) {
 function toShop(p: CatalogProduct): ShopProduct {
   const live = p.variants.filter((v) => v.is_active);
   const variants = live.map((v) => ({
+    id: v.id,
     size: v.size ?? "One size",
     color: v.color ?? "One color",
     price: v.price,

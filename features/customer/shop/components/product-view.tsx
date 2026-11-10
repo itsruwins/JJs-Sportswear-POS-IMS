@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { pageShell } from "@/features/customer/shell/components/page-parts";
-import { SHOP } from "@/lib/shop";
 import { available, CATEGORIES, inCategory, MADE_TO_ORDER, type ShopProduct } from "@/features/customer/shop/model";
 import { DesignDetail } from "./design-detail";
 import { ProductDetail } from "./product-detail";
@@ -11,13 +10,21 @@ import { ProductCard } from "./shop-parts";
 const LIVE_TABLES = ["products", "product_variants"] as const;
 
 /** A product page: the detail, then up to four more from its first category (a design's: more designs). */
-export function ProductView({ product, products }: { product: ShopProduct; products: ShopProduct[] }) {
+export function ProductView({
+  product,
+  products,
+  inCart,
+}: {
+  product: ShopProduct;
+  products: ShopProduct[];
+  /** Pieces already in the customer's cart, per variant id. */
+  inCart: Record<string, number>;
+}) {
   const category =
     (product.madeToOrder ? CATEGORIES.find((c) => c.id === MADE_TO_ORDER) : CATEGORIES.find((c) => c.id !== MADE_TO_ORDER && inCategory(product, c))) ?? null;
   const related = category
     ? products.filter((p) => p.id !== product.id && inCategory(p, category) && available(p)).slice(0, 4)
     : [];
-  const shop = { name: SHOP.name, address: SHOP.address, city: SHOP.city, phone: SHOP.phone, hours: SHOP.hours };
 
   return (
     <div className={pageShell}>
@@ -28,9 +35,9 @@ export function ProductView({ product, products }: { product: ShopProduct; produ
       </Link>
 
       {product.madeToOrder ? (
-        <DesignDetail product={product} shop={shop} />
+        <DesignDetail product={product} inCart={inCart} />
       ) : (
-        <ProductDetail product={product} category={category?.label ?? null} shop={shop} />
+        <ProductDetail product={product} category={category?.label ?? null} inCart={inCart} />
       )}
 
       {related.length > 0 && category && (

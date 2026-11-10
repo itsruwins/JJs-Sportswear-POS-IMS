@@ -21,14 +21,17 @@ export function StatusPill({ status }: { status: OrderStatus }) {
 const TRACK = ["Sent", "Accepted", "In production", "Ready", "Picked up"];
 const RANK: Record<OrderStatus, number> = { pending: 0, accepted: 1, in_progress: 2, ready: 3, completed: 4, declined: -1, cancelled: -1 };
 
-/** The order's board: a lamp per stage, passed ones lit, the current one live. Idle when there's no order yet. */
-export function StageStrip({ status }: { status: OrderStatus | null }) {
+/**
+ * The order's board: a lamp per stage, passed ones lit, the current one live. Idle when there's no order yet.
+ * `first` names the opening stage: "Sent" for a request, "Ordered" for an order taken at the counter.
+ */
+export function StageStrip({ status, first = "Sent" }: { status: OrderStatus | null; first?: string }) {
   const rank = status ? RANK[status] : -1;
   const done = status === "completed";
   return (
     <div className="board rounded-[1.25rem] px-4 py-3.5 text-board-ink sm:px-5">
       <ol aria-label="Order progress" className="grid grid-cols-5 gap-2">
-        {TRACK.map((label, i) => {
+        {[first, ...TRACK.slice(1)].map((label, i) => {
           const passed = rank > i || done;
           const live = rank === i && !done;
           return (

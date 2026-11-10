@@ -32,6 +32,12 @@ export function Receipt({ sale }: { sale: SaleDetail }) {
         <dd className="tabular text-right">{when(sale.created_at)}</dd>
         <dt className="opacity-70">Cashier</dt>
         <dd className="text-right">{personName(sale.cashier)}</dd>
+        {sale.ticketCode && (
+          <>
+            <dt className="opacity-70">Ticket</dt>
+            <dd className="tabular text-right">{sale.ticketCode}</dd>
+          </>
+        )}
       </dl>
 
       <ul className="receipt-rule mt-4 pt-3">

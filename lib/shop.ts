@@ -9,7 +9,7 @@ export const SHOP = {
   city: "Legazpi City, Albay",
   /** Contact number for the receipt. Placeholder until the shop confirms it. */
   phone: null as string | null,
-  /** Store hours, shown to customers on the "Buy at the shop" sheet. Placeholder until the shop confirms them. */
+  /** Store hours, shown to customers on the cart page and design sheets. Placeholder until the shop confirms them. */
   hours: null as string | null,
   /** Printed under the items. */
   thanks: "Thank you for shopping with us!",
