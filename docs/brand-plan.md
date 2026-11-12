@@ -4,6 +4,8 @@ One phase per session. Each phase ends finished and tested, and the next one sta
 
 Goal: the app matches the shop's official logo, a white J&J on an orange circle with "CRAFTS & SPORTSWEAR" under it. The court-green scoreboard world becomes a charcoal scoreboard with the logo's orange as the brand color, and the shop's name becomes J&J Crafts & Sportswear.
 
+**Status: complete (2026-11-12).** B1–B5 are built. B6 closed with nothing to build, because the app sends no Auth emails.
+
 Source file: the official logo PNG (1254 × 1254, orange circle on an off-white square). There is no vector file. The second J is drawn inverted, so it can look like an L.
 
 ## Decisions (2026-10-27)
@@ -140,10 +142,17 @@ Garment and sample colors in `features/shared/catalog/colors.ts` are product dat
 - The repo has no `supabase/templates/`, so the Auth emails live in the Supabase dashboard. Write HTML templates (confirm sign-up, reset password, and any others the project sends) with the badge, the new name and the palette, using email-safe inline styles.
 - Save them in `supabase/templates/` so they're tracked, with a short note on where to paste each one in the dashboard.
 - **Done when:** each template renders in a test send to Gmail on a phone and a desktop, light and dark.
+- **Closed 2026-11-12: nothing to send.** The app sends no Auth emails, so there are no templates to brand:
+  - Logins are usernames. Each account's Auth address is a placeholder, `username@jjsportswear.local` (`features/shared/auth/credentials.ts`), that can't receive mail. Email confirmation is off in Supabase Auth, which sign-up depends on.
+  - There's no reset-by-email: the login dialog sends people to the shop ("Message the shop and staff will help you reset it").
+  - Changing a password on the Account page (`updateUser({ password })`) sends nothing by default, and any notice would go to the placeholder.
+  - The optional contact email given at sign-up is only stored on the profile for the shop. Supabase never mails it.
+  - The placeholder domain keeps the old name on purpose (decision 2026-11-12): it's stored on every account in Supabase Auth and never shown to people, so renaming it would mean migrating every login address at once. `credentials.ts` says so.
+  - If email is added later (for example, letting customers who gave a contact email reset their own password), that's its own feature. It would need real Auth addresses or a separate sending path, and its templates should then use the badge, the name and the palette from this plan.
 
 ## Open questions for later phases
 
 - B1: where the logo files should live (`public/brand/` vs inline SVG components), and whether the trace needs touch-ups after you review it.
 - B2: whether any screen should keep a hint of green (for example, "Verified" or "Paid"), or green leaves the app entirely.
 - B5: which printer the shop uses for receipts (thermal is black only).
-- B6: which Auth emails the project actually sends (sign-up, reset, email change, magic link).
+- B6: answered 2026-11-12. None; see Phase B6.
