@@ -6,7 +6,7 @@ import { ProviderAccounts } from "@/features/admin/payments/components/payment-a
 import { fetchProviders } from "@/features/shared/payments/data";
 import { requireStaff } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "Shop accounts · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Shop accounts" };
 
 /** Owner: the shop's account at each e-wallet and bank, and which ones customers can pay through online. */
 export default async function AccountsPage() {

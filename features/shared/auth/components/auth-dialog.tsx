@@ -554,7 +554,7 @@ function Field({
           id={`${id}-msg`}
           className={`mt-2 flex gap-2 text-[0.875rem] leading-snug ${error ? "font-semibold text-ink" : "text-ink-2"}`}
         >
-          {error && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-signal" />}
+          {error && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full signal-dot" />}
           {error ?? hint}
         </p>
       )}

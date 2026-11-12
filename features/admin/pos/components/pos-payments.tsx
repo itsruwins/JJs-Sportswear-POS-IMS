@@ -126,7 +126,7 @@ export function PosPayments({
 
   return (
     <div>
-      <h3 className="voice-label text-[0.8125rem] uppercase text-ink-2">Payments</h3>
+      <h3 className="voice-kicker text-[0.75rem] text-ink-2">Payments</h3>
       <ul className="mt-1.5 divide-y divide-line border-y border-line">
         {ePayments.map((p) => (
           <li key={p.id} className="flex items-center gap-1">

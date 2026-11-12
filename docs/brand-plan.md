@@ -4,6 +4,8 @@ One phase per session. Each phase ends finished and tested, and the next one sta
 
 Goal: the app matches the shop's official logo, a white J&J on an orange circle with "CRAFTS & SPORTSWEAR" under it. The court-green scoreboard world becomes a charcoal scoreboard with the logo's orange as the brand color, and the shop's name becomes J&J Crafts & Sportswear.
 
+**Status: complete (2026-11-12).** B1–B5 are built. B6 closed with nothing to build, because the app sends no Auth emails.
+
 Source file: the official logo PNG (1254 × 1254, orange circle on an off-white square). There is no vector file. The second J is drawn inverted, so it can look like an L.
 
 ## Decisions (2026-10-27)
@@ -82,6 +84,22 @@ Garment and sample colors in `features/shared/catalog/colors.ts` are product dat
 - Walk every surface in light and dark at phone and desktop widths: landing, shop, product, design studio, orders, pay, chat, account; admin home, POS, stock, products, orders, design orders, payments, sales, receipts, reports, staff, history.
 - Fix the places where green carried meaning the new tokens don't express on their own: size rails, period lamps, the order band, sales chart columns (dark mode gets its own validated orange step), unread avatars, the photo backdrop, and the hardcoded values in the landing AI studio and sample data.
 - **Done when:** every screen has been seen in both themes and no screen shows yellow unless something is live, low, owed or unread.
+- **Decisions (2026-11-11):** walk the real screens with test logins (read-only); the landing demo's green jersey and the Court green / Amber sample chips become J&J orange; B3 fixes color and brand only, everything else goes on a list.
+- **Built 2026-11-11:**
+  - Walked 27 screens (landing, 19 owner, 7 customer) in light and dark, at 1440 and 390 wide, with a script that also reads every element's computed colors and flags green hues and yellow fills. No green was left in the theme, and no screen showed yellow without something live, low, owed or unread. The "acer" login turned out to be a customer account, so it covered the customer side; staff screens reuse the owner's components.
+  - **Yellow on paper:** shot-clock yellow is 1.4:1 on the light ground, so the small yellow dots (low size, a problem beside a field, unread on the dock) and the outlined "now" panels nearly vanished. New `signal-edge` token (oklch 0.6 0.13 85, 3.7:1 on ground; the yellow itself in dark mode). Dots use the new `.signal-dot` class (yellow with a 1px edge rim), and the pay notice and urgent scan notice get a yellow band inside a 1px edge rim.
+  - The landing username field's error ring was yellow; it's now the solid ink ring every other field uses (board ink on the board).
+  - Landing AI studio: the "Court green" preset is now "J&J orange with charcoal side panels and thin white pinstripes" (logo orange body, charcoal panels and trim, off-white lettering). Sample chips: Court green and Amber became J&J orange; the near-blacks and grays lost their green tint.
+  - Last green-tinted values: the sales chart tooltip shadow, and DESIGN.md's board lift, selected tile, hinge, lamp glow and photo backdrop values, which now match the CSS. `.impeccable/design.json` has the new token.
+  - Checked: typecheck, lint, `npm run build`.
+  - Not seen live because the data doesn't exist yet (nothing low, unread, owed, in production, or sold): low cells and the unread dot in the admin, live period lamps on an order, the pay notice, and the sales chart columns. Their CSS was read and uses the B2 tokens.
+  - **Non-color issues found (not fixed, for later):**
+    - Admin Home "Getting set up": "Open the counter" still says "once Point of sale is ready", though the POS is built.
+    - Admin chat on desktop: the conversation list cuts off the time at its right edge ("Fri").
+    - Admin dock: the "Coming soon" item and `.admin-soon-dot` are unused now that every section is built.
+    - POS Designs tab on phones: the search placeholder is cut off ("Team, design number, or ticl").
+    - Disabled orange buttons (chat Send) turn a muddy brown at half opacity in dark mode.
+    - The old name "J&J Sportswear" is still on the payment slip, the ticket's "At the shop", and the landing copy (B4 and B5).
 
 ### Phase B4: Name and font
 - `SHOP.name` becomes "J&J Crafts & Sportswear". Add a short name ("J&J") next to it in `lib/shop.ts`.
@@ -89,20 +107,52 @@ Garment and sample colors in `features/shared/catalog/colors.ts` are product dat
 - Load Montserrat through `next/font` next to Archivo and point the label voice, kickers and the name beside the badge at it. Board numerals and body text stay Archivo.
 - Update `PRODUCT.md` (name, brand commitments: the logo now exists).
 - **Done when:** a grep for "J&J Sportswear" finds only docs history, and tab titles read correctly on every route.
+- **Decisions (2026-11-12):**
+  - Montserrat reaches the small uppercase labels on the boards ("kickers") and nothing else. Table headers, field labels, chips and initials stay in the narrow Archivo label voice, because Montserrat is too wide for them.
+  - Tab titles: the full name on the landing and customer pages ("Shop · J&J Crafts & Sportswear"), "J&J Admin" on admin pages ("Products · J&J Admin").
+  - Copy: swap the name only. No new claims about crafts.
+- **Built 2026-11-12:**
+  - `lib/shop.ts`: `SHOP.name` is "J&J Crafts & Sportswear", plus `SHOP.short` ("J&J").
+  - Title templates: the root layout (`default` with the tagline, `template` "%s · name"), the customer layout (`absolute` name, same template) and the admin layout (`absolute` "J&J Admin", template "%s · J&J Admin"). 27 pages and the admin chat layout now give only their own title. The product page's title is the product name.
+  - Every hard-coded name now reads `SHOP`: landing lead, footer, nav aria-label, admin and customer bar aria-labels, the account menu's home link, the chat header, greeting and screen-reader speaker name, the pay modal ("Send to …'s GCash"), and the report's print line. The print footers in `app/globals.css` can't import, so they spell the new name out. The name never breaks across lines in running text (landing lead, chat greeting).
+  - New `.voice-kicker` in `app/globals.css` (Montserrat 600, uppercase, +0.1em, a size down to 0.6875rem). Used by the landing scoreboard labels, the admin readout, the POS and design-order Total, the ticket's "Show this at the counter", the POS Payments heading and the slip's "Order slip".
+  - `PRODUCT.md` (name, short name, the logo now exists), `DESIGN.md` and `.impeccable/design.json` (name, Board Label now Montserrat, the Montserrat rules) and the two `.impeccable/surfaces` briefs updated.
+  - Checked: typecheck, lint, `npm run build`. Every tab title was read in a browser: landing, 19 admin routes and 10 customer routes. Screenshots of the landing, admin home, payment slip (the full name fits on one line at 1.5rem), ticket, chat panel (desktop and phone) and account menu.
+  - Not seen live: the sales receipt and the order slip, since there are no sales or walk-in orders yet. They share the payment slip's header markup and width.
+  - Still saying the old name, on purpose: comments in the applied initial migration (never edited) and in the one-time seed scripts, plus older plan docs.
 
 ### Phase B5: Print
 - Logo on the POS receipt, the payment slip, the order slip and the report printouts. Black one-color badge on the 80 mm roll; full color on A4 where the printer allows, black otherwise.
 - The print footers carry the new name.
 - **Done when:** every printable page has been printed to PDF at 80 mm and A4, and the logo is sharp and in the right color on each.
+- **Decisions (2026-11-12):**
+  - The shop's printers aren't known yet, so B5 plans for both: black badge on the 80 mm roll, orange badge on A4 (a black-only A4 printer prints it as a grey disc).
+  - Slips: the badge centred above the name, which stays as text so it's sharp on any printer.
+  - Reports: in print only, a small lockup (badge and "Crafts & Sportswear") above the title on page 1. The footer on every page keeps the name and page count.
+  - Testing: a temporary admin page with sample data rendered the sales receipt and order slip for printing, then was deleted. Nothing was written to the database.
+- **Built 2026-11-12:**
+  - `features/admin/sales/components/receipt-parts.tsx`: `SlipHeader`, the one header for the sales receipt, payment slip and order slip (compact badge, name, address/city/phone, the slip's own line). The three copies of that header are gone.
+  - `app/globals.css`: `.slip-badge` prints at 14 mm on the roll and 16 mm on A4. On the roll it sets `--brand: black`, so the badge's disc turns black and the letters stay paper; on A4 it stays logo orange.
+  - `app/admin/reports/page.tsx`: a print-only `Wordmark` above the title.
+  - `DESIGN.md`: receipt header and report print described.
+  - Printed to PDF from the running app with each paper's own `@page` rules (as `PrintButtons` sets them): the payment slip (real data), the sales receipt and the order slip (sample data) at 80 mm and A4, and both reports at A4. The badge is vector in every PDF, black on the roll, orange on A4. The print footers read "J&J Crafts & Sportswear · Sales report" / "· Inventory report".
+  - Not checked: a real thermal printer or a black-only laser. The PDFs show what the browser sends; the thermal driver's dithering and margins can only be seen on the device.
 
 ### Phase B6: Auth emails
 - The repo has no `supabase/templates/`, so the Auth emails live in the Supabase dashboard. Write HTML templates (confirm sign-up, reset password, and any others the project sends) with the badge, the new name and the palette, using email-safe inline styles.
 - Save them in `supabase/templates/` so they're tracked, with a short note on where to paste each one in the dashboard.
 - **Done when:** each template renders in a test send to Gmail on a phone and a desktop, light and dark.
+- **Closed 2026-11-12: nothing to send.** The app sends no Auth emails, so there are no templates to brand:
+  - Logins are usernames. Each account's Auth address is a placeholder, `username@jjsportswear.local` (`features/shared/auth/credentials.ts`), that can't receive mail. Email confirmation is off in Supabase Auth, which sign-up depends on.
+  - There's no reset-by-email: the login dialog sends people to the shop ("Message the shop and staff will help you reset it").
+  - Changing a password on the Account page (`updateUser({ password })`) sends nothing by default, and any notice would go to the placeholder.
+  - The optional contact email given at sign-up is only stored on the profile for the shop. Supabase never mails it.
+  - The placeholder domain keeps the old name on purpose (decision 2026-11-12): it's stored on every account in Supabase Auth and never shown to people, so renaming it would mean migrating every login address at once. `credentials.ts` says so.
+  - If email is added later (for example, letting customers who gave a contact email reset their own password), that's its own feature. It would need real Auth addresses or a separate sending path, and its templates should then use the badge, the name and the palette from this plan.
 
 ## Open questions for later phases
 
 - B1: where the logo files should live (`public/brand/` vs inline SVG components), and whether the trace needs touch-ups after you review it.
 - B2: whether any screen should keep a hint of green (for example, "Verified" or "Paid"), or green leaves the app entirely.
 - B5: which printer the shop uses for receipts (thermal is black only).
-- B6: which Auth emails the project actually sends (sign-up, reset, email change, magic link).
+- B6: answered 2026-11-12. None; see Phase B6.

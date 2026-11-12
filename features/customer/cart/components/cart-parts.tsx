@@ -85,7 +85,7 @@ export function CartRow({ line: l, onQuantity }: { line: CartLine; onQuantity: (
 
         {state === "low" && item && (
           <p className="mt-2.5 flex items-center gap-2 text-[0.875rem] text-ink-2">
-            <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-signal" />
+            <span aria-hidden="true" className="size-2 shrink-0 rounded-full signal-dot" />
             <span>
               <span className="tabular font-semibold text-ink">Only {item.stock} left</span> at the shop right now.
             </span>

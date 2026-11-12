@@ -9,8 +9,8 @@ const PRESETS: Preset[] = [
   {
     prompt: "Black and amber, a lava stripe across the chest like Mayon at night, number 23.",
     design: {
-      body: "oklch(0.21 0.01 158)",
-      panel: "oklch(0.3 0.01 158)",
+      body: "oklch(0.21 0.012 50)",
+      panel: "oklch(0.3 0.012 50)",
       trim: "oklch(0.82 0.165 78)",
       ink: "oklch(0.97 0.01 78)",
       accent: "oklch(0.64 0.2 38)",
@@ -33,13 +33,13 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    prompt: "Court green with thin gold pinstripes, old-school varsity lettering, number 11.",
+    prompt: "J&J orange with charcoal side panels and thin white pinstripes, old-school varsity lettering, number 11.",
     design: {
-      body: "oklch(0.43 0.105 158)",
-      panel: "oklch(0.34 0.085 158)",
-      trim: "oklch(0.86 0.12 90)",
-      ink: "oklch(0.97 0.02 95)",
-      accent: "oklch(0.86 0.12 90)",
+      body: "oklch(0.653 0.215 37.5)",
+      panel: "oklch(0.255 0.012 50)",
+      trim: "oklch(0.255 0.012 50)",
+      ink: "oklch(0.975 0.006 70)",
+      accent: "oklch(0.975 0.006 70 / 0.55)",
       pattern: "pinstripe",
       name: "KINGS",
       number: "11",

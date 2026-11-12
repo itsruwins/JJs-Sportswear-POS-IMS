@@ -8,7 +8,7 @@ import { manilaToday } from "@/features/admin/history/data";
 import { fetchSale } from "@/features/admin/sales/data";
 import { requireStaff } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "Receipt · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Receipt" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const dayOf = (iso: string) =>

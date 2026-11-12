@@ -8,7 +8,8 @@ import { fetchCartCount } from "@/features/customer/cart/data";
 import { initials, requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = {
-  title: "J&J Sportswear",
+  // "Shop · J&J Crafts & Sportswear"; a page without its own title shows the name alone.
+  title: { absolute: SHOP.name, template: `%s · ${SHOP.name}` },
   robots: { index: false, follow: false },
 };
 

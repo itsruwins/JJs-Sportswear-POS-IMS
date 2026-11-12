@@ -10,10 +10,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function generateMetadata({ params }: PageProps<"/shop/[id]">): Promise<Metadata> {
   const { id } = await params;
-  if (!UUID.test(id)) return { title: "Shop · J&J Sportswear" };
+  if (!UUID.test(id)) return { title: "Shop" };
   const { supabase } = await requireCustomer();
   const { data } = await supabase.from("products").select("name").eq("id", id).maybeSingle<{ name: string }>();
-  return { title: `${data?.name ?? "Shop"} · J&J Sportswear` };
+  return { title: data?.name ?? "Shop" };
 }
 
 export default async function ProductPage({ params }: PageProps<"/shop/[id]">) {

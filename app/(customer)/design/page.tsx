@@ -6,7 +6,7 @@ import { fetchMyDesigns, STUDIO_MIGRATION } from "@/features/customer/design/dat
 import { fluxConfigured } from "@/features/customer/design/flux";
 import { requireCustomer } from "@/features/customer/shell/session";
 
-export const metadata: Metadata = { title: "Design · J&J Sportswear" };
+export const metadata: Metadata = { title: "Design" };
 // A FLUX generation can take half a minute; give the studio's server actions room.
 export const maxDuration = 120;
 

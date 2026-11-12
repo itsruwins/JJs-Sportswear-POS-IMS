@@ -99,7 +99,7 @@ export const SAMPLE_PRODUCTS: SampleProduct[] = [
     name: "Reversible Liga Jersey",
     garment: "jersey",
     colors: [
-      { name: "Black", swatch: "oklch(0.2 0.01 158)" },
+      { name: "Black", swatch: "oklch(0.2 0.012 50)" },
       { name: "White", swatch: "oklch(0.97 0 0)" },
     ],
     stock: [
@@ -114,8 +114,8 @@ export const SAMPLE_PRODUCTS: SampleProduct[] = [
     name: "Dri-fit Practice Tee",
     garment: "tee",
     colors: [
-      { name: "Court green", swatch: "oklch(0.43 0.105 158)" },
-      { name: "Heather gray", swatch: "oklch(0.72 0.005 158)" },
+      { name: "J&J orange", swatch: "oklch(0.653 0.215 37.5)" },
+      { name: "Heather gray", swatch: "oklch(0.72 0.006 60)" },
     ],
     stock: [
       { size: "S", qty: 14 },
@@ -128,7 +128,7 @@ export const SAMPLE_PRODUCTS: SampleProduct[] = [
   {
     name: "Basketball Shorts",
     garment: "shorts",
-    colors: [{ name: "Black", swatch: "oklch(0.2 0.01 158)" }],
+    colors: [{ name: "Black", swatch: "oklch(0.2 0.012 50)" }],
     stock: [
       { size: "S", qty: 10 },
       { size: "M", qty: 12 },
@@ -141,8 +141,8 @@ export const SAMPLE_PRODUCTS: SampleProduct[] = [
     name: "Warmer Jacket",
     garment: "jacket",
     colors: [
-      { name: "Charcoal", swatch: "oklch(0.32 0.008 158)" },
-      { name: "Amber", swatch: "oklch(0.82 0.165 78)" },
+      { name: "Charcoal", swatch: "oklch(0.32 0.01 50)" },
+      { name: "J&J orange", swatch: "oklch(0.653 0.215 37.5)" },
     ],
     stock: [
       { size: "S", qty: 0 },

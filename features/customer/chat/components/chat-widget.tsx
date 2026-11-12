@@ -22,6 +22,7 @@ import {
 } from "@/features/customer/chat/data";
 import { STATUS_TEXT } from "@/features/customer/orders/model";
 import { createClient } from "@/lib/supabase/client";
+import { SHOP } from "@/lib/shop";
 
 type Tag = { id: string; number: string };
 type Photo = { blob: Blob; ext: string; type: string; url: string };
@@ -318,7 +319,7 @@ export function ChatWidget({ uid, firstName, initialUnread, hours }: { uid: stri
           <BrandBadge className="size-9 shrink-0" />
           <div className="min-w-0 flex-1">
             <h2 id={ids.title} ref={heading} tabIndex={-1} className="truncate text-[1rem] font-semibold text-board-ink outline-none">
-              J&amp;J Sportswear
+              {SHOP.name}
             </h2>
             <p className="truncate text-[0.8125rem] text-board-ink/75">A person from the shop answers</p>
           </div>
@@ -336,7 +337,7 @@ export function ChatWidget({ uid, firstName, initialUnread, hours }: { uid: stri
           {/* The greeting: from the shop, not stored, always first. */}
           <div className="flex flex-col items-start">
             <p className="chat-bubble chat-bubble-shop">
-              Hi {firstName}! You’re chatting with J&amp;J Sportswear. Ask about sizes, prices, or your orders, and a person from the shop will
+              Hi {firstName}! You’re chatting with <span className="whitespace-nowrap">{SHOP.name}</span>. Ask about sizes, prices, or your orders, and a person from the shop will
               answer {hours ? `during store hours (${hours})` : "here, usually the same day"}.
             </p>
           </div>
@@ -416,7 +417,7 @@ export function ChatWidget({ uid, firstName, initialUnread, hours }: { uid: stri
                         About {m.order.number}
                       </Link>
                     )}
-                    <span className="sr-only">{m.mine ? "You" : "J&J Sportswear"}: </span>
+                    <span className="sr-only">{m.mine ? "You" : SHOP.name}: </span>
                     {m.photoUrl && (
                       <a href={m.photoUrl} target="_blank" rel="noreferrer" className={`chat-photo press ${isPending ? "opacity-70" : ""}`}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}

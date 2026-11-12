@@ -608,7 +608,7 @@ export function PaymentReading({
         )}
         {(mark === "differs" || mark === "check") && (
           <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
-            <span aria-hidden="true" className="size-2 rounded-full bg-signal" />
+            <span aria-hidden="true" className="size-2 rounded-full signal-dot" />
             {mark === "differs" ? "Differs" : "Check this"}
           </span>
         )}

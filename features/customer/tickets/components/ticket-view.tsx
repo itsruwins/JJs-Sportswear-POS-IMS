@@ -172,7 +172,7 @@ export function TicketView({
           <section aria-label="Ticket code" className="board rounded-[1.75rem] p-5 text-board-ink sm:p-7">
             <div className={`flex flex-col gap-6 ${live && qr ? "sm:flex-row sm:items-center sm:justify-between" : ""}`}>
               <div className="min-w-0">
-                <p className="voice-label text-[0.75rem] uppercase text-board-ink-2">{live ? "Show this at the counter" : "Ticket"}</p>
+                <p className="voice-kicker text-[0.6875rem] text-board-ink-2">{live ? "Show this at the counter" : "Ticket"}</p>
                 <div className={`mt-3 ${live ? "" : "opacity-55"}`}>
                   <FlipText text={t.code} label={`Ticket code ${t.code.split("").join(" ")}`} className="text-[clamp(2.5rem,11vw,4rem)]" />
                 </div>
