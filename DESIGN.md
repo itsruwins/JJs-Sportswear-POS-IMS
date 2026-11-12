@@ -18,6 +18,7 @@ colors:
   accent: "oklch(0.565 0.19 37.5)"
   signal: "oklch(0.87 0.17 95)"
   signal-ink: "oklch(0.28 0.06 85)"
+  signal-edge: "oklch(0.6 0.13 85)"
   pick: "oklch(0.255 0.012 50)"
   pick-ink: "oklch(0.975 0.006 70)"
   ground: "oklch(0.975 0.006 70)"
@@ -31,6 +32,7 @@ colors:
   board-edge-dark: "oklch(0.185 0.008 50)"
   board-line-dark: "oklch(0.38 0.012 50)"
   accent-dark: "oklch(0.72 0.17 45)"
+  signal-edge-dark: "oklch(0.87 0.17 95)"
   pick-dark: "oklch(0.93 0.006 70)"
   pick-ink-dark: "oklch(0.18 0.01 50)"
   card-dark: "oklch(0.935 0.005 70)"
@@ -235,6 +237,7 @@ A charcoal instrument on warm paper, with the logo's orange for the brand and th
 
 ### Secondary
 - **Shot-Clock Yellow** (`signal`) with **Signal Ink** (`signal-ink`): the live period lamp, low-stock cells, pills and counts for what's waiting now, and text selection. Signal Ink is the only text color allowed on yellow. Unchanged in dark mode.
+- **Signal Edge** (`signal-edge`): yellow alone is 1.4:1 on the paper, so a small yellow mark on ground (an unread dot, a low-size dot, a dot beside a problem) gets a 1px rim of this deeper yellow, and a panel marked "now" without a fill (the pay notice, an urgent scan notice) gets a yellow band inside a 1px rim of it (3.7:1 on ground). Dark mode uses the yellow itself (`signal-edge-dark`). Never a text color.
 - **Pick** (`pick`) and **Pick Ink** (`pick-ink`): the chosen one of a set (current dock and tab item, a pressed chip or size, a switch turned on, unread avatars, done steps). Charcoal in light; near-white with dark type in dark mode (`pick-dark`, `pick-ink-dark`), where charcoal would barely part from the ground (1.3:1).
 
 ### Neutral
@@ -287,12 +290,12 @@ Headline and intro sit side by side on large screens (two columns aligned to the
 Depth is tonal and physical, never ambient decoration. The board is the one lifted object: a faint top highlight inset, a soft radial sheen from above, and a deep warm drop. Wells are pressed into the paint with an inner shadow. Cards and cells sit just proud of the board with a 1–2px shadow. Off the board, surfaces are flat and edged with a 1px inset rule.
 
 ### Shadow Vocabulary
-- **Board lift** (light: `0 1px 0 oklch(1 0 0 / 0.12) inset, 0 30px 60px -30px oklch(0.25 0.08 158 / 0.55), 0 12px 24px -12px oklch(0.25 0.06 158 / 0.35)`; dark: `0 1px 0 oklch(1 0 0 / 0.08) inset, 0 30px 60px -30px oklch(0 0 0 / 0.7)`): the scoreboard only.
+- **Board lift** (light: `0 1px 0 oklch(1 0 0 / 0.1) inset, 0 30px 60px -30px oklch(0.2 0.02 50 / 0.5), 0 12px 24px -12px oklch(0.2 0.02 50 / 0.3)`; dark: `0 1px 0 oklch(1 0 0 / 0.08) inset, 0 30px 60px -30px oklch(0 0 0 / 0.7)`): the scoreboard only.
 - **Well** (`inset 0 2px 6px oklch(0 0 0 / 0.28), 0 1px 0 oklch(1 0 0 / 0.08)`): status window, control strip, input on board.
 - **Card on board** (`0 1px 2px oklch(0 0 0 / 0.2)`): stock cells on a rail.
 - **Card button on board** (`0 1px 0 oklch(1 0 0 / 0.6) inset, 0 6px 14px -6px oklch(0 0 0 / 0.45)`): the off-white primary action set on charcoal.
-- **Lamp recess / glow**: idle `inset 0 1px 2px oklch(0 0 0 / 0.45)`; live `0 0 0 3px oklch(0.82 0.165 78 / 0.25), 0 2px 6px oklch(0.82 0.165 78 / 0.45)`.
-- **Selected tile** (`0 10px 24px -14px oklch(0.2 0.02 158 / 0.6)`): the chosen prompt tile.
+- **Lamp recess / glow**: idle `inset 0 1px 2px oklch(0 0 0 / 0.45)`; live `0 0 0 3px` signal at 25% and `0 2px 6px` signal at 45%; idle lamps also carry a 1px `board-line` rim so they show on charcoal.
+- **Selected tile** (`0 10px 24px -14px oklch(0.2 0.02 50 / 0.6)`): the chosen prompt tile.
 
 ### Named Rules
 **The Only-The-Board-Lifts Rule.** The large drop shadow belongs to the scoreboard. Other surfaces are flat with a hairline, or recessed as wells.
@@ -325,7 +328,7 @@ Sticky translucent bar, 64px, Nav Glass with `blur(20px) saturate(170%)`. Once s
 The board surface (Charcoal with radial sheen and board lift, 1.75rem / 2.25rem radius, 16–32px padding) holds board labels, flip readouts, and a status well. A ruled period strip carries the period buttons; a full-bleed well along the bottom is the control strip that holds the working form. Board type is Board Chalk; secondary reading text is Board Chalk Muted.
 
 ### Split-flap cell (signature)
-Each character is a 0.72em × 1em off-white card in two hinged halves; the top half shades from Flip Card to Card Shade, and a 1px `oklch(0.2 0.02 158 / 0.35)` hinge crosses the middle. Flip text pads to a fixed cell count so the board never reflows; unused cells stay in place at 22% opacity so the word reads first. Cells sit 0.06em apart.
+Each character is a 0.72em × 1em off-white card in two hinged halves; the top half shades from Flip Card to Card Shade, and a 1px `oklch(0.2 0.02 50 / 0.35)` hinge crosses the middle. Flip text pads to a fixed cell count so the board never reflows; unused cells stay in place at 22% opacity so the word reads first. Cells sit 0.06em apart.
 
 ### Period lamps
 0.7rem round lamps inside pill buttons. **Idle:** Board Edge, recessed, with a 1px Board Rule rim so it shows on charcoal. **Done:** Board Chalk with a faint white ring. **Live:** yellow with a soft yellow halo. 220ms color transition. Tapping a period flips the board to that stage; tapping the live period steps through its remaining statuses.
@@ -334,7 +337,7 @@ Each character is a 0.72em × 1em off-white card in two hinged halves; the top h
 Size runs are a strip of board (Charcoal, 12px radius, 6px padding, 6px gaps) holding identical cells. **In:** lit off-white card with the count in Board voice. **Low:** yellow card, Signal Ink. **Out:** a blank well slot (Board Well, inner shadow, a dash). The legend uses miniature rails (3px pad, 3px cells). State changes cross-fade at 260ms.
 
 ### Stock cells off the board (admin)
-Lists, the restock queue, and the size × color grid use loose cells on the page ground. **In:** the lit card with a 1px rule. **Low:** yellow. **Out:** a hollow slot with a 1.5px solid ink ring and the count "0", identical in light and dark, so a sold-out size reads as the most urgent state without inverting into a lit card in dark mode. When one color of a size is sold out but others still have stock, the size's cell is yellow with a small ink dot in its top-right corner. Product photos sit on a light Photo Backdrop (`oklch(0.955 0.004 158)` light, `oklch(0.9 0.005 158)` dark) in both themes, the way product photography is shot; light garments carry a soft outline.
+Lists, the restock queue, and the size × color grid use loose cells on the page ground. **In:** the lit card with a 1px rule. **Low:** yellow. **Out:** a hollow slot with a 1.5px solid ink ring and the count "0", identical in light and dark, so a sold-out size reads as the most urgent state without inverting into a lit card in dark mode. When one color of a size is sold out but others still have stock, the size's cell is yellow with a small ink dot in its top-right corner. Product photos sit on a light Photo Backdrop (`oklch(0.955 0.005 70)` light, `oklch(0.9 0.005 70)` dark) in both themes, the way product photography is shot; light garments carry a soft outline.
 
 ### Reports and print (admin)
 The inventory report is a calm document, not a board: plain board-numeral figures on the ground, sections under display headings on a 1px rule, each with an outlined "CSV" pill at the right. Tables use label-voice headers, tabular figures, and zero shown as a muted dash so real numbers stand out; pieces out carry a minus so a row adds across to Net. On phones, short lists stack like Home's rows and wide tables scroll sideways inside a labeled, focusable region with the first column pinned. **Print** is always a white A4 page with dark ink, whatever the theme: app chrome and controls are hidden, the shop name folds into the "as of" sentence (never a kicker above the title), rows compact to 10pt, table headers repeat, headings stay with their tables, and a quiet 8pt footer reads "J&J Sportswear · Inventory report" and "Page N of M". Yellow stays limited to Low pills.

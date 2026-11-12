@@ -563,7 +563,7 @@ export function DesignOrderScreen({
         {input}
         {(problem || hint) && (
           <p id={`${id}-msg`} className={`mt-2 flex gap-2 text-[0.875rem] leading-snug ${problem ? "font-semibold text-ink" : "text-ink-2"}`}>
-            {problem && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full bg-signal" />}
+            {problem && <span aria-hidden="true" className="mt-[0.4em] size-1.5 shrink-0 rounded-full signal-dot" />}
             {problem || hint}
           </p>
         )}

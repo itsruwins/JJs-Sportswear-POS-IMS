@@ -82,6 +82,22 @@ Garment and sample colors in `features/shared/catalog/colors.ts` are product dat
 - Walk every surface in light and dark at phone and desktop widths: landing, shop, product, design studio, orders, pay, chat, account; admin home, POS, stock, products, orders, design orders, payments, sales, receipts, reports, staff, history.
 - Fix the places where green carried meaning the new tokens don't express on their own: size rails, period lamps, the order band, sales chart columns (dark mode gets its own validated orange step), unread avatars, the photo backdrop, and the hardcoded values in the landing AI studio and sample data.
 - **Done when:** every screen has been seen in both themes and no screen shows yellow unless something is live, low, owed or unread.
+- **Decisions (2026-11-11):** walk the real screens with test logins (read-only); the landing demo's green jersey and the Court green / Amber sample chips become J&J orange; B3 fixes color and brand only, everything else goes on a list.
+- **Built 2026-11-11:**
+  - Walked 27 screens (landing, 19 owner, 7 customer) in light and dark, at 1440 and 390 wide, with a script that also reads every element's computed colors and flags green hues and yellow fills. No green was left in the theme, and no screen showed yellow without something live, low, owed or unread. The "acer" login turned out to be a customer account, so it covered the customer side; staff screens reuse the owner's components.
+  - **Yellow on paper:** shot-clock yellow is 1.4:1 on the light ground, so the small yellow dots (low size, a problem beside a field, unread on the dock) and the outlined "now" panels nearly vanished. New `signal-edge` token (oklch 0.6 0.13 85, 3.7:1 on ground; the yellow itself in dark mode). Dots use the new `.signal-dot` class (yellow with a 1px edge rim), and the pay notice and urgent scan notice get a yellow band inside a 1px edge rim.
+  - The landing username field's error ring was yellow; it's now the solid ink ring every other field uses (board ink on the board).
+  - Landing AI studio: the "Court green" preset is now "J&J orange with charcoal side panels and thin white pinstripes" (logo orange body, charcoal panels and trim, off-white lettering). Sample chips: Court green and Amber became J&J orange; the near-blacks and grays lost their green tint.
+  - Last green-tinted values: the sales chart tooltip shadow, and DESIGN.md's board lift, selected tile, hinge, lamp glow and photo backdrop values, which now match the CSS. `.impeccable/design.json` has the new token.
+  - Checked: typecheck, lint, `npm run build`.
+  - Not seen live because the data doesn't exist yet (nothing low, unread, owed, in production, or sold): low cells and the unread dot in the admin, live period lamps on an order, the pay notice, and the sales chart columns. Their CSS was read and uses the B2 tokens.
+  - **Non-color issues found (not fixed, for later):**
+    - Admin Home "Getting set up": "Open the counter" still says "once Point of sale is ready", though the POS is built.
+    - Admin chat on desktop: the conversation list cuts off the time at its right edge ("Fri").
+    - Admin dock: the "Coming soon" item and `.admin-soon-dot` are unused now that every section is built.
+    - POS Designs tab on phones: the search placeholder is cut off ("Team, design number, or ticl").
+    - Disabled orange buttons (chat Send) turn a muddy brown at half opacity in dark mode.
+    - The old name "J&J Sportswear" is still on the payment slip, the ticket's "At the shop", and the landing copy (B4 and B5).
 
 ### Phase B4: Name and font
 - `SHOP.name` becomes "J&J Crafts & Sportswear". Add a short name ("J&J") next to it in `lib/shop.ts`.

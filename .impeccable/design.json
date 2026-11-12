@@ -244,6 +244,21 @@
           "oklch(0.95 0.06 85)"
         ]
       },
+      "signal-edge": {
+        "role": "secondary",
+        "displayName": "Signal Edge",
+        "canonical": "oklch(0.6 0.13 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.13 85)",
+          "oklch(0.26 0.13 85)",
+          "oklch(0.37 0.13 85)",
+          "oklch(0.48 0.13 85)",
+          "oklch(0.60 0.13 85)",
+          "oklch(0.72 0.13 85)",
+          "oklch(0.84 0.13 85)",
+          "oklch(0.95 0.13 85)"
+        ]
+      },
       "pick": {
         "role": "secondary",
         "displayName": "Pick",

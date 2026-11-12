@@ -48,7 +48,7 @@ export function UsernameForm({ tone = "ground", label = "Choose a username" }: U
             onBoard
               ? "board-well text-board-ink"
               : "bg-ground-2 text-ink shadow-[inset_0_0_0_1px_var(--line)]"
-          } ${showError ? "shadow-[0_0_0_2px_var(--signal)]" : ""}`}
+          } ${showError ? (onBoard ? "shadow-[0_0_0_2px_var(--board-ink)]" : "shadow-[0_0_0_2px_var(--ink)]") : ""}`}
         >
           <span aria-hidden="true" className={onBoard ? "text-board-ink-2" : "text-ink-2"}>
             @
