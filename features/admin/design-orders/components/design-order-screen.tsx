@@ -543,7 +543,7 @@ export function DesignOrderScreen({
       )}
       <div className="board mt-4 flex items-center justify-between gap-4 rounded-2xl px-4 py-3 text-board-ink">
         <span className="text-[0.875rem]">
-          <span className="voice-label block text-[0.75rem] uppercase text-board-ink-2">Total</span>
+          <span className="voice-kicker block text-[0.6875rem] text-board-ink-2">Total</span>
           {count} {count === 1 ? "piece" : "pieces"}
         </span>
         <FlipText text={formatPeso(total)} length={Math.max(6, formatPeso(total).length)} align="end" className="text-[1.75rem]" />

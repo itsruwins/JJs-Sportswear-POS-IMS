@@ -253,6 +253,17 @@ html {
   white-space: nowrap;
 }
 
+/* Kicker: the small uppercase line over a board readout ("TOTAL", "LOW STOCK"), in the brand voice.
+   Montserrat runs wide, so it's set a size down with less tracking than the lockup. Labels inside
+   tables, fields and chips stay in the narrow label voice. */
+.voice-kicker {
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+
 .tabular {
   font-variant-numeric: tabular-nums;
 }
@@ -1817,14 +1828,14 @@ button.admin-dock-item[data-current="true"]:hover {
   /* Each report names its own pages, so the footer says which report it is. */
   @page sales-report {
     @bottom-left {
-      content: "J&J Sportswear · Sales report";
+      content: "J&J Crafts & Sportswear · Sales report";
       font-size: 8pt;
       color: oklch(0.38 0.016 50);
     }
   }
   @page inventory-report {
     @bottom-left {
-      content: "J&J Sportswear · Inventory report";
+      content: "J&J Crafts & Sportswear · Inventory report";
       font-size: 8pt;
       color: oklch(0.38 0.016 50);
     }

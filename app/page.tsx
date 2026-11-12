@@ -8,6 +8,7 @@ import { SiteNav } from "@/features/landing/components/site-nav";
 import { StaffBoxScore } from "@/features/landing/components/staff-box-score";
 import { StockStandings } from "@/features/landing/components/stock-standings";
 import { UsernameForm } from "@/features/landing/components/username-form";
+import { SHOP } from "@/lib/shop";
 
 const shell = "mx-auto w-full max-w-[80rem] px-4 sm:px-6 lg:px-10";
 
@@ -35,7 +36,7 @@ export default function Home() {
               <span className="whitespace-nowrap text-accent">Wear it.</span>
             </h1>
             <p className="max-w-[36ch] shrink-0 text-[1.0625rem] leading-relaxed text-ink-2 lg:mb-2">
-              Custom team kits from J&amp;J Sportswear in Legazpi, with every order on a board you can check from your
+              Custom team kits from <span className="whitespace-nowrap">{SHOP.name}</span> in Legazpi, with every order on a board you can check from your
               phone, from first draft to pickup.
             </p>
           </div>

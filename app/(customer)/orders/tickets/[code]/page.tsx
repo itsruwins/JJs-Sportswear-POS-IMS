@@ -8,7 +8,7 @@ import { fetchMyTicket, fetchTicketOrder, fetchTicketReceipt } from "@/features/
 import { ticketQr } from "@/features/customer/tickets/qr";
 import { requireCustomer } from "@/features/customer/shell/session";
 
-export const metadata: Metadata = { title: "Counter ticket · J&J Sportswear" };
+export const metadata: Metadata = { title: "Counter ticket" };
 
 // Stock moves under a ticket, and the counter can mark it paid or ordered while it's on screen; the
 // page follows them, and the order a design ticket made as the shop works on it and takes payments

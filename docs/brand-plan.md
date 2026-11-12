@@ -105,6 +105,19 @@ Garment and sample colors in `features/shared/catalog/colors.ts` are product dat
 - Load Montserrat through `next/font` next to Archivo and point the label voice, kickers and the name beside the badge at it. Board numerals and body text stay Archivo.
 - Update `PRODUCT.md` (name, brand commitments: the logo now exists).
 - **Done when:** a grep for "J&J Sportswear" finds only docs history, and tab titles read correctly on every route.
+- **Decisions (2026-11-12):**
+  - Montserrat reaches the small uppercase labels on the boards ("kickers") and nothing else. Table headers, field labels, chips and initials stay in the narrow Archivo label voice, because Montserrat is too wide for them.
+  - Tab titles: the full name on the landing and customer pages ("Shop · J&J Crafts & Sportswear"), "J&J Admin" on admin pages ("Products · J&J Admin").
+  - Copy: swap the name only. No new claims about crafts.
+- **Built 2026-11-12:**
+  - `lib/shop.ts`: `SHOP.name` is "J&J Crafts & Sportswear", plus `SHOP.short` ("J&J").
+  - Title templates: the root layout (`default` with the tagline, `template` "%s · name"), the customer layout (`absolute` name, same template) and the admin layout (`absolute` "J&J Admin", template "%s · J&J Admin"). 27 pages and the admin chat layout now give only their own title. The product page's title is the product name.
+  - Every hard-coded name now reads `SHOP`: landing lead, footer, nav aria-label, admin and customer bar aria-labels, the account menu's home link, the chat header, greeting and screen-reader speaker name, the pay modal ("Send to …'s GCash"), and the report's print line. The print footers in `app/globals.css` can't import, so they spell the new name out. The name never breaks across lines in running text (landing lead, chat greeting).
+  - New `.voice-kicker` in `app/globals.css` (Montserrat 600, uppercase, +0.1em, a size down to 0.6875rem). Used by the landing scoreboard labels, the admin readout, the POS and design-order Total, the ticket's "Show this at the counter", the POS Payments heading and the slip's "Order slip".
+  - `PRODUCT.md` (name, short name, the logo now exists), `DESIGN.md` and `.impeccable/design.json` (name, Board Label now Montserrat, the Montserrat rules) and the two `.impeccable/surfaces` briefs updated.
+  - Checked: typecheck, lint, `npm run build`. Every tab title was read in a browser: landing, 19 admin routes and 10 customer routes. Screenshots of the landing, admin home, payment slip (the full name fits on one line at 1.5rem), ticket, chat panel (desktop and phone) and account menu.
+  - Not seen live: the sales receipt and the order slip, since there are no sales or walk-in orders yet. They share the payment slip's header markup and width.
+  - Still saying the old name, on purpose: comments in the applied initial migration (never edited) and in the one-time seed scripts, plus older plan docs.
 
 ### Phase B5: Print
 - Logo on the POS receipt, the payment slip, the order slip and the report printouts. Black one-color badge on the 80 mm roll; full color on A4 where the printer allows, black otherwise.

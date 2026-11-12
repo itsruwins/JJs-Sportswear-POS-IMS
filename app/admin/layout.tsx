@@ -3,9 +3,11 @@ import { AdminDock } from "@/features/admin/shell/components/admin-dock";
 import { AdminTopBar } from "@/features/admin/shell/components/admin-top-bar";
 import { fetchUnreadChats } from "@/features/admin/chat/data";
 import { requireStaff } from "@/features/admin/shell/session";
+import { SHOP } from "@/lib/shop";
 
 export const metadata: Metadata = {
-  title: "Admin · J&J Sportswear",
+  // The short name keeps the page name readable in a narrow tab: "Products · J&J Admin".
+  title: { absolute: `${SHOP.short} Admin`, template: `%s · ${SHOP.short} Admin` },
   robots: { index: false, follow: false },
 };
 

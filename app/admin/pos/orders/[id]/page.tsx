@@ -7,7 +7,7 @@ import { COUNTER_ORDERS_MIGRATION, fetchCounterOrder } from "@/features/admin/de
 import { PrintButtons } from "@/features/admin/sales/components/receipt-actions";
 import { requireStaff } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "Order slip · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Order slip" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

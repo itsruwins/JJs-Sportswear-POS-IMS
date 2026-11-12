@@ -7,7 +7,7 @@ import { StockBrowser } from "@/features/admin/stock/components/stock-browser";
 import { fetchCatalog, fetchRecentMoves } from "@/features/shared/catalog/catalog";
 import { requireOwner } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "Stock · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Stock" };
 
 export default async function StockPage() {
   const { supabase } = await requireOwner();

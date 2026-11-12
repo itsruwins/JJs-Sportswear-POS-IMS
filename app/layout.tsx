@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Montserrat } from "next/font/google";
+import { SHOP } from "@/lib/shop";
 import { themeInitScript } from "@/lib/theme";
 import "./globals.css";
 
@@ -19,9 +20,10 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "J&J Sportswear · Design it. Track it. Wear it.",
+  // Pages under a layout with its own template (customer, admin) use that one instead.
+  title: { default: `${SHOP.name} · Design it. Track it. Wear it.`, template: `%s · ${SHOP.name}` },
   description:
-    "Custom team jerseys and sportswear from J&J Sportswear in Legazpi City. Design with AI, pay your down payment by GCash, track your order live, and check sizes and stock online.",
+    `Custom team jerseys and sportswear from ${SHOP.name} in Legazpi City. Design with AI, pay your down payment by GCash, track your order live, and check sizes and stock online.`,
 };
 
 export const viewport: Viewport = {

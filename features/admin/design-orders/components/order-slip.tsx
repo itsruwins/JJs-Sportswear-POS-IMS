@@ -27,7 +27,7 @@ export function OrderSlip({ order, change }: { order: CounterOrder; change: numb
         {SHOP.address && <p className="mt-1.5">{SHOP.address}</p>}
         <p className={SHOP.address ? undefined : "mt-1.5"}>{SHOP.city}</p>
         {SHOP.phone && <p className="tabular">{SHOP.phone}</p>}
-        <p className="voice-label mt-3 text-[0.75rem] uppercase tracking-[0.08em]">Order slip</p>
+        <p className="voice-kicker mt-3 text-[0.6875rem]">Order slip</p>
       </header>
 
       <dl className="receipt-rule mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 pt-4 text-[0.8125rem]">

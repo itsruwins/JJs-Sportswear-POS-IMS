@@ -7,7 +7,7 @@ related_targets: ["app/(customer)/shop/page.tsx","app/(customer)/orders/page.tsx
 
 # Customer app shell (/shop, /orders, /design, /chat, /account)
 
-Mode: Operate. Customers of J&J Sportswear (teams, schools, walk-in buyers), mostly on phones, light with dark following the system. Phase C1 of docs/customer-plan.md: everything except the landing page sits behind login; customers land on /shop after logging in; staff and owners are sent to /admin. Tabs not built yet show their honest empty state and say which update brings them. Code-led build, structure pinned by the user (phone-first app with a tab dock, top nav on desktop).
+Mode: Operate. Customers of J&J Crafts & Sportswear (teams, schools, walk-in buyers), mostly on phones, light with dark following the system. Phase C1 of docs/customer-plan.md: everything except the landing page sits behind login; customers land on /shop after logging in; staff and owners are sent to /admin. Tabs not built yet show their honest empty state and say which update brings them. Code-led build, structure pinned by the user (phone-first app with a tab dock, top nav on desktop).
 
 Update (2026-11-09, Phase T1 of docs/ticket-plan.md): the user asked for a cart, so a bag icon with an ink count sits in the top bar before the bell. The "refuses a cart icon" line below is superseded.
 

@@ -9,7 +9,7 @@ import { fetchMyOrder } from "@/features/customer/orders/data";
 import { fetchProviders } from "@/features/shared/payments/data";
 import { requireCustomer } from "@/features/customer/shell/session";
 
-export const metadata: Metadata = { title: "Order · J&J Sportswear" };
+export const metadata: Metadata = { title: "Order" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

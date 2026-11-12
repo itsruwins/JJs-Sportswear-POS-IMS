@@ -12,7 +12,7 @@ const WORD_CELLS = Math.max(...ORDER_STAGES.map((s) => s.word.length));
 
 function BoardLabel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <span className={`voice-label block text-[0.75rem] uppercase text-board-ink-2 ${className}`}>
+    <span className={`voice-kicker block text-[0.6875rem] text-board-ink-2 ${className}`}>
       {children}
     </span>
   );

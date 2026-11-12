@@ -9,8 +9,9 @@ import { historyBounds, parseHistoryFilters, type HistoryFilters } from "@/featu
 import { fetchMovements, fetchStockRows, groupByProduct, needsRestock, stockSummary } from "@/features/admin/stock/data";
 import { fetchSalesReport } from "@/features/admin/reports/data";
 import { requireStaff, STAFF_HOME } from "@/features/admin/shell/session";
+import { SHOP } from "@/lib/shop";
 
-export const metadata: Metadata = { title: "Reports · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Reports" };
 
 const TZ = "Asia/Manila";
 const day = (ymd: string, withYear = false) =>
@@ -58,7 +59,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
         <div>
           <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">{tab === "sales" ? "Sales report" : "Inventory report"}</h1>
           <p className="mt-2 max-w-[60ch] text-[0.9375rem] text-ink-2">
-            <span className="print-only">J&amp;J Sportswear, Legazpi City. </span>As of {asOf}.{" "}
+            <span className="print-only">{SHOP.name}, Legazpi City. </span>As of {asOf}.{" "}
             {tab === "sales"
               ? "Counter sales; voided sales aren’t counted."
               : "Values use selling prices; archived products and hidden sizes aren’t counted."}

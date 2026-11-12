@@ -4,7 +4,7 @@ import { readQuery } from "@/features/customer/shop/model";
 import { fetchShop } from "@/features/customer/shop/data";
 import { requireCustomer } from "@/features/customer/shell/session";
 
-export const metadata: Metadata = { title: "Shop · J&J Sportswear" };
+export const metadata: Metadata = { title: "Shop" };
 
 export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
   const { supabase } = await requireCustomer();

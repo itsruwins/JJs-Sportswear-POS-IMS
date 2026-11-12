@@ -8,7 +8,7 @@ import { fetchMyOrder } from "@/features/customer/orders/data";
 import { fromLines, type RequestDraft } from "@/features/customer/orders/model";
 import { requireCustomer } from "@/features/customer/shell/session";
 
-export const metadata: Metadata = { title: "Edit request · J&J Sportswear" };
+export const metadata: Metadata = { title: "Edit request" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

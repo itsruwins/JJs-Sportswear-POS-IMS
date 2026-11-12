@@ -9,7 +9,7 @@ import { requestsReady } from "@/features/customer/orders/data";
 import { blankGarment, garmentForProduct, type AttachedDesign, type RequestDraft } from "@/features/customer/orders/model";
 import { requireCustomer } from "@/features/customer/shell/session";
 
-export const metadata: Metadata = { title: "Request a custom order · J&J Sportswear" };
+export const metadata: Metadata = { title: "Request a custom order" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
