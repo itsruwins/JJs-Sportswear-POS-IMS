@@ -3,7 +3,9 @@
  * file yet. Fill these in when the shop confirms them; a null line is left off the receipt.
  */
 export const SHOP = {
-  name: "J&J Sportswear",
+  name: "J&J Crafts & Sportswear",
+  /** Where the full name doesn't fit, and in admin tab titles. */
+  short: "J&J",
   /** Street address. Placeholder until the shop confirms it. */
   address: null as string | null,
   city: "Legazpi City, Albay",

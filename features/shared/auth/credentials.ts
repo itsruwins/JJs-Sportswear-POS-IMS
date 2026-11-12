@@ -7,6 +7,8 @@ export const USERNAME_PATTERN = /^[A-Za-z0-9_.]{3,30}$/;
 export const USERNAME_HINT = "3–30 characters: letters, numbers, dots, or underscores.";
 export const PASSWORD_MIN = 8;
 
+// The domain keeps the shop's old name on purpose: every account's login address in Supabase Auth is stored
+// with it, so changing it here alone would lock everyone out. People never see it.
 export function usernameToEmail(username: string) {
   return `${username.trim().toLowerCase()}@jjsportswear.local`;
 }

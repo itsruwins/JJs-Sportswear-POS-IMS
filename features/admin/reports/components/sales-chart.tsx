@@ -107,7 +107,7 @@ export function SalesChart({ series, bucket }: { series: SeriesPoint[]; bucket: 
                   <div
                     aria-hidden="true"
                     data-print="hide"
-                    className="pointer-events-none absolute z-10 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-left text-ground shadow-[0_6px_18px_-8px_oklch(0.2_0.03_158/0.5)]"
+                    className="pointer-events-none absolute z-10 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-left text-ground shadow-[0_6px_18px_-8px_oklch(0.2_0.02_50/0.5)]"
                     style={{ bottom: `calc(${h}% + 0.5rem)`, ...(i > series.length * 0.7 ? { right: 0 } : i < series.length * 0.3 ? { left: 0 } : {}) }}
                   >
                     <p className="tabular text-[0.9375rem] font-semibold leading-tight">{formatPeso(s.revenue)}</p>

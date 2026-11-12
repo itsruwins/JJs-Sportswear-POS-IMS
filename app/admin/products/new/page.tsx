@@ -3,7 +3,7 @@ import { ProductForm } from "@/features/admin/products/components/product-form";
 import { fetchCatalog, formContext } from "@/features/shared/catalog/catalog";
 import { requireOwner } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "New product · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "New product" };
 
 export default async function NewProductPage() {
   const { supabase } = await requireOwner();

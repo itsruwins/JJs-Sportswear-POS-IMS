@@ -9,8 +9,10 @@ import { historyBounds, parseHistoryFilters, type HistoryFilters } from "@/featu
 import { fetchMovements, fetchStockRows, groupByProduct, needsRestock, stockSummary } from "@/features/admin/stock/data";
 import { fetchSalesReport } from "@/features/admin/reports/data";
 import { requireStaff, STAFF_HOME } from "@/features/admin/shell/session";
+import { Wordmark } from "@/features/shared/ui/wordmark";
+import { SHOP } from "@/lib/shop";
 
-export const metadata: Metadata = { title: "Reports · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Reports" };
 
 const TZ = "Asia/Manila";
 const day = (ymd: string, withYear = false) =>
@@ -56,9 +58,13 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
     <div data-report={tab} className="mx-auto max-w-[80rem] px-4 pt-8 sm:px-6 sm:pt-10 lg:px-10">
       <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div>
+          {/* Printed reports open with the shop's lockup; on screen the top bar already carries it. */}
+          <div className="print-only mb-5">
+            <Wordmark />
+          </div>
           <h1 className="voice-display text-[clamp(2.25rem,5vw,3.5rem)]">{tab === "sales" ? "Sales report" : "Inventory report"}</h1>
           <p className="mt-2 max-w-[60ch] text-[0.9375rem] text-ink-2">
-            <span className="print-only">J&amp;J Sportswear, Legazpi City. </span>As of {asOf}.{" "}
+            <span className="print-only">{SHOP.name}, Legazpi City. </span>As of {asOf}.{" "}
             {tab === "sales"
               ? "Counter sales; voided sales aren’t counted."
               : "Values use selling prices; archived products and hidden sizes aren’t counted."}

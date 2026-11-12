@@ -6,7 +6,7 @@ import { ProductsBrowser, type Filter, type Sort } from "@/features/admin/produc
 import { fetchCatalog } from "@/features/shared/catalog/catalog";
 import { requireStaff } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "Products · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Products" };
 
 const FILTERS: Filter[] = ["active", "low", "out", "archived"];
 const SORTS: Sort[] = ["name", "attention", "updated"];

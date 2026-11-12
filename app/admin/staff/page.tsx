@@ -5,7 +5,7 @@ import { StaffScreen } from "@/features/admin/staff/components/staff-screen";
 import { requireStaff, STAFF_HOME } from "@/features/admin/shell/session";
 import { fetchTeam } from "@/features/admin/staff/data";
 
-export const metadata: Metadata = { title: "Staff · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Staff" };
 
 /** The owner's staff screen: who can use the admin, and adding or removing people. */
 export default async function StaffPage() {

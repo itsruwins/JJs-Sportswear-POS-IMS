@@ -6,7 +6,7 @@ import { CounterChecks } from "@/features/admin/payments/components/payment-coun
 import { COUNTER_VIEWS, countCounterToCheck, fetchCounterPayments, fetchPaymentQueue, QUEUE_VIEWS, type CounterView, type QueueView } from "@/features/admin/payments/data";
 import { requireStaff } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "Payments · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Payments" };
 
 /**
  * Money waiting on the shop: custom-order payments customers sent, and (for the owner) the

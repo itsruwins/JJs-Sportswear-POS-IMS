@@ -8,13 +8,13 @@ web
 
 ## Users
 
-Primary: customers of J&J Sportswear, a custom-printing and sportswear shop in Legazpi City, Albay. They are mostly teams, schools, and organizations ordering custom jerseys and uniforms, plus walk-in buyers of ready-made apparel. They browse on their phones and want to know whether a design or size is available without messaging the shop or visiting in person.
+Primary: customers of J&J Crafts & Sportswear, a custom-printing and sportswear shop in Legazpi City, Albay. They are mostly teams, schools, and organizations ordering custom jerseys and uniforms, plus walk-in buyers of ready-made apparel. They browse on their phones and want to know whether a design or size is available without messaging the shop or visiting in person.
 
 Secondary: the shop's owner and staff, who use the same system for point-of-sale, inventory, custom-order handling, payment verification, and reports. On the landing page they are addressed in a section further down and reach their tools through the shared login.
 
 ## Product Purpose
 
-An integrated point-of-sale and inventory management system for J&J Sportswear (capstone project, CCDI Legazpi, 2026). It replaces manual logbook order tracking and manual stock checks. Customers browse products with real-time size, color, and stock availability; request custom orders (optionally starting from an AI-generated design); pay a down payment and balance via GCash or cash; follow their order's status; and chat with staff. Staff run sales at the counter, manage products and variants, get low-stock alerts, verify payments, and see sales and inventory reports.
+An integrated point-of-sale and inventory management system for J&J Crafts & Sportswear (capstone project, CCDI Legazpi, 2026). It replaces manual logbook order tracking and manual stock checks. Customers browse products with real-time size, color, and stock availability; request custom orders (optionally starting from an AI-generated design); pay a down payment and balance via GCash or cash; follow their order's status; and chat with staff. Staff run sales at the counter, manage products and variants, get low-stock alerts, verify payments, and see sales and inventory reports.
 
 Success for the landing page: a visitor creates an account.
 
@@ -33,12 +33,13 @@ Design it. Track it. Wear it. One place covers the whole journey of a custom tea
 
 - Stack: Next.js 16 (App Router), React 19, Tailwind CSS 4, Supabase (Auth plus Postgres; schema in `supabase/migrations`).
 - Confirmed features: product catalog with variants (size, color, SKU, price, stock), product tags and search, inventory transactions, low-stock alerts, POS sales with receipts, AI design generation, custom orders with items and status history, down-payment/balance payments, customer-staff chat, notifications, and sales and inventory reports.
-- Out of scope: RFID, IoT, automatic supplier ordering or purchase recommendations, SMS notifications, accounting, and payroll. The system is built for J&J Sportswear only.
-- Display name: **J&J Sportswear**.
+- Out of scope: RFID, IoT, automatic supplier ordering or purchase recommendations, SMS notifications, accounting, and payroll. The system is built for J&J Crafts & Sportswear only.
+- Display name: **J&J Crafts & Sportswear**, or **J&J** where space is tight. Both live in `lib/shop.ts` (`SHOP.name`, `SHOP.short`).
 
 ## Brand Commitments
 
-- Name: J&J Sportswear. No logo exists yet; a typographic wordmark is to be created.
+- Name: J&J Crafts & Sportswear (renamed from J&J Sportswear in 2026-11).
+- Logo: the shop's official badge, a white J&J on a logo-orange circle with "CRAFTS & SPORTSWEAR" under it. The second J is drawn inverted; that's part of the logo, not an L. Traced to SVG in `features/shared/ui/brand-badge.tsx`, with standalone files in `public/brand/`. In the app it appears as the round badge followed by "Crafts & Sportswear" in Montserrat.
 - Personality: athletic and confident.
 - Key message: "Design it. Track it. Wear it."
 - Theme: light by default, with dark mode following the system setting.

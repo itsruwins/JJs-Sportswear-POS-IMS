@@ -41,6 +41,9 @@
   /* Now: live, low, owed, unread. Text on it is always signal-ink. */
   --signal: oklch(0.87 0.17 95);
   --signal-ink: oklch(0.28 0.06 85);
+  /* Yellow alone is 1.4:1 on the paper, so a yellow dot or edge on ground gets this deeper
+     rim (3.7:1 on ground). On the dark ground the yellow itself already stands out. */
+  --signal-edge: oklch(0.6 0.13 85);
 
   /* The chosen one of a set (current tab, pressed chip, switch on). Charcoal in light;
      near-white in dark, where charcoal would barely part from the ground. */
@@ -79,6 +82,7 @@
     --card-shade: oklch(0.87 0.007 70);
 
     --accent: oklch(0.72 0.17 45);
+    --signal-edge: var(--signal);
     --pick: oklch(0.93 0.006 70);
     --pick-ink: oklch(0.18 0.01 50);
 
@@ -106,6 +110,7 @@
   --card-shade: oklch(0.87 0.007 70);
 
   --accent: oklch(0.72 0.17 45);
+  --signal-edge: var(--signal);
 
   --pick: oklch(0.93 0.006 70);
   --pick-ink: oklch(0.18 0.01 50);
@@ -154,6 +159,7 @@
   --color-accent: var(--accent);
   --color-signal: var(--signal);
   --color-signal-ink: var(--signal-ink);
+  --color-signal-edge: var(--signal-edge);
   --color-pick: var(--pick);
   --color-pick-ink: var(--pick-ink);
 
@@ -245,6 +251,17 @@ html {
   text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
+}
+
+/* Kicker: the small uppercase line over a board readout ("TOTAL", "LOW STOCK"), in the brand voice.
+   Montserrat runs wide, so it's set a size down with less tracking than the lockup. Labels inside
+   tables, fields and chips stay in the narrow label voice. */
+.voice-kicker {
+  font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.25;
 }
 
 .tabular {
@@ -867,11 +884,19 @@ button.admin-dock-item[data-current="true"]:hover {
   height: 0.5625rem;
   border-radius: 999px;
   background: var(--signal);
-  box-shadow: 0 0 0 2px var(--surface);
+  box-shadow:
+    inset 0 0 0 1px var(--signal-edge),
+    0 0 0 2px var(--surface);
 }
 .admin-dock-item[aria-expanded="true"] .admin-unread-dot,
 .admin-dock-item[data-current="true"] .admin-unread-dot {
   box-shadow: 0 0 0 2px var(--pick);
+}
+
+/* A small yellow marker beside text (low, owed, a problem): yellow with the deeper rim. */
+.signal-dot {
+  background: var(--signal);
+  box-shadow: inset 0 0 0 1px var(--signal-edge);
 }
 
 /* "Coming soon" tooltip: on hover, keyboard focus, or a tap. */
@@ -1211,6 +1236,7 @@ button.admin-dock-item[data-current="true"]:hover {
   margin-right: 0.3125rem;
   border-radius: 999px;
   background: var(--signal);
+  box-shadow: inset 0 0 0 1px var(--signal-edge);
   vertical-align: 0.0625rem;
 }
 .shop-size[aria-pressed="true"] {
@@ -1308,10 +1334,12 @@ button.admin-dock-item[data-current="true"]:hover {
 /* ---------- Customer: order tracking ---------- */
 
 /* What the customer has to pay now: a raised neutral panel, edged in yellow, with the live
-   lamp. Amber marks it as "now" without filling it, so it reads the same in light and dark. */
+   lamp. The yellow edge marks it as "now" without filling it, in light and dark. */
 .pay-notice {
   background: var(--ground-2);
-  box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--signal) 75%, transparent);
+  box-shadow:
+    inset 0 0 0 1px var(--signal-edge),
+    inset 0 0 0 2.5px var(--signal);
 }
 
 /* ---------- Customer: AI design studio ---------- */
@@ -1800,14 +1828,14 @@ button.admin-dock-item[data-current="true"]:hover {
   /* Each report names its own pages, so the footer says which report it is. */
   @page sales-report {
     @bottom-left {
-      content: "J&J Sportswear · Sales report";
+      content: "J&J Crafts & Sportswear · Sales report";
       font-size: 8pt;
       color: oklch(0.38 0.016 50);
     }
   }
   @page inventory-report {
     @bottom-left {
-      content: "J&J Sportswear · Inventory report";
+      content: "J&J Crafts & Sportswear · Inventory report";
       font-size: 8pt;
       color: oklch(0.38 0.016 50);
     }
@@ -1938,6 +1966,20 @@ button.admin-dock-item[data-current="true"]:hover {
   html[data-paper] .receipt-void {
     box-shadow: inset 0 0 0 1.5px black;
   }
+  /* The badge prints at a fixed size: 14 mm on the roll, 16 mm on A4 (where the slip is 120 mm wide). */
+  html[data-paper="thermal"] .slip-badge {
+    width: 14mm;
+    height: 14mm;
+  }
+  html[data-paper="a4"] .slip-badge {
+    width: 16mm;
+    height: 16mm;
+  }
+  /* Thermal heads print black only: the badge becomes the one-color version, a black disc with the
+     letters left as paper. A4 keeps the logo orange; a black-only printer turns it into a grey disc. */
+  html[data-paper="thermal"] .slip-badge {
+    --brand: black;
+  }
 }
 
 /* ---------- Admin: point of sale, e-payment sheet ---------- */
@@ -2000,7 +2042,9 @@ button.admin-dock-item[data-current="true"]:hover {
   padding: 0.875rem 1rem;
 }
 .scan-notices-urgent {
-  box-shadow: inset 0 0 0 1.5px var(--signal);
+  box-shadow:
+    inset 0 0 0 1px var(--signal-edge),
+    inset 0 0 0 2.5px var(--signal);
 }
 .scan-notices b {
   font-weight: 650;

@@ -7,7 +7,7 @@ import { fetchOrders, PRODUCTION_MIGRATION, VIEWS, type OrderView } from "@/feat
 import { ORDER_TABLES } from "@/features/shared/orders/tables";
 import { requireStaff } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "Custom orders · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Custom orders" };
 
 const EMPTY: Record<OrderView, string> = {
   open: "No orders are waiting or in production. New custom orders from customers show up here.",

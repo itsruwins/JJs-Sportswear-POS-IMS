@@ -9,7 +9,7 @@ import { fetchOrderMessages } from "@/features/admin/chat/data";
 import { fetchOrderMoney } from "@/features/admin/payments/data";
 import { requireStaff } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "Custom order · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Custom order" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

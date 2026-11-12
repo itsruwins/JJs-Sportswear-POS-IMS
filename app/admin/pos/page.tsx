@@ -11,7 +11,7 @@ import { geminiConfigured } from "@/features/admin/pos/gemini";
 import { requireStaff } from "@/features/admin/shell/session";
 import { normalizeTicketCode } from "@/features/shared/tickets/model";
 
-export const metadata: Metadata = { title: "Point of sale · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Point of sale" };
 
 /**
  * The counter. Shelf: find an item, pick its size and color, take cash or an e-payment, and print the

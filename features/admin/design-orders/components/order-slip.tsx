@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { formatReference } from "@/features/shared/payments/model";
 import type { CounterOrder } from "@/features/admin/design-orders/data";
+import { SlipHeader } from "@/features/admin/sales/components/receipt-parts";
 import { SHOP } from "@/lib/shop";
 
 const when = (iso: string) =>
@@ -22,13 +23,9 @@ export function OrderSlip({ order, change }: { order: CounterOrder; change: numb
       aria-label={`Order slip ${order.orderNumber}`}
       className="receipt relative mx-auto w-full max-w-[24rem] bg-card px-6 py-7 text-[0.875rem] leading-snug text-card-ink shadow-[inset_0_0_0_1px_var(--line)]"
     >
-      <header className="text-center">
-        <p className="voice-display text-[1.5rem] uppercase leading-none">{SHOP.name}</p>
-        {SHOP.address && <p className="mt-1.5">{SHOP.address}</p>}
-        <p className={SHOP.address ? undefined : "mt-1.5"}>{SHOP.city}</p>
-        {SHOP.phone && <p className="tabular">{SHOP.phone}</p>}
-        <p className="voice-label mt-3 text-[0.75rem] uppercase tracking-[0.08em]">Order slip</p>
-      </header>
+      <SlipHeader>
+        <p className="voice-kicker mt-3 text-[0.6875rem]">Order slip</p>
+      </SlipHeader>
 
       <dl className="receipt-rule mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 pt-4 text-[0.8125rem]">
         <dt className="opacity-70">Order</dt>

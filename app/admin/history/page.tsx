@@ -8,7 +8,7 @@ import { LiveRefresh } from "@/features/shared/ui/live-refresh";
 import { fetchHistory, fetchHistoryOptions, HISTORY_STEP, MAX_SHOW, manilaToday, parseHistoryFilters, shiftDate } from "@/features/admin/history/data";
 import { requireOwner } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "History · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "History" };
 
 export default async function HistoryPage({ searchParams }: PageProps<"/admin/history">) {
   const { supabase } = await requireOwner();

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AuthButton } from "@/features/shared/auth/components/auth-provider";
 import { Wordmark } from "@/features/shared/ui/wordmark";
+import { SHOP } from "@/lib/shop";
 
 // Shop details are placeholders until the owner confirms them.
 const SHOP_DETAILS = [
@@ -54,7 +55,7 @@ export function SiteFooter() {
         </nav>
       </div>
       <div className="mx-auto max-w-[80rem] px-4 pb-10 text-[0.8125rem] text-ink-2 sm:px-6 lg:px-10">
-        © 2026 J&amp;J Sportswear. Orders, products, and stock shown on this page are samples.
+        © 2026 {SHOP.name}. Orders, products, and stock shown on this page are samples.
       </div>
     </footer>
   );

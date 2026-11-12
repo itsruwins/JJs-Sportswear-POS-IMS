@@ -10,6 +10,7 @@ import { cleanReference, digitsOnly, formatReference, referenceFits, referenceLe
 import type { Money } from "@/features/customer/orders/model";
 import { createClient } from "@/lib/supabase/client";
 import { submitPayment } from "@/features/customer/orders/actions";
+import { SHOP } from "@/lib/shop";
 
 const label = "text-[0.9375rem] font-semibold text-ink";
 const errorText = "mt-2 text-[0.875rem] font-semibold text-ink";
@@ -229,7 +230,7 @@ export function PayModal({
                     <img src={provider.qrUrl} alt={`The shop’s ${provider.name} QR code`} className="size-24 shrink-0 rounded-xl bg-white object-contain p-1" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-[0.8125rem] text-ink-2">Send to J&amp;J Sportswear’s {provider.name}</p>
+                    <p className="text-[0.8125rem] text-ink-2">Send to {SHOP.name}’s {provider.name}</p>
                     <p className={`mt-0.5 text-[1rem] font-semibold ${provider.accountName ? "text-ink" : "text-ink-2"}`}>{provider.accountName ?? "Account name to follow"}</p>
                     <div className="mt-0.5 flex items-center gap-2">
                       <p className={`tabular text-[1.125rem] font-semibold ${provider.accountNumber ? "text-ink" : "text-ink-2"}`}>

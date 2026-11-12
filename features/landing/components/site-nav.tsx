@@ -6,6 +6,7 @@ import { useAuth } from "@/features/shared/auth/components/auth-provider";
 import { CUSTOMER_HOME } from "@/lib/paths";
 import { ThemeButton } from "@/features/shared/ui/theme-button";
 import { Wordmark } from "@/features/shared/ui/wordmark";
+import { SHOP } from "@/lib/shop";
 
 const LINKS = [
   { href: "#orders", label: "Custom orders" },
@@ -28,7 +29,7 @@ export function SiteNav() {
   return (
     <header className="site-nav sticky top-0" data-scrolled={scrolled}>
       <nav aria-label="Main" className="mx-auto flex h-16 max-w-[80rem] items-center gap-6 px-4 sm:px-6 lg:px-10">
-        <Link href="/" className="press -ml-1 rounded-lg px-1 py-1" aria-label="J&J Sportswear home">
+        <Link href="/" className="press -ml-1 rounded-lg px-1 py-1" aria-label={`${SHOP.name} home`}>
           <Wordmark compact />
         </Link>
 

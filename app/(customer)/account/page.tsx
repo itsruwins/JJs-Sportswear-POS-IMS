@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AccountView } from "@/features/customer/account/components/account-view";
 import { initials, requireCustomer } from "@/features/customer/shell/session";
 
-export const metadata: Metadata = { title: "Account · J&J Sportswear" };
+export const metadata: Metadata = { title: "Account" };
 
 export default async function AccountPage() {
   const { profile } = await requireCustomer();

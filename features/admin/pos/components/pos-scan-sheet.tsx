@@ -681,7 +681,7 @@ function FieldMark({ mark }: { mark: Mark }) {
   if (mark === "unsure")
     return (
       <span className="inline-flex items-center gap-1.5 text-[0.8125rem] font-semibold text-ink">
-        <span aria-hidden="true" className="size-2 rounded-full bg-signal" />
+        <span aria-hidden="true" className="size-2 rounded-full signal-dot" />
         Check this
       </span>
     );

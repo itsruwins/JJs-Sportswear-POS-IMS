@@ -162,7 +162,7 @@ export function ProductDetail({
         <p className="mt-4 flex items-center gap-2 text-[0.9375rem] text-ink-2" aria-live="polite">
           {chosen ? (
             <>
-              {chosen.low && <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-signal" />}
+              {chosen.low && <span aria-hidden="true" className="size-2 shrink-0 rounded-full signal-dot" />}
               <span>
                 <span className="font-semibold text-ink">
                   {chosen.low ? `Only ${piecesLeft(chosen.stock)}` : piecesLeft(chosen.stock)}

@@ -5,7 +5,7 @@ import { fetchCart } from "@/features/customer/cart/data";
 import { fetchOpenTickets } from "@/features/customer/tickets/data";
 import { requireCustomer } from "@/features/customer/shell/session";
 
-export const metadata: Metadata = { title: "Cart · J&J Sportswear" };
+export const metadata: Metadata = { title: "Cart" };
 
 // Stock and prices change under a cart; the page follows them.
 const LIVE_TABLES = ["products", "product_variants"] as const;

@@ -21,7 +21,7 @@ export function ReadoutBoard({ items }: { items: Readout[] }) {
           return (
             <div key={item.label} className="min-w-0">
               <dt className="flex items-center gap-2">
-                <span className="voice-label text-[0.75rem] uppercase text-board-ink-2">{item.label}</span>
+                <span className="voice-kicker text-[0.6875rem] text-board-ink-2">{item.label}</span>
                 {item.alert && <span className="lamp" data-state="live" aria-hidden="true" />}
               </dt>
               <dd className="mt-2">

@@ -8,7 +8,7 @@ import { historyBounds, manilaToday, parseHistoryFilters, shiftDate } from "@/fe
 import { fetchSales, fetchSalesTotals } from "@/features/admin/sales/data";
 import { requireStaff } from "@/features/admin/shell/session";
 
-export const metadata: Metadata = { title: "Sales · J&J Sportswear Admin" };
+export const metadata: Metadata = { title: "Sales" };
 
 /** Receipts to find and reprint. Staff see today's sales; the owner can look back over any period, with totals. */
 export default async function SalesPage({ searchParams }: PageProps<"/admin/sales">) {

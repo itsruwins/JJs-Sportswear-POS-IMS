@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-10-28T01:36:35.800642+00:00",
-  "title": "Design System: J&J Sportswear",
+  "title": "Design System: J&J Crafts & Sportswear",
   "extensions": {
     "colorMeta": {
       "board": {
@@ -242,6 +242,21 @@
           "oklch(0.72 0.06 85)",
           "oklch(0.84 0.06 85)",
           "oklch(0.95 0.06 85)"
+        ]
+      },
+      "signal-edge": {
+        "role": "secondary",
+        "displayName": "Signal Edge",
+        "canonical": "oklch(0.6 0.13 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.13 85)",
+          "oklch(0.26 0.13 85)",
+          "oklch(0.37 0.13 85)",
+          "oklch(0.48 0.13 85)",
+          "oklch(0.60 0.13 85)",
+          "oklch(0.72 0.13 85)",
+          "oklch(0.84 0.13 85)",
+          "oklch(0.95 0.13 85)"
         ]
       },
       "pick": {
@@ -617,11 +632,11 @@
       },
       "board-label": {
         "displayName": "Board Label",
-        "purpose": "Uppercase scoreboard field names (Home, Status, Paid)."
+        "purpose": "Small uppercase line over a board readout (Home, Status, Paid, Total, Low stock). Montserrat 600, 0.6875rem, +0.1em, .voice-kicker."
       },
       "brand": {
         "displayName": "Brand",
-        "purpose": "\"Crafts & Sportswear\" beside the badge. Montserrat 600, uppercase, +0.16em."
+        "purpose": "\"Crafts & Sportswear\" beside the badge. Montserrat 600, uppercase, +0.16em. Board labels share its face."
       }
     },
     "shadows": [
@@ -821,13 +836,13 @@
   ],
   "narrative": {
     "northStar": "The Liga Scoreboard",
-    "overview": "Every custom order is a game in progress, kept on the hand-flipped scoreboard of a barangay covered court and rebuilt with Apple precision. The instrument surfaces are charcoal boards, like the panel over a gym floor; the readouts on them are true off-white split-flap cards carrying near-black condensed numerals. The shop's logo orange marks the brand and the one next step on a screen, and shot-clock yellow is held back for the things that are happening right now. Everything around the board sits on a warm off-white ground, the paper of the logo, so the board is always the heaviest object in view and the orange the brightest.\n\nThe system is Archivo, worked across its width axis: pulled to its narrowest for board numerals and display, kept at normal width for anything people read. Montserrat SemiBold, set wide, is the brand voice from the logo's tagline. Density follows the scoreboard: a strict cell module, identical cells in a run, ruled bands between readings, lamps for stage. Depth is physical and restrained (a lit, slightly convex board; recessed wells; cards that sit proud of the paint), and the only authored motion is the flip.",
+    "overview": "Every custom order is a game in progress, kept on the hand-flipped scoreboard of a barangay covered court and rebuilt with Apple precision. The instrument surfaces are charcoal boards, like the panel over a gym floor; the readouts on them are true off-white split-flap cards carrying near-black condensed numerals. The shop's logo orange marks the brand and the one next step on a screen, and shot-clock yellow is held back for the things that are happening right now. Everything around the board sits on a warm off-white ground, the paper of the logo, so the board is always the heaviest object in view and the orange the brightest.\n\nThe system is Archivo, worked across its width axis: pulled to its narrowest for board numerals and display, kept at normal width for anything people read. Montserrat SemiBold, set wide, is the brand voice from the logo's tagline, and the small uppercase labels on the boards speak in it. Density follows the scoreboard: a strict cell module, identical cells in a run, ruled bands between readings, lamps for stage. Depth is physical and restrained (a lit, slightly convex board; recessed wells; cards that sit proud of the paint), and the only authored motion is the flip.",
     "keyCharacteristics": [
       "Charcoal owns every instrument surface; the ground is warm off-white paper.",
       "Logo orange is the brand and the next step: the badge, one main action per screen, accent type and strokes, focus rings.",
       "Off-white flip cards with a hinge line are the signature readout, never decoration.",
       "Yellow means \"now\": live stage, low stock, money owed, unread. Nothing else.",
-      "Archivo differentiated by width (62 / 72 / 85 / normal), weight, and tabular figures; Montserrat only for the brand voice.",
+      "Archivo differentiated by width (62 / 72 / 85 / normal), weight, and tabular figures; Montserrat only for the brand voice and the board labels.",
       "Light and dark are both first-class, switched by `prefers-color-scheme`.",
       "Every control has press travel; the flip is the single authored animation."
     ],
@@ -849,7 +864,7 @@
       },
       {
         "name": "The Width-Is-Voice Rule",
-        "body": "Hierarchy is carried by the width axis and weight of one family, never by a second typeface (Montserrat is the logo's own lettering, kept to the brand voice). Board numerals are `wdth` 62, display is 72, labels 85, reading text normal width.",
+        "body": "Hierarchy is carried by the width axis and weight of one family, never by a second typeface (Montserrat is the logo's own lettering, kept to the brand voice and the board labels). Board numerals are `wdth` 62, display is 72, labels 85, reading text normal width.",
         "section": "typography"
       },
       {
@@ -880,7 +895,7 @@
     "donts": [
       "**Don't** use yellow as a brand fill, a button color at rest, a focus ring, or decoration.",
       "**Don't** put more than one orange-filled button on a screen.",
-      "**Don't** add another typeface beyond Archivo and the Montserrat brand voice, or a second brand hue.",
+      "**Don't** add another typeface beyond Archivo and the Montserrat brand voice, or a second brand hue. Don't spread Montserrat into tables, fields or chips: it's too wide for them.",
       "**Don't** animate anything else with an authored entrance, scroll reveal, or loop; the flip is the motion.",
       "**Don't** put the board lift shadow on anything but the scoreboard.",
       "**Don't** set yellow text on light ground; use semibold ink.",
