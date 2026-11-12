@@ -3,6 +3,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { OrderFlash } from "@/features/admin/orders/components/order-actions";
 import { personName, when } from "@/features/admin/orders/components/order-parts";
 import { PrintButtons } from "@/features/admin/sales/components/receipt-actions";
+import { SlipHeader } from "@/features/admin/sales/components/receipt-parts";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { methodLine, PAY_TYPE_LABEL, type PaymentDetail } from "@/features/admin/payments/data";
 import { formatReference } from "@/features/shared/payments/model";
@@ -189,13 +190,9 @@ function PaymentSlip({ payment: p, after }: { payment: PaymentDetail; after: num
       aria-label={`Payment slip for ${p.order.order_number}`}
       className="receipt relative mx-auto w-full max-w-[24rem] bg-card px-6 py-7 text-[0.875rem] leading-snug text-card-ink shadow-[inset_0_0_0_1px_var(--line)]"
     >
-      <header className="text-center">
-        <p className="voice-display text-[1.5rem] uppercase leading-none">{SHOP.name}</p>
-        {SHOP.address && <p className="mt-1.5">{SHOP.address}</p>}
-        <p className={SHOP.address ? undefined : "mt-1.5"}>{SHOP.city}</p>
-        {SHOP.phone && <p className="tabular">{SHOP.phone}</p>}
+      <SlipHeader>
         <p className="mt-3 font-semibold">Custom order payment</p>
-      </header>
+      </SlipHeader>
 
       <dl className="receipt-rule mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 pt-4 text-[0.8125rem]">
         <dt className="opacity-70">Order</dt>

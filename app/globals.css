@@ -1966,6 +1966,20 @@ button.admin-dock-item[data-current="true"]:hover {
   html[data-paper] .receipt-void {
     box-shadow: inset 0 0 0 1.5px black;
   }
+  /* The badge prints at a fixed size: 14 mm on the roll, 16 mm on A4 (where the slip is 120 mm wide). */
+  html[data-paper="thermal"] .slip-badge {
+    width: 14mm;
+    height: 14mm;
+  }
+  html[data-paper="a4"] .slip-badge {
+    width: 16mm;
+    height: 16mm;
+  }
+  /* Thermal heads print black only: the badge becomes the one-color version, a black disc with the
+     letters left as paper. A4 keeps the logo orange; a black-only printer turns it into a grey disc. */
+  html[data-paper="thermal"] .slip-badge {
+    --brand: black;
+  }
 }
 
 /* ---------- Admin: point of sale, e-payment sheet ---------- */

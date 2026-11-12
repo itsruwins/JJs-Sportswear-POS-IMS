@@ -123,6 +123,18 @@ Garment and sample colors in `features/shared/catalog/colors.ts` are product dat
 - Logo on the POS receipt, the payment slip, the order slip and the report printouts. Black one-color badge on the 80 mm roll; full color on A4 where the printer allows, black otherwise.
 - The print footers carry the new name.
 - **Done when:** every printable page has been printed to PDF at 80 mm and A4, and the logo is sharp and in the right color on each.
+- **Decisions (2026-11-12):**
+  - The shop's printers aren't known yet, so B5 plans for both: black badge on the 80 mm roll, orange badge on A4 (a black-only A4 printer prints it as a grey disc).
+  - Slips: the badge centred above the name, which stays as text so it's sharp on any printer.
+  - Reports: in print only, a small lockup (badge and "Crafts & Sportswear") above the title on page 1. The footer on every page keeps the name and page count.
+  - Testing: a temporary admin page with sample data rendered the sales receipt and order slip for printing, then was deleted. Nothing was written to the database.
+- **Built 2026-11-12:**
+  - `features/admin/sales/components/receipt-parts.tsx`: `SlipHeader`, the one header for the sales receipt, payment slip and order slip (compact badge, name, address/city/phone, the slip's own line). The three copies of that header are gone.
+  - `app/globals.css`: `.slip-badge` prints at 14 mm on the roll and 16 mm on A4. On the roll it sets `--brand: black`, so the badge's disc turns black and the letters stay paper; on A4 it stays logo orange.
+  - `app/admin/reports/page.tsx`: a print-only `Wordmark` above the title.
+  - `DESIGN.md`: receipt header and report print described.
+  - Printed to PDF from the running app with each paper's own `@page` rules (as `PrintButtons` sets them): the payment slip (real data), the sales receipt and the order slip (sample data) at 80 mm and A4, and both reports at A4. The badge is vector in every PDF, black on the roll, orange on A4. The print footers read "J&J Crafts & Sportswear · Sales report" / "· Inventory report".
+  - Not checked: a real thermal printer or a black-only laser. The PDFs show what the browser sends; the thermal driver's dithering and margins can only be seen on the device.
 
 ### Phase B6: Auth emails
 - The repo has no `supabase/templates/`, so the Auth emails live in the Supabase dashboard. Write HTML templates (confirm sign-up, reset password, and any others the project sends) with the badge, the new name and the palette, using email-safe inline styles.

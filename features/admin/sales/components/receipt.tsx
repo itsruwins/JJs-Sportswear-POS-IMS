@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import { formatReference } from "@/features/shared/payments/model";
 import { personName, type SaleDetail } from "@/features/admin/sales/data";
+import { SlipHeader } from "@/features/admin/sales/components/receipt-parts";
 import { SHOP } from "@/lib/shop";
 
 const when = (iso: string) =>
@@ -18,12 +19,7 @@ export function Receipt({ sale }: { sale: SaleDetail }) {
       aria-label={`Receipt ${sale.receipt_number}`}
       className="receipt relative mx-auto w-full max-w-[24rem] bg-card px-6 py-7 text-[0.875rem] leading-snug text-card-ink shadow-[inset_0_0_0_1px_var(--line)]"
     >
-      <header className="text-center">
-        <p className="voice-display text-[1.5rem] uppercase leading-none">{SHOP.name}</p>
-        {SHOP.address && <p className="mt-1.5">{SHOP.address}</p>}
-        <p className={SHOP.address ? undefined : "mt-1.5"}>{SHOP.city}</p>
-        {SHOP.phone && <p className="tabular">{SHOP.phone}</p>}
-      </header>
+      <SlipHeader />
 
       <dl className="receipt-rule mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 pt-4 text-[0.8125rem]">
         <dt className="opacity-70">Receipt</dt>
