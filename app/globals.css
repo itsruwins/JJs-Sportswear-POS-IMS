@@ -1342,6 +1342,30 @@ button.admin-dock-item[data-current="true"]:hover {
     inset 0 0 0 2.5px var(--signal);
 }
 
+/* Landing AI studio band: the three sample designs (cut out, transparent) are stacked and
+   cross-fade. A soft drop shadow follows each garment's outline so it sits on the band. */
+.landing-studio-shot {
+  opacity: 0;
+  filter: drop-shadow(0 22px 22px oklch(0.2 0.02 50 / 0.16));
+  transition: opacity 420ms var(--ease-out);
+}
+:root[data-theme="dark"] .landing-studio-shot {
+  filter: drop-shadow(0 22px 26px oklch(0 0 0 / 0.5));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .landing-studio-shot {
+    filter: drop-shadow(0 22px 26px oklch(0 0 0 / 0.5));
+  }
+}
+.landing-studio-shot[data-on="true"] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-studio-shot {
+    transition: none;
+  }
+}
+
 /* ---------- Customer: AI design studio ---------- */
 
 /* Color picks: the shop's swatches, numbered in the order they were picked. */

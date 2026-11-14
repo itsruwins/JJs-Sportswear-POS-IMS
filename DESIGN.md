@@ -242,7 +242,7 @@ A charcoal instrument on warm paper, with the logo's orange for the brand and th
 ### Neutral
 - **Flip Card** (`card`) and **Card Shade** (`card-shade`): the off-white of split-flap cards and stock cells; the shade is the lower end of the top flap's gradient. Dark mode dims the card slightly (`card-dark`, `card-shade-dark`) so it never glares.
 - **Card Ink** (`card-ink`): numerals on cards and text on card-colored buttons.
-- **Paper** (`ground`) and **Paper Raised** (`ground-2`): page background and the alternate band (AI studio section, inputs on ground, prompt tiles). Dark: `ground-dark`, `ground-2-dark`.
+- **Paper** (`ground`) and **Paper Raised** (`ground-2`): page background and the alternate band (AI studio section, inputs on ground, sample tiles). Dark: `ground-dark`, `ground-2-dark`.
 - **Ink** (`ink`) and **Ink Muted** (`ink-2`): reading text on ground. Dark: `ink-dark`, `ink-2-dark`.
 - **Rule** (`line`): hairlines between sections and table rows, the inset 1px edge of inputs and cells on ground. Dark: `line-dark`.
 - **Nav Glass** (`nav-bg`): ground at 72% (70% dark) under the translucent nav.
