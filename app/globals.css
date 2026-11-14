@@ -1342,6 +1342,30 @@ button.admin-dock-item[data-current="true"]:hover {
     inset 0 0 0 2.5px var(--signal);
 }
 
+/* Landing AI studio band: the three sample designs (cut out, transparent) are stacked and
+   cross-fade. A soft drop shadow follows each garment's outline so it sits on the band. */
+.landing-studio-shot {
+  opacity: 0;
+  filter: drop-shadow(0 22px 22px oklch(0.2 0.02 50 / 0.16));
+  transition: opacity 420ms var(--ease-out);
+}
+:root[data-theme="dark"] .landing-studio-shot {
+  filter: drop-shadow(0 22px 26px oklch(0 0 0 / 0.5));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .landing-studio-shot {
+    filter: drop-shadow(0 22px 26px oklch(0 0 0 / 0.5));
+  }
+}
+.landing-studio-shot[data-on="true"] {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-studio-shot {
+    transition: none;
+  }
+}
+
 /* ---------- Customer: AI design studio ---------- */
 
 /* Color picks: the shop's swatches, numbered in the order they were picked. */
@@ -1362,6 +1386,12 @@ button.admin-dock-item[data-current="true"]:hover {
   font-size: 0.6875rem;
   font-weight: 700;
   box-shadow: 0 1px 2px oklch(0 0 0 / 0.25);
+}
+/* The design studio's custom color: a spectrum ring around a "+" that opens the system picker. */
+.studio-swatch-custom {
+  background:
+    radial-gradient(circle, var(--ground) 0 52%, transparent 54%),
+    conic-gradient(from 90deg, #e5484d, #f2c230, #46a758, #0d74ce, #8e4ec6, #e5484d);
 }
 /* The design on the stage wears an ink ring in the gallery, outside the tile so the
    picture can't cover it. */

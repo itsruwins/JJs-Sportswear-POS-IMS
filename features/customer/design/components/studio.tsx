@@ -4,13 +4,19 @@ import { uuid } from "@/lib/uuid";
 import { useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ImagePlus, LoaderCircle, Sparkles, X } from "lucide-react";
+import { ArrowRight, ImagePlus, LoaderCircle, Plus, Sparkles, X } from "lucide-react";
 import { prepareForUpload } from "@/features/shared/photos/prepare-upload";
 import { garmentColor } from "@/features/shared/catalog/colors";
 import type { MyDesign } from "@/features/customer/design/data";
 import {
   blankPicks,
+  blankSrc,
+  colorHex,
+  CUTS,
   DESIGNS_PER_DAY,
+  garmentShape,
+  hasCutChoice,
+  isHexColor,
   MAX_COLORS,
   MAX_EXTRA,
   picksSummary,
@@ -62,37 +68,42 @@ function ChipGroup<T extends string>({ name, options, value, onPick }: { name: s
   );
 }
 
-/** The stage before the first design: the picked colors, and what Generate will make. */
-function EmptyStage({ picks, live }: { picks: DesignPicks; live: boolean }) {
+/** A picked color as CSS: an exact hex as is, a swatch name through the shop's palette. */
+const swatchOf = (c: string) => (isHexColor(c) ? c : garmentColor(c).body);
+
+/**
+ * Under the stage before the first design: the picked colors, and what Generate will make.
+ * The stage itself shows the blank garment the AI prints on (it follows the garment, sport,
+ * and cut).
+ */
+function EmptyStageNote({ picks, live }: { picks: DesignPicks; live: boolean }) {
   return (
-    <div className="grid size-full place-items-center p-6 text-center">
-      <div>
-        {picks.colors.length > 0 && (
-          <ul className="flex justify-center gap-2" aria-label="Your colors">
-            {picks.colors.map((c) => (
-              <li
-                key={c}
-                title={c}
-                className="size-9 rounded-full shadow-[inset_0_0_0_1px_oklch(0_0_0/0.12)]"
-                style={{ background: garmentColor(c).body }}
-              >
-                <span className="sr-only">{c}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="mx-auto mt-4 max-w-[34ch] text-[0.9375rem] leading-relaxed text-card-ink/75">
+    <div className="mt-4 flex items-center gap-3">
+      {picks.colors.length > 0 && (
+        <ul className="flex shrink-0 -space-x-1.5" aria-label="Your colors">
+          {picks.colors.map((c) => (
+            <li
+              key={c}
+              title={c}
+              className="size-6 rounded-full shadow-[inset_0_0_0_1px_oklch(0_0_0/0.15),0_0_0_2px_var(--ground)]"
+              style={{ background: swatchOf(c) }}
+            >
+              <span className="sr-only">{c}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="min-w-0 text-[0.875rem] leading-snug text-ink-2">
           {live ? (
             <>
-              <span className="font-semibold text-card-ink">Your design shows here.</span> Generate to see it front and back, with your names and number.
+              <span className="font-semibold text-ink">Your design is printed on this garment.</span> Generate to see it front and back.
             </>
           ) : (
             <>
-              <span className="font-semibold text-card-ink">The AI designer is coming soon.</span> Your picks are kept for when it’s on.
+              <span className="font-semibold text-ink">The AI designer is coming soon.</span> Your picks are kept for when it’s on.
             </>
           )}
-        </p>
-      </div>
+      </p>
     </div>
   );
 }
@@ -123,6 +134,8 @@ export function Studio({
     const last = designs[0]?.details;
     return last ? { ...blankPicks(), ...last, extra: "", logoPath: last.logoPath ?? null } : blankPicks();
   });
+  /** While the custom color picker is open, the slot its color fills (it fires on every drag). */
+  const customSlot = useRef<number | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(savedLogoUrl);
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState<"generate" | "refine" | null>(null);
@@ -145,6 +158,20 @@ export function Studio({
     if (has) return patch({ colors: picks.colors.filter((x) => x !== c) });
     if (picks.colors.length >= MAX_COLORS) return setError(`Pick up to ${MAX_COLORS} colors. Tap one to remove it.`);
     patch({ colors: [...picks.colors, c] });
+  };
+
+  /** The custom picker: the first change adds a color, later ones (while it's open) adjust it. */
+  const pickCustom = (raw: string) => {
+    const hex = raw.toUpperCase();
+    const slot = customSlot.current;
+    if (slot !== null && slot < picks.colors.length) {
+      if (picks.colors.some((c, i) => i !== slot && colorHex(c) === hex)) return;
+      return patch({ colors: picks.colors.map((c, i) => (i === slot ? hex : c)) });
+    }
+    if (picks.colors.some((c) => colorHex(c) === hex)) return;
+    if (picks.colors.length >= MAX_COLORS) return setError(`Pick up to ${MAX_COLORS} colors. Remove one to add your own.`);
+    customSlot.current = picks.colors.length;
+    patch({ colors: [...picks.colors, hex] });
   };
 
   const pickLogo = async (file: File | undefined) => {
@@ -205,6 +232,12 @@ export function Studio({
         <div className="flex flex-col gap-6">
           <ChipGroup name="Garment" options={STUDIO_GARMENTS} value={picks.garment as (typeof STUDIO_GARMENTS)[number]} onPick={(v) => patch({ garment: v })} />
           <ChipGroup name="Sport" options={STUDIO_SPORTS} value={picks.sport as (typeof STUDIO_SPORTS)[number]} onPick={(v) => patch({ sport: v })} />
+          {hasCutChoice(picks) && (
+            <div>
+              <ChipGroup name="Cut" options={CUTS} value={picks.cut} onPick={(v) => patch({ cut: v })} />
+              <p className="mt-2 text-[0.8125rem] text-ink-2">NBA cut has side panels and a V-neck; regular has plain sides and a round neck.</p>
+            </div>
+          )}
 
           <fieldset>
             <legend className={label}>
@@ -228,10 +261,41 @@ export function Studio({
                   </button>
                 );
               })}
+              <label title="Pick an exact color" className="shop-swatch studio-swatch studio-swatch-custom press cursor-pointer focus-within:shadow-[0_0_0_3px_var(--ground),0_0_0_5px_var(--focus)]">
+                <Plus aria-hidden="true" className="size-4 text-ink" />
+                <input
+                  type="color"
+                  aria-label="Pick an exact color"
+                  value={picks.colors.find(isHexColor) ?? "#2747A8"}
+                  onClick={() => (customSlot.current = null)}
+                  onChange={(e) => pickCustom(e.target.value)}
+                  onBlur={() => (customSlot.current = null)}
+                  className="sr-only"
+                />
+              </label>
             </div>
-            <p className="mt-2.5 text-[0.8125rem] text-ink-2">
-              {picks.colors.length ? picks.colors.map((c, i) => `${COLOR_ROLES[i]}: ${c}`).join(" · ") : "No colors picked yet."}
-            </p>
+            {picks.colors.length ? (
+              <ul className="mt-3 flex flex-wrap gap-2" aria-label="Your colors">
+                {picks.colors.map((c, i) => (
+                  <li key={c}>
+                    <button
+                      type="button"
+                      onClick={() => patch({ colors: picks.colors.filter((x) => x !== c) })}
+                      aria-label={`Remove ${c}, the ${COLOR_ROLES[i].toLowerCase()} color`}
+                      className="press inline-flex h-8 items-center gap-2 rounded-full pr-2.5 pl-1.5 text-[0.8125rem] text-ink shadow-[inset_0_0_0_1px_var(--line)] hover:bg-ground-2"
+                    >
+                      <span aria-hidden="true" className="size-5 rounded-full shadow-[inset_0_0_0_1px_oklch(0_0_0/0.15)]" style={{ background: swatchOf(c) }} />
+                      <span>
+                        <span className="text-ink-2">{COLOR_ROLES[i]}:</span> <span className={`font-semibold ${isHexColor(c) ? "tabular" : ""}`}>{c}</span>
+                      </span>
+                      <X aria-hidden="true" className="size-3.5 text-ink-2" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2.5 text-[0.8125rem] text-ink-2">No colors picked yet.</p>
+            )}
           </fieldset>
 
           <ChipGroup name="Style" options={STUDIO_STYLES as unknown as { id: DesignPicks["style"]; label: string }[]} value={picks.style} onPick={(v) => patch({ style: v })} />
@@ -264,6 +328,10 @@ export function Studio({
               />
             </div>
           </div>
+          <label className="-mt-3 flex cursor-pointer items-center gap-2.5 text-[0.9375rem] text-ink">
+            <input type="checkbox" checked={picks.frontNumber} onChange={(e) => patch({ frontNumber: e.target.checked })} className="scan-check" />
+            Number on the front too, under the team name
+          </label>
 
           <div>
             <p className={label}>
@@ -350,9 +418,11 @@ export function Studio({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={current.url} alt={`Design: ${picksSummary(current.details) ?? current.prompt}`} className="size-full object-contain" />
           ) : (
-            <EmptyStage picks={picks} live={live} />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={blankSrc(garmentShape(picks))} alt={`A blank ${picks.garment.toLowerCase()}, front and back, that your design is printed on`} className="size-full object-contain" />
           )}
         </div>
+        {!busy && !current && <EmptyStageNote picks={picks} live={live} />}
 
         {error && (
           <p role="alert" className="auth-alert mt-4 rounded-2xl px-5 py-3.5 text-[0.9375rem]">
