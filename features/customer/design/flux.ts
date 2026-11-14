@@ -24,9 +24,13 @@ type Poll = { status?: string; result?: { sample?: string } };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Generates one image and returns its bytes. `references` are image URLs FLUX can fetch
- * (a design being refined first, then a logo); FLUX.2 takes up to 8. The result link FLUX
- * returns expires in 10 minutes, so the image is downloaded right away.
+ * Generates one image and returns its bytes. `references` are images in the order the
+ * prompt names them (image 1, image 2, ...): URLs FLUX can fetch or base64; FLUX.2 takes up
+ * to 8. The result link FLUX returns expires in 10 minutes, so the image is downloaded right
+ * away.
+ *
+ * Cost on flux-2-pro: 3 credits for the image (kept under 1 megapixel) plus 1.5 per
+ * reference image, so a design on a blank with a logo is 6 credits.
  */
 export async function fluxGenerate(prompt: string, references: string[] = []): Promise<{ bytes: Buffer; type: string }> {
   const key = process.env.BFL_API_KEY?.trim();
@@ -35,11 +39,14 @@ export async function fluxGenerate(prompt: string, references: string[] = []): P
 
   const body: Record<string, unknown> = {
     prompt,
-    // Landscape, so the front and back fit side by side.
-    width: 1536,
-    height: 1024,
+    // Landscape 3:2 for front and back side by side, just under 1 megapixel (BFL bills
+    // output by the started megapixel, so 1536×1024 would cost half again as much).
+    width: 1184,
+    height: 784,
     output_format: "jpeg",
     safety_tolerance: 2,
+    // The app writes the whole prompt; FLUX's own rewriting can change names and numbers.
+    disable_pup: true,
   };
   references.slice(0, 8).forEach((url, i) => {
     body[i === 0 ? "input_image" : `input_image_${i + 1}`] = url;

@@ -63,7 +63,7 @@ export default function Home() {
         <section id="studio" aria-labelledby="studio-title" className="bg-ground-2 py-20 lg:py-28">
           <div className={shell}>
             <h2 id="studio-title" className="voice-display mb-12 max-w-[16ch] text-[clamp(2.5rem,5.5vw,4.25rem)] lg:mb-14">
-              Say it in words. See it on a jersey.
+              Pick it. See it on a jersey.
             </h2>
             <AiStudio />
           </div>

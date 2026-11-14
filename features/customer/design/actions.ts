@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { manilaDay } from "./data";
-import { buildPrompt, buildRefinePrompt, cleanPicks, DESIGNS_PER_DAY, type DesignPicks } from "./model";
+import { buildPrompt, buildRefinePrompt, cleanPicks, DESIGNS_PER_DAY, garmentShape, type DesignPicks } from "./model";
 import { FluxError, fluxConfigured, fluxGenerate } from "./flux";
+import { blankImage } from "./blanks";
 import { requireCustomer } from "@/features/customer/shell/session";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -18,11 +19,13 @@ const OFF_MESSAGE = "The AI designer isn’t on yet. Check back soon.";
 /**
  * Makes one design with FLUX.2 and saves it. Without the shop's key there's nothing to
  * make it with. Nothing is saved (or counted) unless an image came back.
+ * `images` are the references in the order the prompt names them: inline base64 (a blank)
+ * or a path in the ai-designs bucket (a design being refined, a logo).
  */
 async function make(
   prompt: string,
   picks: DesignPicks,
-  references: { parentPath?: string | null },
+  images: ({ base64: string } | { path: string })[],
   parentId: string | null,
 ): Promise<DesignResult> {
   if (!fluxConfigured()) return { ok: false, message: OFF_MESSAGE };
@@ -37,10 +40,13 @@ async function make(
 
   let image: { bytes: Buffer; type: string; ext: string };
   try {
-    const paths = [references.parentPath, picks.logoPath].filter((p): p is string => Boolean(p));
+    const paths = images.flatMap((i) => ("path" in i ? [i.path] : []));
     const signed = paths.length ? await supabase.storage.from("ai-designs").createSignedUrls(paths, REFERENCE_LINK_FOR) : null;
-    const urls = (signed?.data ?? []).map((s) => s.signedUrl).filter((u): u is string => Boolean(u));
-    const out = await fluxGenerate(prompt, urls);
+    const urlFor = new Map((signed?.data ?? []).map((s) => [s.path, s.signedUrl]));
+    const refs = images.map((i) => ("path" in i ? urlFor.get(i.path) : i.base64));
+    // A missing link would shift "image 2" onto the wrong picture; stop instead.
+    if (refs.some((r) => !r)) return { ok: false, message: "We couldn’t load your logo or design for the AI. Try again." };
+    const out = await fluxGenerate(prompt, refs as string[]);
     image = { ...out, ext: out.type.includes("png") ? "png" : out.type.includes("webp") ? "webp" : "jpg" };
   } catch (e) {
     return { ok: false, message: e instanceof FluxError ? e.message : "We couldn’t make that design. Try again in a moment." };
@@ -69,7 +75,10 @@ export async function generateDesign(rawPicks: DesignPicks): Promise<DesignResul
   const { profile } = await requireCustomer();
   const picks = cleanPicks(rawPicks, profile.id);
   if (!picks) return { ok: false, message: "Pick a garment, a sport, a style, and at least one color." };
-  return make(buildPrompt(picks, Boolean(picks.logoPath)), picks, {}, null);
+  // The shape's white blank goes first so every design keeps the shop's cut; then the logo.
+  const blank = await blankImage(garmentShape(picks));
+  const images = [...(blank ? [{ base64: blank }] : []), ...(picks.logoPath ? [{ path: picks.logoPath }] : [])];
+  return make(buildPrompt(picks, { blank: Boolean(blank), logo: Boolean(picks.logoPath) }), picks, images, null);
 }
 
 /** Refines one of the customer's designs: FLUX gets the design back with the change asked for. */
@@ -86,5 +95,6 @@ export async function refineDesign(parentId: string, change: string): Promise<De
   if (!parent?.generated_image_url) return { ok: false, message: "That design doesn’t exist anymore." };
   // A refinement keeps the picks; the change itself is in the prompt.
   const picks = cleanPicks({ ...(parent.details ?? {}), extra: text }, profile.id) ?? cleanPicks({ garment: "Jersey", sport: "Basketball", style: "classic", colors: ["Black"], extra: text }, profile.id)!;
-  return make(buildRefinePrompt(text), picks, { parentPath: parent.generated_image_url }, parent.id);
+  // Only the design itself: its logo is already printed on it, and each extra image costs credits.
+  return make(buildRefinePrompt(text), picks, [{ path: parent.generated_image_url }], parent.id);
 }

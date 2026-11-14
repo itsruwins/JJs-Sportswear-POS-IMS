@@ -6,8 +6,11 @@ import { createClient } from "@/lib/supabase/client";
 import { AuthDialog, type AuthMode } from "./auth-dialog";
 
 type AuthContextValue = {
-  /** Open the account sheet. Signed-in visitors see their account instead of a form. */
-  openAuth: (mode: AuthMode, username?: string) => void;
+  /**
+   * Open the account sheet. Signed-in visitors see their account instead of a form.
+   * `next` is a customer or admin page to go to after signing in (instead of the default).
+   */
+  openAuth: (mode: AuthMode, username?: string, next?: string) => void;
   username: string | null;
   /** True for staff and the owner, who have an admin to go to. */
   isStaff: boolean;
@@ -38,7 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Where to go after logging in, when an admin or customer page sent the visitor here.
   const nextPath = useRef<string | null>(null);
 
-  const openAuth = useCallback((mode: AuthMode, prefill = "") => {
+  const openAuth = useCallback((mode: AuthMode, prefill = "", next?: string) => {
+    if (next !== undefined) nextPath.current = next.startsWith(ADMIN_PATH) || isCustomerPath(next) ? next : null;
     setSheet((s) => ({ open: true, mode, prefill, nonce: s.nonce + 1 }));
   }, []);
 
