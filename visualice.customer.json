@@ -1,0 +1,112 @@
+{
+  "$schema": "https://unpkg.com/visualice@0.2.1/config.schema.json",
+  "target": "http://localhost:3000",
+  "seeds": [
+    "/shop"
+  ],
+  "scope": {
+    "include": [
+      "/",
+      "/shop/**",
+      "/shop",
+      "/cart",
+      "/chat",
+      "/design",
+      "/account",
+      "/orders",
+      "/orders/**"
+    ],
+    "exclude": [],
+    "maxPages": 60,
+    "samples": {
+      "/shop/*": 3,
+      "/shop?*": 2,
+      "/orders/*": 2,
+      "/orders/*/edit": 1,
+      "/orders/tickets/*": 1
+    }
+  },
+  "discovery": {
+    "useSitemap": false,
+    "interactions": {
+      "denyLabels": [
+        "logout",
+        "log out",
+        "sign out",
+        "delete",
+        "remove",
+        "unsubscribe",
+        "pay",
+        "generate",
+        "regenerate",
+        "send",
+        "submit",
+        "retry",
+        "save",
+        "add to cart",
+        "checkout",
+        "place order",
+        "approve",
+        "reject",
+        "archive",
+        "void",
+        "refund",
+        "complete sale",
+        "charge",
+        "upload"
+      ],
+      "blockWrites": true
+    }
+  },
+  "auth": {
+    "storageStatePath": ".visualice/customer/auth.json",
+    "login": {
+      "url": "/?auth=login&next=/shop",
+      "steps": [
+        {
+          "action": "waitFor",
+          "target": {
+            "selector": "dialog[open] input[autocomplete=username]"
+          }
+        },
+        {
+          "action": "fill",
+          "target": {
+            "selector": "dialog[open] input[autocomplete=username]"
+          },
+          "value": "${VC_CUSTOMER_USER}"
+        },
+        {
+          "action": "fill",
+          "target": {
+            "selector": "dialog[open] input[autocomplete=current-password]"
+          },
+          "value": "${VC_CUSTOMER_PASS}"
+        },
+        {
+          "action": "click",
+          "target": {
+            "selector": "dialog[open] form button[type=submit]"
+          }
+        },
+        {
+          "action": "waitFor",
+          "url": "**/shop**"
+        }
+      ],
+      "verify": {
+        "url": "**/shop**"
+      }
+    }
+  },
+  "routesFile": "visualice.routes.customer.md",
+  "output": {
+    "dir": ".visualice/customer",
+    "site": "jj-customer"
+  },
+  "politeness": {
+    "concurrency": 2,
+    "timeoutMs": 60000,
+    "retries": 2
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "$schema": "https://unpkg.com/visualice@0.2.1/config.schema.json",
+  "target": "http://localhost:3000",
+  "seeds": [
+    "/admin"
+  ],
+  "scope": {
+    "include": [
+      "/admin/**",
+      "/admin"
+    ],
+    "exclude": [
+      "/admin/reports/export**"
+    ],
+    "maxPages": 60,
+    "samples": {
+      "/admin/products/*": 2,
+      "/admin/products/*/edit": 1,
+      "/admin/orders/*": 2,
+      "/admin/payments/*": 2,
+      "/admin/sales/*": 2,
+      "/admin/pos/orders/*": 1,
+      "/admin/chat/*": 2,
+      "/admin/sales?*": 2,
+      "/admin/reports?*": 3,
+      "/admin/history?*": 2,
+      "/admin/stock?*": 2,
+      "/admin/products?*": 2,
+      "/admin/orders?*": 2
+    }
+  },
+  "discovery": {
+    "useSitemap": false,
+    "interactions": {
+      "denyLabels": [
+        "logout",
+        "log out",
+        "sign out",
+        "delete",
+        "remove",
+        "unsubscribe",
+        "pay",
+        "generate",
+        "regenerate",
+        "send",
+        "submit",
+        "retry",
+        "save",
+        "add to cart",
+        "checkout",
+        "place order",
+        "approve",
+        "reject",
+        "archive",
+        "void",
+        "refund",
+        "complete sale",
+        "charge",
+        "upload"
+      ],
+      "blockWrites": true
+    }
+  },
+  "auth": {
+    "storageStatePath": ".visualice/admin/auth.json",
+    "login": {
+      "url": "/?auth=login&next=/admin",
+      "steps": [
+        {
+          "action": "waitFor",
+          "target": {
+            "selector": "dialog[open] input[autocomplete=username]"
+          }
+        },
+        {
+          "action": "fill",
+          "target": {
+            "selector": "dialog[open] input[autocomplete=username]"
+          },
+          "value": "${VC_ADMIN_USER}"
+        },
+        {
+          "action": "fill",
+          "target": {
+            "selector": "dialog[open] input[autocomplete=current-password]"
+          },
+          "value": "${VC_ADMIN_PASS}"
+        },
+        {
+          "action": "click",
+          "target": {
+            "selector": "dialog[open] form button[type=submit]"
+          }
+        },
+        {
+          "action": "waitFor",
+          "url": "**/admin**"
+        }
+      ],
+      "verify": {
+        "url": "**/admin**"
+      }
+    }
+  },
+  "routesFile": "visualice.routes.admin.md",
+  "output": {
+    "dir": ".visualice/admin",
+    "site": "jj-admin"
+  },
+  "politeness": {
+    "concurrency": 2,
+    "timeoutMs": 60000,
+    "retries": 2
+  }
+}
