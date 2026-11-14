@@ -155,6 +155,14 @@ Sources: the manuscript (*Design-Driven Development of an Integrated POS and IMS
   - Add `BFL_API_KEY=...` to `.env.local` (and to the hosting environment), then restart the server.
   - Optional: `BFL_MODEL` picks the endpoint (default `flux-2-pro`).
   - Preview designs made earlier stay marked "Preview".
+- **FLUX turned on (2026-11-14):**
+  - The key is in `.env.local` (`BFL_API_KEY`, `BFL_MODEL=flux-2-pro`). It still has to be added to the hosting environment (Vercel) before the live site can generate.
+  - **Look:** modelled on the shop's FLUX.2 samples in `../Files/` (Thunder, Star, Eagle, Storm): a 3D ghost-mannequin garment, front on the left and back on the right, soft shadow, plain off-white background.
+  - **Shape lock:** seven white blanks made once with FLUX.2 [pro] live in `public/design-blanks/` (`tank-nba`, `tank-regular`, `tee-v`, `shirt`, `polo`, `jacket`, `hoodie`). Each new design sends its shape's blank as image 1 (inline base64, so it works on localhost), with the logo as image 2. `garmentShape()` in `model.ts` picks the blank: basketball jerseys follow the cut, running jerseys use the regular tank, other jerseys the V-neck tee. `next.config.ts` traces the folder into the `/design` route.
+  - **New picks:** NBA or regular cut (basketball jerseys), "number on the front too", an exact color picker (stored as `#RRGGBB`; swatch names go to FLUX as their palette hex), and four styles from the samples: angular shards, brush strokes, paint fade, half and half.
+  - **Prompt:** written to BFL's FLUX.2 guide: subject first, colors as hex tied to parts (body, pattern, trim), exact text in quotes, team and player names over 4 letters also spelled out letter by letter (without it FLUX wrote "MAYYON"), and lettering colors picked for contrast. Prompt upsampling is off (`disable_pup`) so FLUX doesn't reword names.
+  - **Cost:** output is 1184×784 (just under 1 MP). On pro a design costs 4.5 credits, or 6 with a logo; a refine is 4.5 (it sends only the design, not the logo). 1 credit is $0.01.
+  - **Credits used in setup:** 39 of 1,000 (24 for the blanks, 15 for three test designs). Tests passed: basketball NBA cut with shards, volleyball with paint fade and a hex color, and regular cut with brush strokes and a logo. Spelling and logo placement were right.
 
 ### Phase C6: Chat
 - One general conversation with the shop, plus order-tagged messages, which can also be started from an order page or a product's "Ask about this".

@@ -1363,6 +1363,12 @@ button.admin-dock-item[data-current="true"]:hover {
   font-weight: 700;
   box-shadow: 0 1px 2px oklch(0 0 0 / 0.25);
 }
+/* The design studio's custom color: a spectrum ring around a "+" that opens the system picker. */
+.studio-swatch-custom {
+  background:
+    radial-gradient(circle, var(--ground) 0 52%, transparent 54%),
+    conic-gradient(from 90deg, #e5484d, #f2c230, #46a758, #0d74ce, #8e4ec6, #e5484d);
+}
 /* The design on the stage wears an ink ring in the gallery, outside the tile so the
    picture can't cover it. */
 .studio-thumb .shop-tile {
