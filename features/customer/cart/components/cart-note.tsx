@@ -3,13 +3,8 @@
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 
-/**
- * What the last tap on Add to cart did, said under the button: what was added and how many are
- * now in the cart, or why it couldn't be. `unit` names what's counted ("of this style").
- */
 export type AddNote = { kind: "added"; label: string; quantity: number; unit?: string } | { kind: "problem"; text: string };
 
-/** The answer to the last Add to cart, in place, so shopping carries on from here. */
 export function CartNote({ note }: { note: AddNote | null }) {
   return (
     <div id="cart-note" aria-live="polite" className="empty:hidden">

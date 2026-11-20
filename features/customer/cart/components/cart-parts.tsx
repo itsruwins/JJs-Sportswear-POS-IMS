@@ -22,10 +22,6 @@ export function SectionTitle({ id, children, aside }: { id: string; children: Re
 const fixButton =
   "press inline-flex h-8 shrink-0 items-center rounded-full bg-ground px-3 text-[0.8125rem] font-semibold text-ink shadow-[inset_0_0_0_1.5px_var(--ink)] hover:bg-ground-2";
 
-/**
- * One line of the cart: the garment, what it is, a stepper, its total, and Remove. A line
- * that no longer fits today's stock says so underneath with the one fix that clears it.
- */
 export function CartRow({ line: l, onQuantity }: { line: CartLine; onQuantity: (quantity: number) => void }) {
   const state = lineState(l);
   const item = l.item;
@@ -112,10 +108,6 @@ export function CartRow({ line: l, onQuantity }: { line: CartLine; onQuantity: (
   );
 }
 
-/**
- * One design in one style: its photo, name and style, each size with its own stepper, the run's
- * total, and Remove for the whole run. A size's − at 1 takes that size out.
- */
 export function DesignCard({
   run,
   onQuantity,
@@ -178,10 +170,6 @@ export function DesignCard({
   );
 }
 
-/**
- * − / count / +, the count typed too (saved on Enter or leaving the field). − stops at 1, unless
- * the line is one size of a design (`removable`), where it takes that size out.
- */
 function Stepper({
   label,
   quantity,
@@ -199,7 +187,6 @@ function Stepper({
   const commit = () => {
     const n = parseInt(draft, 10);
     if (!Number.isFinite(n) || n === quantity) return setDraft(String(quantity));
-    // Typing 0 removes the line, the same as Remove; above stock is lowered to it.
     onQuantity(Math.max(0, Math.min(n, max)));
   };
   return (
@@ -242,7 +229,6 @@ function Stepper({
   );
 }
 
-/** Where the cart is paid for: the shop's details, "to follow" in muted ink until they're set. */
 export function ShopDetails() {
   const row = "grid grid-cols-[5rem_minmax(0,1fr)] gap-3 border-t border-line py-3 first:border-t-0";
   return (

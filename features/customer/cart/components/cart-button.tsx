@@ -2,10 +2,6 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { piecesLabel } from "@/features/customer/cart/model";
 
-/**
- * The bag in the top bar: opens the cart, with the pieces in it. The count is ink, not
- * yellow: a cart is waiting on nobody, so it isn't "now".
- */
 export function CartButton({ count, current }: { count: number; current: boolean }) {
   return (
     <Link
