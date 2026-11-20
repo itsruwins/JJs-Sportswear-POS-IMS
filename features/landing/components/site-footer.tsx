@@ -3,12 +3,12 @@ import { AuthButton } from "@/features/shared/auth/components/auth-provider";
 import { Wordmark } from "@/features/shared/ui/wordmark";
 import { SHOP } from "@/lib/shop";
 
-// Shop details are placeholders until the owner confirms them.
-const SHOP_DETAILS = [
-  { label: "Visit", value: "Street address to follow, Legazpi City, Albay" },
-  { label: "Hours", value: "Shop hours to follow" },
-  { label: "Call", value: "Phone number to follow" },
-  { label: "Message", value: "Facebook page to follow" },
+const SHOP_DETAILS: { label: string; value: string; href?: string }[] = [
+  { label: "Visit", value: `${SHOP.address}, ${SHOP.city}` },
+  { label: "Hours", value: SHOP.hours ?? "" },
+  { label: "Call", value: SHOP.phone ?? "", href: `tel:${SHOP.phone?.replace(/\s/g, "")}` },
+  { label: "Message", value: `${SHOP.facebook} on Facebook` },
+  { label: "Email", value: SHOP.email, href: `mailto:${SHOP.email}` },
 ];
 
 const LINKS = [
@@ -27,7 +27,15 @@ export function SiteFooter() {
             {SHOP_DETAILS.map((d) => (
               <div key={d.label} className="flex gap-3">
                 <dt className="w-[4.5rem] shrink-0 font-semibold text-ink">{d.label}</dt>
-                <dd className="italic text-ink-2">{d.value}</dd>
+                <dd className="text-ink-2">
+                  {d.href ? (
+                    <a href={d.href} className="tabular transition-colors hover:text-ink hover:underline">
+                      {d.value}
+                    </a>
+                  ) : (
+                    d.value
+                  )}
+                </dd>
               </div>
             ))}
           </dl>
