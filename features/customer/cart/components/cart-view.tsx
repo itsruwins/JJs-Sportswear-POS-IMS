@@ -21,17 +21,15 @@ import type { TicketSummary } from "@/features/customer/tickets/data";
 import { GetTicketButton } from "@/features/customer/tickets/components/ticket-parts";
 import { CartRow, DesignCard, SectionTitle, ShopDetails } from "./cart-parts";
 
+import { Status } from '../utils/status-cart'
+import {EmptyCart} from '../utils/empty-cart'
+import {OpenTicketRow} from '../utils/open-ticket-row'
+
 type Change = { line: CartLine; quantity: number };
 
 /** The last lines taken out (one size, or a design's whole run), so a slip is one tap to undo. */
 type Removed = { lines: CartLine[]; label: string };
 
-/**
- * The cart: what the customer means to buy at the counter, in two parts that each get their own
- * ticket. Ready-made items are read against today's stock; designs are made after ordering, so
- * they're size runs with the down payment they'll need. Changes show at once and save behind
- * the scenes; the page then re-reads the cart, so another device's changes land here too.
- */
 export function CartView({
   lines,
   problem,
@@ -236,74 +234,5 @@ export function CartView({
         </div>
       )}
     </div>
-  );
-}
-
-/** A ticket already made: where to find it, and what a new one of its kind does with it. */
-function OpenTicketRow({ ticket: t, taken }: { ticket: TicketSummary; taken: boolean }) {
-  const design = t.kind === "design";
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-2xl bg-ground-2 py-3 pl-4 pr-2 shadow-[inset_0_0_0_1px_var(--line)]">
-      <p className="min-w-0 text-[0.9375rem] leading-snug text-ink">
-        <span className="font-semibold">
-          {design ? "Design ticket" : "Ticket"} <span className="tabular whitespace-nowrap">{t.code}</span> is ready for the counter
-        </span>
-        <span className="text-ink-2">
-          {" "}
-          · <span className="tabular">{piecesLabel(t.pieces)}</span>
-          {taken ? `. A new ${design ? "design ticket takes its designs" : "ticket takes its items"} in.` : "."}
-        </span>
-      </p>
-      <Link
-        href={`/orders/tickets/${t.code}`}
-        className="press inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-3 text-[0.9375rem] font-semibold text-ink underline underline-offset-4 hover:bg-ground hover:no-underline"
-      >
-        View ticket
-        <ArrowRight aria-hidden="true" className="size-4" />
-      </Link>
-    </div>
-  );
-}
-
-/** What the last change did: a refusal, or Undo for what was just removed. */
-function Status({ message, removed, onUndo, first = false }: { message: string | null; removed: Removed | null; onUndo: () => void; first?: boolean }) {
-  return (
-    <div aria-live="polite" className={`empty:hidden ${first ? "-mb-8" : ""}`}>
-      {message ? (
-        <p className={`${first ? "" : "mt-4 "}text-[0.9375rem] font-semibold text-ink`}>{message}</p>
-      ) : removed ? (
-        <div className={`${first ? "" : "mt-4 "}flex items-center justify-between gap-3 rounded-2xl bg-ground-2 py-2 pl-4 pr-2 shadow-[inset_0_0_0_1px_var(--line)]`}>
-          <p className="min-w-0 text-[0.9375rem] text-ink">
-            Removed <span className="font-semibold">{removed.label}</span>.
-          </p>
-          <button
-            type="button"
-            onClick={onUndo}
-            className="press inline-flex h-10 shrink-0 items-center rounded-full px-3 text-[0.9375rem] font-semibold text-ink underline underline-offset-4 hover:bg-ground hover:no-underline"
-          >
-            Undo
-          </button>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function EmptyCart() {
-  return (
-    <section className="mt-2 max-w-[46rem] rounded-[1.25rem] bg-ground-2 px-5 py-6 shadow-[inset_0_0_0_1px_var(--line)] sm:px-7 sm:py-7">
-      <h2 className="text-[1.125rem] font-semibold leading-snug text-ink">Your cart is empty.</h2>
-      <p className="mt-2 max-w-[52ch] text-[0.9375rem] leading-relaxed text-ink-2">
-        Pick a size on a ready-made item, or a style and how many of each size on a design, and tap Add to cart. It waits here, on any
-        device you log in on, until you’re at the counter.
-      </p>
-      <Link
-        href="/shop"
-        className="press mt-5 inline-flex h-12 items-center gap-2 rounded-full bg-action px-5 text-[0.9375rem] font-semibold text-action-ink hover:bg-action-deep"
-      >
-        Go to the shop
-        <ArrowRight aria-hidden="true" className="size-4" />
-      </Link>
-    </section>
   );
 }
