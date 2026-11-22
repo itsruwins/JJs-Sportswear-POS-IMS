@@ -2,11 +2,12 @@
 // The username can't change (it's how they log in). Safe for client components.
 
 import { PASSWORD_MIN } from "@/features/shared/auth/credentials";
+import type { NameParts } from "@/features/shared/names/model";
+import { checkName } from "@/features/shared/names/validation";
 
-export type DetailsDraft = { fullName: string; phone: string; email: string };
+export type DetailsDraft = NameParts & { phone: string; email: string };
 export type DetailsErrors = Partial<Record<keyof DetailsDraft, string>>;
 
-export const NAME_MAX = 80;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /** Phone numbers as people type them ("0917 123 4567", "+63 917 123 4567"): 7 to 15 digits. */
@@ -19,10 +20,7 @@ export function checkPhone(phone: string) {
 }
 
 export function checkDetails(d: DetailsDraft): DetailsErrors {
-  const e: DetailsErrors = {};
-  const name = d.fullName.trim();
-  if (name.length < 2) e.fullName = "Add your name, so the shop knows who’s ordering.";
-  else if (name.length > NAME_MAX) e.fullName = `Keep it under ${NAME_MAX} characters.`;
+  const e: DetailsErrors = checkName(d);
   const phone = checkPhone(d.phone.trim());
   if (phone) e.phone = phone;
   const email = d.email.trim();

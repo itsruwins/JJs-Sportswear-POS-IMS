@@ -46,8 +46,8 @@ export function CustomerTopBar({ userId, username, fullName, initials, avatarUrl
   return (
     <header className="site-nav sticky top-0" data-scrolled={scrolled}>
       <div className="mx-auto flex h-16 max-w-[80rem] items-center gap-3 px-4 sm:px-6 lg:px-10">
-        <Link href={CUSTOMER_HOME} className="press -ml-1 rounded-lg px-1 py-1" aria-label={`${SHOP.name} shop`}>
-          <Wordmark compact />
+        <Link href={CUSTOMER_HOME} className="press -ml-1 flex rounded-lg px-1 py-1" aria-label={`${SHOP.name} shop`}>
+          <Wordmark compact bar />
         </Link>
 
         {/* Desktop: the dock's tabs move up here. Account sits in the avatar menu. */}

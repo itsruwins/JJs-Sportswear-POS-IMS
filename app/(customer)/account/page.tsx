@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AccountView } from "@/features/customer/account/components/account-view";
 import { initials, requireCustomer } from "@/features/customer/shell/session";
+import { nameFromRow, splitName } from "@/features/shared/names/model";
 
 export const metadata: Metadata = { title: "Account" };
 
@@ -19,6 +20,7 @@ export default async function AccountPage() {
       username={profile.username}
       initials={initials(profile.full_name, profile.username)}
       fullName={profile.full_name}
+      name={profile.first_name || profile.last_name ? nameFromRow(profile) : splitName(profile.full_name ?? "")}
       phone={profile.phone}
       email={profile.email}
       avatarUrl={profile.avatar_url}

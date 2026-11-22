@@ -1,10 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CartLine } from "./model";
 
-// The cart is the customer's own rows in cart_items (RLS). Variants and products come
-// through the shop's own read rules, so an archived item arrives as null. Designs are
-// in it too (from 20261027000000_design_tickets.sql); before that, none get added.
-
 type CartRow = {
   variant_id: string;
   quantity: number;
