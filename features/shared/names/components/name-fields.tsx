@@ -15,6 +15,11 @@ type Props = {
   autoFocus?: boolean;
   /** The small signal dot before an error, as the sign-up form's other fields have. */
   errorDot?: boolean;
+  /**
+   * Someone else's name (a buyer at the counter): no autofill, and the preview speaks to staff
+   * ("On the order: …") instead of the customer ("The shop sees: …").
+   */
+  forSomeoneElse?: boolean;
 };
 
 const label = "mb-2 block text-[0.9375rem] font-semibold text-ink";
@@ -25,7 +30,7 @@ const label = "mb-2 block text-[0.9375rem] font-semibold text-ink";
  * same way the preview does. Field ids are `<id>-first`, so a form can focus the first problem
  * through `[aria-invalid='true']`.
  */
-export function NameFields({ value, errors, onChange, examples, autoFocus, errorDot }: Props) {
+export function NameFields({ value, errors, onChange, examples, autoFocus, errorDot, forSomeoneElse }: Props) {
   const id = useId();
   // Previewed once both required parts are there, so it never shows half a name.
   const shown = value.firstName.trim() && value.lastName.trim() ? formatName(value) : "";
@@ -44,7 +49,7 @@ export function NameFields({ value, errors, onChange, examples, autoFocus, error
       value={value[key]}
       onChange={(e) => onChange({ [key]: e.target.value })}
       maxLength={NAME_PART_MAX}
-      autoComplete={autoComplete}
+      autoComplete={forSomeoneElse ? "off" : autoComplete}
       autoCapitalize="words"
       spellCheck={false}
       placeholder={examples ? example : undefined}
@@ -91,7 +96,7 @@ export function NameFields({ value, errors, onChange, examples, autoFocus, error
               id={`${id}-suffix`}
               value={value.suffix}
               onChange={(e) => onChange({ suffix: e.target.value as NameParts["suffix"] })}
-              autoComplete="honorific-suffix"
+              autoComplete={forSomeoneElse ? "off" : "honorific-suffix"}
               aria-invalid={Boolean(errors.suffix) || undefined}
               aria-describedby={errors.suffix ? `${id}-suffix-msg` : undefined}
               className={`auth-input cursor-pointer appearance-none pl-4 pr-9 ${value.suffix ? "" : "text-ink-2"} ${errors.suffix ? "is-invalid" : ""}`}
@@ -112,8 +117,10 @@ export function NameFields({ value, errors, onChange, examples, autoFocus, error
       <p id={`${id}-shown`} className="mt-3 text-[0.875rem] leading-snug text-ink-2">
         {shown ? (
           <>
-            The shop sees: <span className="font-semibold text-ink">{shown}</span>
+            {forSomeoneElse ? "On the order:" : "The shop sees:"} <span className="font-semibold text-ink">{shown}</span>
           </>
+        ) : forSomeoneElse ? (
+          "The middle name shows as an initial."
         ) : (
           "Your middle name shows as an initial."
         )}

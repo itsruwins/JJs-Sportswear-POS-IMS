@@ -68,3 +68,12 @@ Goal: wherever a person's name is typed, the single "Full name" box becomes Firs
 - The counter design order's Buyer step gets the four fields. A loaded ticket fills them in from the customer's parts.
 - The draft saved in the tab keeps the parts, and an older saved draft with only `name` still loads.
 - **Done when:** a walk-in order is made with the parts, and the order slip, order view, and payments show `Juan D. dela Cruz Jr.`.
+- **Decided (2026-11-23):** First and Last are required at the counter, the same as at sign-up. The preview line reads "On the order: Juan D. Dela Cruz Jr.".
+- **Built 2026-11-23 (uncommitted):**
+  - `NameFields` gains `forSomeoneElse`, which turns autofill off and changes the preview to "On the order:" and "The middle name shows as an initial.".
+  - Design orders: `Buyer` is `NameParts` plus phone, team, needed-by, and notes. `restoreBuyer` splits an older draft's `name` saved in the tab, and `hasBuyerName` decides when there is an order in progress. The Buyer step shows `NameFields` across both columns above Phone | Team name. Errors appear after Next, as before. The Pay step's summary shows `formatName(buyer)`.
+  - `placeCounterOrder` checks the parts with `checkName(…, "the buyer’s")` and sends `first_name`, `middle_name`, `last_name`, and `suffix` in `p_buyer`. `PlaceField` swaps `name` for the four part fields, and the database's `order:first_name` (and the others) map back to them. Any buyer field sends the order back to Buyer. An `order:name` refusal means the database hasn't had N1, and the message says so.
+  - `loadTicket` reads the customer's profile with `*`. `DesignTicketInfo` gains `nameParts`, from the account's parts, or a split of `full_name` for an account without them. `orderFromTicket` fills the buyer from it.
+  - Checked in the running app as the owner on desktop in light mode and on a phone in dark mode. An old-style draft ("juan dela cruz jr.") restores as Juan / Dela Cruz / Jr. The preview line, the errors for a missing first name and a digit in the middle name, and the Pay summary ("Maria Clara B. Dela Cruz III") all show correctly. No order was placed, and the tab's draft was cleared. Typecheck and lint are clean.
+- **Plan complete.** A possible later follow-up is revoking the `full_name` update grant, now that every form writes the parts.
+
