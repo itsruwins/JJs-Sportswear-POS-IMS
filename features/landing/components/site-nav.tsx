@@ -29,8 +29,8 @@ export function SiteNav() {
   return (
     <header className="site-nav sticky top-0" data-scrolled={scrolled}>
       <nav aria-label="Main" className="mx-auto flex h-16 max-w-[80rem] items-center gap-6 px-4 sm:px-6 lg:px-10">
-        <Link href="/" className="press -ml-1 rounded-lg px-1 py-1" aria-label={`${SHOP.name} home`}>
-          <Wordmark compact />
+        <Link href="/" className="press -ml-1 flex rounded-lg px-1 py-1" aria-label={`${SHOP.name} home`}>
+          <Wordmark compact bar />
         </Link>
 
         <ul className="ml-4 hidden items-center gap-1 lg:flex">

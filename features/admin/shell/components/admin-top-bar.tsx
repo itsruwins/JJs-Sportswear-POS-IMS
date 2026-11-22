@@ -45,7 +45,7 @@ export function AdminTopBar({ userId, username, fullName, role }: Props) {
     <header className="site-nav sticky top-0" data-scrolled={scrolled}>
       <div className="mx-auto flex h-16 max-w-[80rem] items-center gap-3 px-4 sm:px-6 lg:px-10">
         <Link href={role === "owner" ? "/admin" : STAFF_HOME} className="press -ml-1 flex items-center gap-3 rounded-lg px-1 py-1" aria-label={`${SHOP.name} admin home`}>
-          <Wordmark compact />
+          <Wordmark compact bar />
           <span aria-hidden="true" className="h-5 w-px bg-line" />
           <span aria-hidden="true" className="voice-label text-[0.9375rem] text-ink-2">
             Admin
