@@ -5,6 +5,7 @@ import { createClient as createPlainClient } from "@supabase/supabase-js";
 import { usernameToEmail } from "@/features/shared/auth/credentials";
 import { AVATAR_PATH, checkDetails, checkPassword, type DetailsDraft, type DetailsErrors, type PasswordDraft, type PasswordErrors } from "./validation";
 import { requireCustomer } from "@/features/customer/shell/session";
+import { nameToRow, toSuffix } from "@/features/shared/names/model";
 
 export type DetailsResult = { ok: true } | { ok: false; errors: DetailsErrors & { form?: string } };
 export type PasswordResult = { ok: true } | { ok: false; errors: PasswordErrors };
@@ -12,16 +13,26 @@ export type PhotoResult = { ok: true; url: string | null } | { ok: false; messag
 
 const text = (v: unknown) => (typeof v === "string" ? v : "");
 
-/** Name, phone, and email. The username stays as it is. */
+/** Name (in parts), phone, and email. The username stays as it is; full_name is rebuilt by the database. */
 export async function saveDetails(raw: DetailsDraft): Promise<DetailsResult> {
   const { supabase, profile } = await requireCustomer();
-  const d = { fullName: text(raw?.fullName), phone: text(raw?.phone), email: text(raw?.email) };
+  const d: DetailsDraft = {
+    firstName: text(raw?.firstName),
+    middleName: text(raw?.middleName),
+    lastName: text(raw?.lastName),
+    suffix: toSuffix(text(raw?.suffix)),
+    phone: text(raw?.phone),
+    email: text(raw?.email),
+  };
+  if (text(raw?.suffix) && !d.suffix) return { ok: false, errors: { suffix: "Pick a suffix from the list." } };
   const errors = checkDetails(d);
   if (Object.keys(errors).length) return { ok: false, errors };
   const { error } = await supabase
     .from("profiles")
-    .update({ full_name: d.fullName.trim().replace(/\s+/g, " "), phone: d.phone.trim().replace(/\s+/g, " ") || null, email: d.email.trim().toLowerCase() || null })
+    .update({ ...nameToRow(d), phone: d.phone.trim().replace(/\s+/g, " ") || null, email: d.email.trim().toLowerCase() || null })
     .eq("id", profile.id);
+  // PGRST204: no such column, so the name-parts update (20261030000000) hasn't run yet.
+  if (error?.code === "PGRST204") return { ok: false, errors: { form: "Saving names needs the latest database update. Ask the shop to run it, then try again." } };
   if (error) return { ok: false, errors: { form: "We couldn’t save your details. Check your connection and try again." } };
   revalidatePath("/", "layout");
   return { ok: true };

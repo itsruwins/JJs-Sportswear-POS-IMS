@@ -14,6 +14,9 @@ import {
   type AuthFailure,
 } from "@/features/shared/auth/credentials";
 import { FlipText } from "@/features/shared/ui/flip-text";
+import { NameFields } from "@/features/shared/names/components/name-fields";
+import { blankName, formatName, nameToRow, type NameParts } from "@/features/shared/names/model";
+import { checkName, type NameErrors } from "@/features/shared/names/validation";
 
 export type AuthMode = "signup" | "login";
 
@@ -153,7 +156,7 @@ type PanelProps = {
   onDone: () => void;
 };
 
-type Errors = Partial<Record<"username" | "name" | "password" | "email" | "form", string>>;
+type Errors = NameErrors & Partial<Record<"username" | "password" | "email" | "form", string>>;
 
 const COPY = {
   signup: {
@@ -176,7 +179,7 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, isStaff, onSigne
   const [who, setWho] = useState(signedInAs ?? "");
 
   const [username, setUsername] = useState(prefill);
-  const [name, setName] = useState("");
+  const [name, setName] = useState<NameParts>(blankName);
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -185,7 +188,7 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, isStaff, onSigne
   const [errors, setErrors] = useState<Errors>({});
   const [pending, setPending] = useState(false);
 
-  const ids = { username: useId(), name: useId(), password: useId(), phone: useId(), email: useId(), form: useId() };
+  const ids = { username: useId(), password: useId(), phone: useId(), email: useId(), form: useId() };
   const prefillValid = USERNAME_PATTERN.test(prefill);
   const copy = COPY[mode];
 
@@ -197,7 +200,7 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, isStaff, onSigne
   const validate = (): Errors => {
     const next: Errors = {};
     if (!USERNAME_PATTERN.test(username)) next.username = `Use ${USERNAME_HINT.toLowerCase()}`;
-    if (mode === "signup" && !name.trim()) next.name = "Add your name so staff know who’s ordering.";
+    if (mode === "signup") Object.assign(next, checkName(name));
     if (mode === "signup" && password.length < PASSWORD_MIN) {
       next.password = `Use at least ${PASSWORD_MIN} characters.`;
     }
@@ -212,11 +215,12 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, isStaff, onSigne
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const form = e.currentTarget;
     const found = validate();
     setErrors(found);
     if (Object.keys(found).length) {
-      const first = (["username", "name", "password", "email"] as const).find((k) => found[k]);
-      if (first) document.getElementById(first === "name" ? ids.name : ids[first])?.focus();
+      // The first flagged field in the form's order.
+      requestAnimationFrame(() => form.querySelector<HTMLElement>("[aria-invalid='true']")?.focus());
       return;
     }
 
@@ -230,7 +234,9 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, isStaff, onSigne
           options: {
             data: {
               username,
-              full_name: name.trim(),
+              ...nameToRow(name),
+              // For a database that hasn't had the name-parts update yet; ignored once it has.
+              full_name: formatName(name),
               phone: phone.trim() || null,
               email: email.trim() || null,
             },
@@ -356,20 +362,18 @@ function AuthPanel({ initialMode, prefill, titleId, signedInAs, isStaff, onSigne
         </Field>
 
         {mode === "signup" && (
-          <Field id={ids.name} label="Full name" error={errors.name}>
-            <input
-              id={ids.name}
-              data-autofocus={prefillValid || undefined}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-              maxLength={80}
-              placeholder="Juan dela Cruz"
-              aria-invalid={!!errors.name}
-              aria-describedby={`${ids.name}-msg`}
-              className={`auth-input px-4 ${errors.name ? "is-invalid" : ""}`}
-            />
-          </Field>
+          <NameFields
+            value={name}
+            errors={errors}
+            onChange={(patch) => {
+              setName((n) => ({ ...n, ...patch }));
+              const key = Object.keys(patch)[0] as keyof NameParts;
+              if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }));
+            }}
+            examples
+            autoFocus={prefillValid}
+            errorDot
+          />
         )}
 
         <Field

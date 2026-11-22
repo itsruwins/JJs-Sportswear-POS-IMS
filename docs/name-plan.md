@@ -54,6 +54,16 @@ Goal: wherever a person's name is typed, the single "Full name" box becomes Firs
 - The customer top bar and the admin's `firstName()` greeting read `first_name`.
 - **Done when:** a new customer signs up with the parts, the combined name shows on their account and in admin screens, and editing the parts updates it everywhere.
 
+- **Decided (2026-11-23):** sign-up shows all four fields in two rows (First | Last, Middle | Suffix). A live "The shop sees: Juan D. Dela Cruz Jr." line previews the name, and the fields themselves keep what's typed. The Account page nudges ("Add your last name.") only when the last name is missing.
+- **Built 2026-11-23 (uncommitted):**
+  - `features/shared/names/components/name-fields.tsx` (`NameFields`) holds the four fields and the preview, with per-field errors and autocomplete hints (given-name, family-name, additional-name, honorific-suffix). `model.ts` gains `initialsOf`.
+  - Sign-up (`auth-dialog.tsx`): `checkName` replaces the old name check. The sign-up data sends `first_name`, `middle_name`, `last_name`, `suffix`, and a combined `full_name` (for a database without N1). Focus goes to the first flagged field.
+  - Account page: `DetailsDraft` is the name parts plus phone and email. `saveDetails` writes the parts (`PGRST204`, meaning no such column, gets a message about the missing database update). The page loads the parts, or splits `full_name` when there are none, and shows the nudge.
+  - Both sessions (`requireCustomer`, `requireStaff`) select `*`, so signing in still works on a database without N1. The customer chat greeting (`givenName`) and the admin home greeting (`firstName`) use `first_name`.
+  - Initials in the customer top bar, the admin top bar, and admin chat now skip the middle initial and suffix (the old code made "Pedro Penduko Jr." into "PJ").
+  - DESIGN.md describes the name fields under Inputs / Fields and the nudge on the Account page.
+  - Checked in the running app against the real database (N1 applied) on desktop in light mode and on a phone in dark mode: empty, filled with the preview, and errors with focus on sign-up and the Account page. Nothing was saved or signed up. Typecheck and lint are clean.
+
 ### Phase N3: Walk-in buyer (admin)
 - The counter design order's Buyer step gets the four fields. A loaded ticket fills them in from the customer's parts.
 - The draft saved in the tab keeps the parts, and an older saved draft with only `name` still loads.

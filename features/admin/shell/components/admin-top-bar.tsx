@@ -10,15 +10,14 @@ import { Wordmark } from "@/features/shared/ui/wordmark";
 import { ThemeButton } from "@/features/shared/ui/theme-button";
 import { ROLE_LABEL, STAFF_HOME } from "@/features/admin/shell/nav";
 import { NotificationBell } from "@/features/shared/ui/notification-bell";
+import { initialsOf } from "@/features/shared/names/model";
 import { usePopoverOpen } from "@/features/shared/ui/use-popover-open";
 import { SHOP } from "@/lib/shop";
 
 type Props = { userId: string; username: string; fullName: string | null; role: StaffRole };
 
 function initials(fullName: string | null, username: string) {
-  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return (parts[0]?.[0] ?? username[0] ?? "?").toUpperCase();
+  return initialsOf(fullName) || (username[0] ?? "?").toUpperCase();
 }
 
 export function AdminTopBar({ userId, username, fullName, role }: Props) {

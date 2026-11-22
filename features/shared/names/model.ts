@@ -90,3 +90,13 @@ export function nameToRow(p: NameParts): NameRow {
   const c = cleanName(p);
   return { first_name: c.firstName || null, middle_name: c.middleName || null, last_name: c.lastName || null, suffix: c.suffix || null };
 }
+
+/**
+ * Two initials from a combined name: first name and last name, skipping the middle initial and
+ * the suffix ("Juan D. Dela Cruz Jr." → "JD"). A note in brackets ("(sample)") is ignored.
+ * "" when there's no name, so the caller can fall back to the username.
+ */
+export function initialsOf(full: string | null | undefined): string {
+  const p = splitName((full ?? "").replace(/\(.*?\)/g, " "));
+  return ((p.firstName[0] ?? "") + (p.lastName[0] ?? "")).toUpperCase();
+}

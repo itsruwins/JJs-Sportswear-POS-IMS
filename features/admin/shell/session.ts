@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { STAFF_HOME } from "./nav";
 import { CUSTOMER_HOME } from "@/lib/paths";
 import { createClient } from "@/lib/supabase/server";
+import { splitName } from "@/features/shared/names/model";
 
 export { STAFF_HOME };
 
@@ -12,6 +13,8 @@ export type StaffProfile = {
   id: string;
   username: string;
   full_name: string | null;
+  /** Missing until the name-parts update (20261030000000) has run. */
+  first_name?: string | null;
   role: StaffRole;
 };
 
@@ -26,17 +29,19 @@ export const requireStaff = cache(async () => {
   const userId = claimsData?.claims?.sub;
   if (!userId) redirect("/?auth=login&next=/admin");
 
-  const { data: profile } = await supabase
+  // Every column, so a database without the name-parts update still signs in.
+  const { data: row } = await supabase
     .from("profiles")
-    .select("id, username, full_name, role")
+    .select("*")
     .eq("id", userId)
-    .single<{ id: string; username: string; full_name: string | null; role: string }>();
+    .single<{ id: string; username: string; full_name: string | null; first_name?: string | null; role: string }>();
 
-  if (!profile) redirect("/");
+  if (!row) redirect("/");
   // Customers have their own app.
-  if (profile.role !== "staff" && profile.role !== "owner") redirect(CUSTOMER_HOME);
+  if (row.role !== "staff" && row.role !== "owner") redirect(CUSTOMER_HOME);
 
-  return { supabase, profile: profile as StaffProfile };
+  const profile: StaffProfile = { id: row.id, username: row.username, full_name: row.full_name, first_name: row.first_name ?? null, role: row.role };
+  return { supabase, profile };
 });
 
 /** Owner-only pages: staff are sent to the point of sale. */
@@ -55,6 +60,6 @@ export async function ownerSession() {
   return session.profile.role === "owner" ? session : null;
 }
 
-export function firstName(profile: Pick<StaffProfile, "full_name" | "username">) {
-  return profile.full_name?.trim().split(/\s+/)[0] || profile.username;
+export function firstName(profile: Pick<StaffProfile, "first_name" | "full_name" | "username">) {
+  return profile.first_name || splitName(profile.full_name ?? "").firstName || profile.username;
 }

@@ -1,8 +1,12 @@
+import { initialsOf } from "@/features/shared/names/model";
+
 const TZ = "Asia/Manila";
 
 /** "MB" for Mara Belgica, "SM" for @sample.mara. */
 export function initials(p: { username: string; full_name: string | null }) {
-  const words = (p.full_name?.replace(/\(.*?\)/g, "").trim() || p.username).split(/[\s._-]+/).filter(Boolean);
+  const named = initialsOf(p.full_name);
+  if (named) return named;
+  const words = p.username.split(/[\s._-]+/).filter(Boolean);
   return ((words[0]?.[0] ?? "") + (words.length > 1 ? words[words.length - 1][0] : "")).toUpperCase() || "?";
 }
 

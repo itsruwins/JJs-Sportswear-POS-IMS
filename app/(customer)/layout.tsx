@@ -5,7 +5,7 @@ import { CustomerTopBar } from "@/features/customer/shell/components/customer-to
 import { SHOP } from "@/lib/shop";
 import { fetchChatUnread } from "@/features/customer/chat/data";
 import { fetchCartCount } from "@/features/customer/cart/data";
-import { initials, requireCustomer } from "@/features/customer/shell/session";
+import { givenName, initials, requireCustomer } from "@/features/customer/shell/session";
 
 export const metadata: Metadata = {
   // "Shop · J&J Crafts & Sportswear"; a page without its own title shows the name alone.
@@ -17,7 +17,7 @@ export default async function CustomerLayout({ children }: { children: React.Rea
   const { supabase, profile } = await requireCustomer();
   const [chatUnread, cartCount] = await Promise.all([fetchChatUnread(supabase, profile.id), fetchCartCount(supabase, profile.id)]);
   const unread = chatUnread ?? 0;
-  const firstName = profile.full_name?.replace(/\(.*?\)/g, "").trim().split(/\s+/)[0] || profile.username;
+  const firstName = givenName(profile);
 
   return (
     <>

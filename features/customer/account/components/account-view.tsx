@@ -5,11 +5,13 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, Check, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { changePassword, removePhoto, saveDetails, setPhoto } from "@/features/customer/account/actions";
-import { AVATAR_SIZE, checkDetails, checkPassword, NAME_MAX, type DetailsDraft, type DetailsErrors, type PasswordDraft, type PasswordErrors } from "@/features/customer/account/validation";
+import { AVATAR_SIZE, checkDetails, checkPassword, type DetailsDraft, type DetailsErrors, type PasswordDraft, type PasswordErrors } from "@/features/customer/account/validation";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/features/customer/shell/components/avatar";
 import { LogOutButton } from "@/features/customer/shell/components/log-out-button";
 import { PageHeader, pageShell } from "@/features/customer/shell/components/page-parts";
+import { NameFields } from "@/features/shared/names/components/name-fields";
+import { cleanName, type NameParts } from "@/features/shared/names/model";
 
 const label = "text-[0.9375rem] font-semibold text-ink";
 const hint = "mt-1.5 text-[0.8125rem] leading-relaxed text-ink-2";
@@ -21,6 +23,7 @@ type Props = {
   username: string;
   initials: string;
   fullName: string | null;
+  name: NameParts;
   phone: string | null;
   email: string | null;
   avatarUrl: string | null;
@@ -163,11 +166,11 @@ function PhotoSection({ uid, username, initials, fullName, avatarUrl }: Props) {
   );
 }
 
-function DetailsSection({ username, fullName, phone, email }: Props) {
+function DetailsSection({ username, name, phone, email }: Props) {
   const router = useRouter();
-  const ids = { name: useId(), phone: useId(), email: useId() };
+  const ids = { phone: useId(), email: useId() };
   const form = useRef<HTMLFormElement>(null);
-  const [saved, setSaved] = useState<DetailsDraft>({ fullName: fullName ?? "", phone: phone ?? "", email: email ?? "" });
+  const [saved, setSaved] = useState<DetailsDraft>({ ...name, phone: phone ?? "", email: email ?? "" });
   const [draft, setDraft] = useState<DetailsDraft>(saved);
   const [errors, setErrors] = useState<DetailsErrors & { form?: string }>({});
   const [busy, setBusy] = useState(false);
@@ -201,16 +204,17 @@ function DetailsSection({ username, fullName, phone, email }: Props) {
       setErrors(r.errors);
       return focusFirstError(form.current);
     }
-    const next = { fullName: draft.fullName.trim(), phone: draft.phone.trim(), email: draft.email.trim().toLowerCase() };
+    // The name as the database stores it (title-cased, spaces tidied).
+    const next = { ...cleanName(draft), phone: draft.phone.trim(), email: draft.email.trim().toLowerCase() };
     setSaved(next);
     setDraft(next);
     setDone(true);
     router.refresh();
   };
 
-  const field = (key: keyof DetailsDraft) => ({
+  const field = (key: "phone" | "email") => ({
     "aria-invalid": Boolean(errors[key]) || undefined,
-    "aria-describedby": `${ids[key === "fullName" ? "name" : key]}-msg`,
+    "aria-describedby": `${ids[key]}-msg`,
     className: `auth-input mt-2 px-4 ${errors[key] ? "is-error" : ""}`,
   });
 
@@ -233,14 +237,14 @@ function DetailsSection({ username, fullName, phone, email }: Props) {
           <p className="mt-2 text-[1rem] text-ink">@{username}</p>
           <p className={hint}>You log in with this. It can’t be changed.</p>
         </div>
-        <div>
-          <label htmlFor={ids.name} className={label}>
-            Name
-          </label>
-          <input id={ids.name} value={draft.fullName} onChange={(e) => patch({ fullName: e.target.value })} maxLength={NAME_MAX + 10} autoComplete="name" {...field("fullName")} />
-          <p id={`${ids.name}-msg`} className={errors.fullName ? errorText : "sr-only"}>
-            {errors.fullName}
-          </p>
+        <div className="flex flex-col gap-4">
+          {!saved.lastName && (
+            <p className="rounded-xl bg-ground-2 px-4 py-3 text-[0.9375rem] leading-snug text-ink shadow-[inset_0_0_0_1px_var(--line)]">
+              <span className="font-semibold">Add your last name.</span>{" "}
+              {saved.firstName ? "Your name now has separate parts, and only your first name came across." : "The shop uses it on your orders and receipts."}
+            </p>
+          )}
+          <NameFields value={draft} errors={errors} onChange={patch} />
         </div>
         <div>
           <label htmlFor={ids.phone} className={label}>
