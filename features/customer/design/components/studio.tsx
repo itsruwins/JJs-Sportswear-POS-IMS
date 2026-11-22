@@ -29,6 +29,10 @@ import { COLOR_SUGGESTIONS } from "@/features/customer/orders/model";
 import { createClient } from "@/lib/supabase/client";
 import { generateDesign, refineDesign } from "@/features/customer/design/actions";
 
+import {ChipGroup} from '../utils/chip-group';
+import {EmptyStageNote} from '../utils/empty-stage-note';
+import { swatchOf } from '../reusable/design-reusable'
+
 const label = "text-[0.9375rem] font-semibold text-ink";
 const COLOR_ROLES = ["Main", "Second", "Accent"];
 
@@ -52,67 +56,7 @@ function TriesLeft({ left }: { left: number }) {
   );
 }
 
-function ChipGroup<T extends string>({ name, options, value, onPick }: { name: string; options: readonly T[] | { id: T; label: string }[]; value: T; onPick: (v: T) => void }) {
-  const list = (options as readonly (T | { id: T; label: string })[]).map((o) => (typeof o === "string" ? { id: o, label: o } : o));
-  return (
-    <fieldset>
-      <legend className={label}>{name}</legend>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {list.map((o) => (
-          <button key={o.id} type="button" aria-pressed={value === o.id} onClick={() => onPick(o.id)} className="shop-chip press h-9 px-3.5 text-[0.875rem]">
-            {o.label}
-          </button>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
-
-/** A picked color as CSS: an exact hex as is, a swatch name through the shop's palette. */
-const swatchOf = (c: string) => (isHexColor(c) ? c : garmentColor(c).body);
-
-/**
- * Under the stage before the first design: the picked colors, and what Generate will make.
- * The stage itself shows the blank garment the AI prints on (it follows the garment, sport,
- * and cut).
- */
-function EmptyStageNote({ picks, live }: { picks: DesignPicks; live: boolean }) {
-  return (
-    <div className="mt-4 flex items-center gap-3">
-      {picks.colors.length > 0 && (
-        <ul className="flex shrink-0 -space-x-1.5" aria-label="Your colors">
-          {picks.colors.map((c) => (
-            <li
-              key={c}
-              title={c}
-              className="size-6 rounded-full shadow-[inset_0_0_0_1px_oklch(0_0_0/0.15),0_0_0_2px_var(--ground)]"
-              style={{ background: swatchOf(c) }}
-            >
-              <span className="sr-only">{c}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      <p className="min-w-0 text-[0.875rem] leading-snug text-ink-2">
-          {live ? (
-            <>
-              <span className="font-semibold text-ink">Your design is printed on this garment.</span> Generate to see it front and back.
-            </>
-          ) : (
-            <>
-              <span className="font-semibold text-ink">The AI designer is coming soon.</span> Your picks are kept for when it’s on.
-            </>
-          )}
-      </p>
-    </div>
-  );
-}
-
-/**
- * The AI design studio: guided picks and free text become a FLUX prompt; each design shows
- * front and back. Three designs a day (refinements count), saved to the customer's gallery,
- * and one tap starts a custom-order request with the design attached.
- */
+// main
 export function Studio({
   uid,
   designs,

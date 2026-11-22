@@ -31,11 +31,6 @@ type Chat = { messages: MyChatMessage[]; photos: boolean; error: boolean };
 const finePointer = () => window.matchMedia("(pointer: fine)").matches;
 const phone = () => window.matchMedia("(max-width: 639px)").matches;
 
-/**
- * The customer's chat with the shop, in a bubble that floats over every customer page.
- * It opens like a chatbot (a greeting and quick replies) but a person from the shop
- * always answers, from the admin inbox. Messages arrive live; opening it reads them.
- */
 export function ChatWidget({ uid, firstName, initialUnread, hours }: { uid: string; firstName: string; initialUnread: number; hours: string | null }) {
   const pathname = usePathname();
   const supabase = useMemo(() => createClient(), []);

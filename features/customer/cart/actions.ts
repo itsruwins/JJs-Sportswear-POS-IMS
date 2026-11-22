@@ -48,10 +48,6 @@ export async function setCartQuantity(variantId: string, quantity: number): Prom
 
 export type RunResult = { ok: true; pieces: number } | { ok: false; message: string };
 
-/**
- * Adds a design's size run (S ×3, M ×5, …) in one step: every size goes in, or none does.
- * Each size caps at 99 in the cart. Returns the pieces now in the cart for those sizes.
- */
 export async function addRunToCart(sizes: { variantId: string; quantity: number }[]): Promise<RunResult> {
   const { supabase } = await requireCustomer();
   const ok =
