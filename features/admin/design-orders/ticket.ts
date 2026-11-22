@@ -1,6 +1,7 @@
 // Loading a customer's design ticket into a counter order: the ticket's sizes meet today's designs.
 import { formatPeso } from "@/features/shared/catalog/catalog";
 import type { LoadedTicket } from "@/features/admin/pos/actions";
+import { blankName } from "@/features/shared/names/model";
 import { MAX_PIECES, manilaDate, type Buyer, type Design, type Pieces } from "./model";
 
 /**
@@ -39,6 +40,6 @@ export function orderFromTicket(
   const d = ticket.design;
   const neededBy = d?.neededBy && d.neededBy >= today ? d.neededBy : "";
   if (d?.neededBy && !neededBy) notes.push("The needed-by date on the ticket has passed. Ask for a new one.");
-  const buyer: Buyer = { name: d?.name ?? "", phone: d?.phone ?? "", team: d?.team ?? "", neededBy, notes: d?.roster ?? "" };
+  const buyer: Buyer = { ...(d?.nameParts ?? blankName()), phone: d?.phone ?? "", team: d?.team ?? "", neededBy, notes: d?.roster ?? "" };
   return { pieces, designOrder, buyer, notes, added };
 }

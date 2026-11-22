@@ -20,6 +20,8 @@ import { orderFromTicket } from "@/features/admin/design-orders/ticket";
 import { placeCounterOrder, type CounterPayment, type PlaceField } from "@/features/admin/design-orders/actions";
 import {
   blankBuyer,
+  hasBuyerName,
+  restoreBuyer,
   downPayment,
   manilaDate,
   orderLines,
@@ -31,8 +33,13 @@ import {
   type Pieces,
 } from "@/features/admin/design-orders/model";
 import { DesignPhoto, DesignTile, OrderSummary, PiecesEditor, StepStrip, type Step } from "./design-order-parts";
+import { NameFields } from "@/features/shared/names/components/name-fields";
+import { formatName } from "@/features/shared/names/model";
+import { checkName } from "@/features/shared/names/validation";
 
 const STORE = "jj-pos-design-order";
+/** Refusals about the buyer, which send the order back to the Buyer step. */
+const BUYER_FIELDS: readonly PlaceField[] = ["first_name", "middle_name", "last_name", "suffix", "phone", "needed_by"];
 type View = "designs" | "design" | Step;
 type Saved = {
   pieces: Pieces;
@@ -82,7 +89,7 @@ export function DesignOrderScreen({
   initialTicket?: string | null;
 }) {
   const router = useRouter();
-  const ids = { search: useId(), name: useId(), phone: useId(), team: useId(), needed: useId(), notes: useId(), amount: useId() };
+  const ids = { search: useId(), phone: useId(), team: useId(), needed: useId(), notes: useId(), amount: useId() };
   const [view, setView] = useState<View>("designs");
   const [openId, setOpenId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -118,7 +125,7 @@ export function DesignOrderScreen({
         // eslint-disable-next-line react-hooks/set-state-in-effect -- one read of this tab's saved order, after hydration
         setPieces(saved.pieces ?? {});
         setDesignOrder(saved.designOrder ?? []);
-        setBuyer({ ...blankBuyer(), ...saved.buyer });
+        setBuyer(restoreBuyer(saved.buyer));
         setAmount(saved.amount ?? "");
         setCashOn(saved.cashOn ?? true);
         setCash(saved.cash ?? "");
@@ -139,7 +146,7 @@ export function DesignOrderScreen({
   useEffect(() => {
     if (!restored) return;
     try {
-      if (count || buyer.name || buyer.phone || ticket) {
+      if (count || hasBuyerName(buyer) || buyer.phone || ticket) {
         sessionStorage.setItem(
           STORE,
           JSON.stringify({ pieces, designOrder, buyer, amount, cashOn, cash, ePayments, key, ticket, ticketNotes } satisfies Saved),
@@ -237,7 +244,7 @@ export function DesignOrderScreen({
       if (!r.ok) setTicketMsg(r.message);
       // A ready-made ticket is charged as a sale: the Shelf tab loads it.
       else if (r.ticket.kind === "ready") router.push(`/admin/pos?ticket=${r.ticket.code}`);
-      else if (count || buyer.name.trim() || buyer.phone.trim() || ticket) setPending(r.ticket);
+      else if (count || hasBuyerName(buyer) || buyer.phone.trim() || ticket) setPending(r.ticket);
       else applyTicket(r.ticket);
     } catch {
       setTicketMsg("We couldn’t look up the ticket. Check the connection and try again.");
@@ -266,8 +273,9 @@ export function DesignOrderScreen({
   const balance = roundPeso(total - payingNow);
   const dueFor = (editing: string | null) => roundPeso(payingNow - ePayments.filter((p) => p.id !== editing).reduce((s, p) => s + p.amount, 0));
 
+  const nameProblems = checkName(buyer, "the buyer’s");
   const buyerProblems = {
-    name: buyer.name.trim().length < 2 ? "Enter the buyer’s name." : "",
+    name: Object.keys(nameProblems).length ? "name" : "",
     phone: !phoneOk(buyer.phone) ? "Enter a phone number, like 0917 123 4567." : "",
     neededBy: buyer.neededBy && buyer.neededBy < manilaDate() ? "Pick today or a later date." : "",
   };
@@ -294,7 +302,7 @@ export function DesignOrderScreen({
     try {
       const result = await placeCounterOrder({
         items: lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity })),
-        buyer: { name: buyer.name, phone: buyer.phone },
+        buyer: { firstName: buyer.firstName, middleName: buyer.middleName, lastName: buyer.lastName, suffix: buyer.suffix, phone: buyer.phone },
         details: { team: buyer.team, neededBy: buyer.neededBy, notes: buyer.notes },
         payments,
         requestId: key,
@@ -311,7 +319,7 @@ export function DesignOrderScreen({
       }
       if (result.unavailable) router.refresh();
       setError({ text: result.message, field: result.field, ticket: result.ticketClosed });
-      if (result.field === "name" || result.field === "phone" || result.field === "needed_by") go("buyer");
+      if (result.field && BUYER_FIELDS.includes(result.field)) go("buyer");
       setBusy(false);
     } catch {
       // The reply was lost: the order may have gone in. The same key can't place it twice.
@@ -602,21 +610,15 @@ export function DesignOrderScreen({
               </p>
             )}
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
-              {field(
-                ids.name,
-                "Name",
-                show("name"),
-                <input
-                  id={ids.name}
-                  value={buyer.name}
-                  onChange={(e) => setBuyer((b) => ({ ...b, name: e.target.value }))}
-                  autoComplete="off"
-                  maxLength={80}
-                  aria-invalid={!!show("name") || undefined}
-                  aria-describedby={`${ids.name}-msg`}
-                  className={`auth-input px-4 ${show("name") ? "is-invalid" : ""}`}
-                />,
-              )}
+              <div className="sm:col-span-2">
+                <NameFields
+                  value={buyer}
+                  errors={touched ? nameProblems : {}}
+                  onChange={(patch) => setBuyer((b) => ({ ...b, ...patch }))}
+                  errorDot
+                  forSomeoneElse
+                />
+              </div>
               {field(
                 ids.phone,
                 "Phone",
@@ -720,7 +722,7 @@ export function DesignOrderScreen({
           <dl className="mt-5 grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 text-[0.9375rem]">
             <dt className="text-ink-2">Buyer</dt>
             <dd className="text-ink">
-              {buyer.name.trim()} · <span className="tabular">{buyer.phone.trim()}</span>
+              {formatName(buyer)} · <span className="tabular">{buyer.phone.trim()}</span>
             </dd>
             {buyer.team.trim() && (
               <>

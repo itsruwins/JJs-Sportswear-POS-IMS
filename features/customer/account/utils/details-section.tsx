@@ -2,18 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import { AVATAR_SIZE, checkDetails, checkPassword, NAME_MAX, type DetailsDraft, type DetailsErrors, type PasswordDraft, type PasswordErrors } from "@/features/customer/account/validation";
+import { checkDetails, type DetailsDraft, type DetailsErrors } from "@/features/customer/account/validation";
+import { NameFields } from "@/features/shared/names/components/name-fields";
+import { cleanName } from "@/features/shared/names/model";
 import {Props} from '../types/personal-type'
 import {focusFirstError} from '../focus-first-error'
 import { saveDetails } from "@/features/customer/account/actions";
 import {sectionTitle, label, hint, errorText} from '../reusable/account-reusable';
 import { Check, LoaderCircle } from "lucide-react";
 
-export function DetailsSection({ username, fullName, phone, email }: Props) {
+export function DetailsSection({ username, name, phone, email }: Props) {
     const router = useRouter();
-    const ids = { name: useId(), phone: useId(), email: useId() };
+    const ids = { phone: useId(), email: useId() };
     const form = useRef<HTMLFormElement>(null);
-    const [saved, setSaved] = useState<DetailsDraft>({ fullName: fullName ?? "", phone: phone ?? "", email: email ?? "" });
+    const [saved, setSaved] = useState<DetailsDraft>({ ...name, phone: phone ?? "", email: email ?? "" });
     const [draft, setDraft] = useState<DetailsDraft>(saved);
     const [errors, setErrors] = useState<DetailsErrors & { form?: string }>({});
     const [busy, setBusy] = useState(false);
@@ -47,16 +49,17 @@ export function DetailsSection({ username, fullName, phone, email }: Props) {
         setErrors(r.errors);
         return focusFirstError(form.current);
       }
-      const next = { fullName: draft.fullName.trim(), phone: draft.phone.trim(), email: draft.email.trim().toLowerCase() };
+      // The name as the database stores it (title-cased, spaces tidied).
+      const next = { ...cleanName(draft), phone: draft.phone.trim(), email: draft.email.trim().toLowerCase() };
       setSaved(next);
       setDraft(next);
       setDone(true);
       router.refresh();
     };
   
-    const field = (key: keyof DetailsDraft) => ({
+    const field = (key: "phone" | "email") => ({
       "aria-invalid": Boolean(errors[key]) || undefined,
-      "aria-describedby": `${ids[key === "fullName" ? "name" : key]}-msg`,
+      "aria-describedby": `${ids[key]}-msg`,
       className: `auth-input mt-2 px-4 ${errors[key] ? "is-error" : ""}`,
     });
   
@@ -79,14 +82,14 @@ export function DetailsSection({ username, fullName, phone, email }: Props) {
             <p className="mt-2 text-[1rem] text-ink">@{username}</p>
             <p className={hint}>You log in with this. It can’t be changed.</p>
           </div>
-          <div>
-            <label htmlFor={ids.name} className={label}>
-              Name
-            </label>
-            <input id={ids.name} value={draft.fullName} onChange={(e) => patch({ fullName: e.target.value })} maxLength={NAME_MAX + 10} autoComplete="name" {...field("fullName")} />
-            <p id={`${ids.name}-msg`} className={errors.fullName ? errorText : "sr-only"}>
-              {errors.fullName}
-            </p>
+          <div className="flex flex-col gap-4">
+            {!saved.lastName && (
+              <p className="rounded-xl bg-ground-2 px-4 py-3 text-[0.9375rem] leading-snug text-ink shadow-[inset_0_0_0_1px_var(--line)]">
+                <span className="font-semibold">Add your last name.</span>{" "}
+                {saved.firstName ? "Your name now has separate parts, and only your first name came across." : "The shop uses it on your orders and receipts."}
+              </p>
+            )}
+            <NameFields value={draft} errors={errors} onChange={patch} />
           </div>
           <div>
             <label htmlFor={ids.phone} className={label}>

@@ -2,6 +2,7 @@
 // and the money rules (at least half down, at most the total). Safe for client components.
 
 import { roundPeso } from "@/features/admin/pos/amounts";
+import { blankName, splitName, type NameParts } from "@/features/shared/names/model";
 
 /** One size of one style of a design, as the counter offers it. */
 export type DesignVariant = { id: string; size: string; price: number };
@@ -30,8 +31,18 @@ export type OrderLine = {
   quantity: number;
 };
 
-export type Buyer = { name: string; phone: string; team: string; neededBy: string; notes: string };
-export const blankBuyer = (): Buyer => ({ name: "", phone: "", team: "", neededBy: "", notes: "" });
+/** Who a counter order is for: the name in parts (First and Last required), and the team details. */
+export type Buyer = NameParts & { phone: string; team: string; neededBy: string; notes: string };
+export const blankBuyer = (): Buyer => ({ ...blankName(), phone: "", team: "", neededBy: "", notes: "" });
+
+/** A buyer saved in this tab, including one saved before names had parts (`name`, split). */
+export function restoreBuyer(saved: (Partial<Buyer> & { name?: string }) | null | undefined): Buyer {
+  const { name, ...rest } = saved ?? {};
+  const hasParts = rest.firstName || rest.middleName || rest.lastName || rest.suffix;
+  return { ...blankBuyer(), ...(!hasParts && name ? splitName(name) : {}), ...rest };
+}
+
+export const hasBuyerName = (b: Buyer) => Boolean(b.firstName.trim() || b.middleName.trim() || b.lastName.trim());
 
 export const MAX_PIECES = 999;
 

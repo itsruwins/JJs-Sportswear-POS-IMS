@@ -8,6 +8,7 @@ import { cleanReference, GCASH } from "@/features/shared/payments/model";
 import { geminiConfigured, GeminiError, readReceiptImage } from "@/features/admin/pos/gemini";
 import { checkReading, type ScanFailure, type ScanResult } from "@/features/admin/pos/scan";
 import { normalizeTicketCode, ticketState, ticketTime, type TicketKind, type TicketStatus } from "@/features/shared/tickets/model";
+import { nameFromRow, splitName, type NameParts, type NameRow } from "@/features/shared/names/model";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // The sale function with payment parts arrives with this update (after 20261016000000_e_payment_methods.sql).
@@ -447,7 +448,7 @@ const overrideError = (code?: string) =>
 
 export type TicketLine = { variantId: string | null; quantity: number; name: string; size: string | null; color: string | null; price: number };
 /** What a design ticket brings to the Designs tab besides its pieces: the buyer from the account, and the team details. */
-export type DesignTicketInfo = { name: string; phone: string; team: string; neededBy: string; roster: string };
+export type DesignTicketInfo = { name: string; nameParts: NameParts; phone: string; team: string; neededBy: string; roster: string };
 export type LoadedTicket = {
   id: string;
   code: string;
@@ -471,7 +472,7 @@ type TicketRow = {
   roster?: string | null;
   expires_at: string;
   closed_at: string | null;
-  profiles: { full_name: string | null; username: string; phone: string | null } | null;
+  profiles: ({ full_name: string | null; username: string; phone: string | null } & Partial<NameRow>) | null;
   counter_ticket_items: { position: number; variant_id: string | null; quantity: number; product_name: string; size: string | null; color: string | null; unit_price: number | string }[] | null;
 };
 
@@ -486,7 +487,7 @@ export async function loadTicket(input: string): Promise<LoadTicketResult> {
     supabase
       .from("counter_tickets")
       .select(
-        `id, code, status, expires_at, closed_at, ${withKind ? "kind, team_name, needed_by, roster, " : ""}profiles!counter_tickets_customer_id_fkey (full_name, username, phone), counter_ticket_items (position, variant_id, quantity, product_name, size, color, unit_price)`,
+        `id, code, status, expires_at, closed_at, ${withKind ? "kind, team_name, needed_by, roster, " : ""}profiles!counter_tickets_customer_id_fkey (*), counter_ticket_items (position, variant_id, quantity, product_name, size, color, unit_price)`,
       )
       .eq("code", code)
       .maybeSingle<TicketRow>();
@@ -527,6 +528,9 @@ export async function loadTicket(input: string): Promise<LoadTicketResult> {
     kind === "design"
       ? {
           name: data.profiles?.full_name?.trim() ?? "",
+          // The account's name parts; an account from before they existed is split.
+          nameParts:
+            data.profiles?.first_name || data.profiles?.last_name ? nameFromRow(data.profiles) : splitName(data.profiles?.full_name ?? ""),
           phone: data.profiles?.phone?.trim() ?? "",
           team: data.team_name?.trim() ?? "",
           neededBy: data.needed_by ?? "",

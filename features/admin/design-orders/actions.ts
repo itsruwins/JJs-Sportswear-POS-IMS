@@ -6,6 +6,8 @@ import { TICKET_ORDERS_MIGRATION } from "@/features/shared/tickets/model";
 import { requireStaff } from "@/features/admin/shell/session";
 import { COUNTER_ORDERS_MIGRATION } from "./data";
 import { MAX_PIECES, phoneOk } from "./model";
+import { nameToRow, toSuffix, type NameParts } from "@/features/shared/names/model";
+import { checkName } from "@/features/shared/names/validation";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isId = (v: unknown): v is string => typeof v === "string" && UUID.test(v);
@@ -17,7 +19,7 @@ export type CounterPayment =
 
 export type PlaceInput = {
   items: { variantId: string; quantity: number }[];
-  buyer: { name: string; phone: string };
+  buyer: NameParts & { phone: string };
   details: { team: string; neededBy: string; notes: string };
   payments: CounterPayment[];
   requestId: string;
@@ -26,7 +28,7 @@ export type PlaceInput = {
 };
 
 /** Which field a refusal is about, so the form can point at it. */
-export type PlaceField = "name" | "phone" | "needed_by" | "items" | "payment";
+export type PlaceField = "first_name" | "middle_name" | "last_name" | "suffix" | "phone" | "needed_by" | "items" | "payment";
 export type PlaceResult =
   | { ok: true; id: string }
   | {
@@ -50,9 +52,18 @@ export async function placeCounterOrder(raw: PlaceInput): Promise<PlaceResult> {
     : [];
   if (!items.length || items.length !== raw.items.length) return { ok: false, message: "Add at least one piece to the order.", field: "items" };
 
-  const name = text(raw?.buyer?.name, 80);
+  const name: NameParts = {
+    firstName: text(raw?.buyer?.firstName, 60),
+    middleName: text(raw?.buyer?.middleName, 60),
+    lastName: text(raw?.buyer?.lastName, 60),
+    suffix: toSuffix(text(raw?.buyer?.suffix, 10)),
+  };
   const phone = text(raw?.buyer?.phone, 20);
-  if (name.length < 2) return { ok: false, message: "Enter the buyer’s name.", field: "name" };
+  const nameErrors = checkName(name, "the buyer’s");
+  const nameField = ({ firstName: "first_name", middleName: "middle_name", lastName: "last_name", suffix: "suffix" } as const);
+  for (const key of ["firstName", "lastName", "middleName", "suffix"] as const) {
+    if (nameErrors[key]) return { ok: false, message: nameErrors[key], field: nameField[key] };
+  }
   if (!phoneOk(phone)) return { ok: false, message: "Enter the buyer’s phone number.", field: "phone" };
   const neededBy = text(raw?.details?.neededBy, 10);
   if (neededBy && !/^\d{4}-\d{2}-\d{2}$/.test(neededBy)) return { ok: false, message: "Pick a needed-by date.", field: "needed_by" };
@@ -78,7 +89,7 @@ export async function placeCounterOrder(raw: PlaceInput): Promise<PlaceResult> {
 
   const args = {
     p_items: items.map((i) => ({ variant_id: i.variantId, quantity: i.quantity })),
-    p_buyer: { name, phone },
+    p_buyer: { ...nameToRow(name), phone },
     p_details: { team: text(raw?.details?.team, 80), needed_by: neededBy || null, notes: text(raw?.details?.notes, 2000) },
     p_payments: payments,
     p_request_id: raw.requestId,
@@ -116,7 +127,10 @@ export async function placeCounterOrder(raw: PlaceInput): Promise<PlaceResult> {
     }
     if (error.code === "PGRST202") return { ok: false, message: `Design orders need the shop’s latest database update (${COUNTER_ORDERS_MIGRATION}).` };
     if (error.code === "42501") return { ok: false, message: "Your account can’t take orders at the counter." };
-    if (detail === "order:name") return { ok: false, message: "Enter the buyer’s name.", field: "name" };
+    const nameRefused = detail.match(/^order:(first_name|middle_name|last_name|suffix)$/)?.[1] as PlaceField | undefined;
+    if (nameRefused) return { ok: false, message: msg.replace(/'/g, "’") + ".", field: nameRefused };
+    // A database without the name-parts update reads only the old one-line name.
+    if (detail === "order:name") return { ok: false, message: "Taking a buyer’s name in parts needs the latest database update (supabase/migrations/20261030000000_name_parts.sql)." };
     if (detail === "order:phone") return { ok: false, message: "Enter the buyer’s phone number.", field: "phone" };
     if (detail === "order:needed_by") return { ok: false, message: msg.replace(/'/g, "’") + ".", field: "needed_by" };
     if (detail === "order:unavailable") {
