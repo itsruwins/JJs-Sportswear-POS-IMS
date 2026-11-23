@@ -66,7 +66,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
           <p className="mt-2 max-w-[60ch] text-[0.9375rem] text-ink-2">
             <span className="print-only">{SHOP.name}, Legazpi City. </span>As of {asOf}.{" "}
             {tab === "sales"
-              ? "Counter sales; voided sales aren’t counted."
+              ? "Shelf sales and custom-order payments, less refunds; voided sales aren’t counted."
               : "Values use selling prices; archived products and hidden sizes aren’t counted."}
           </p>
         </div>
@@ -104,7 +104,7 @@ async function SalesTab({ filters, periodQs }: { filters: HistoryFilters; period
         <ReportPeriod range={filters.range} from={filters.from} to={filters.to} />
       </div>
       {/* On paper the period otherwise rides on the Summary; with no Summary, it prints here. */}
-      {(error || !report || (report.totals.sales === 0 && report.totals.voided === 0)) && (
+      {(error || !report || (report.totals.sales === 0 && report.totals.voided === 0 && report.totals.order_payment_count === 0 && report.totals.refund_count === 0)) && (
         <p className="print-only mt-4 text-[0.9375rem]">{periodLabel(filters)}</p>
       )}
       {error || !report ? (

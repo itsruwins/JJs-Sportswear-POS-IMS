@@ -309,3 +309,213 @@ export function personName(p: Person) {
 export function formatGcashRef(ref: string) {
   return formatReference(GCASH, ref.replace(/\D/g, ""));
 }
+
+// ---------------------------------------------------------------------------------------------
+// Custom-order money: payments on custom orders (Designs-tab down payments, balances at pickup,
+// customers' online payments) and refunds. They're kept in payments and custom_order_refunds,
+// not sales, so they're read here and shown beside the sales. A payment counts on the day it
+// was verified (a counter payment the moment it's recorded); pending, submitted, and rejected
+// payments never count. A refund counts against the day it was given back.
+// ---------------------------------------------------------------------------------------------
+
+/** One verified custom-order payment, or one refund, in the sales timeline. */
+export type OrderMoneyLine = {
+  kind: "payment" | "refund";
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  /** The customer, or the walk-in buyer's name. */
+  buyer: string | null;
+  /** Down payment or balance (payments only). */
+  paymentType: "down_payment" | "balance" | null;
+  /** Always positive; a refund is taken off the totals. */
+  amount: number;
+  /** When it counts: verified (payments) or given back (refunds). */
+  at: string;
+  method: PartMethod;
+  provider: string | null;
+  providerName: string | null;
+  reference: string | null;
+  /** Who recorded or verified the payment, or gave the refund. */
+  by: Person;
+};
+
+/** Order money for a period, for the figures above the list. */
+export type OrderTotals = {
+  payments: number;
+  paid: number;
+  refunds: number;
+  refunded: number;
+  /** Net of refunds, like the totals: cash + e_payment = paid − refunded. */
+  cash: number;
+  e_payment: number;
+  providers: ProviderTotal[];
+};
+
+type OrderRef = {
+  order_number: string;
+  walk_in_name: string | null;
+  customer: { username: string; full_name: string | null } | null;
+} | null;
+
+const ORDER = "order:custom_orders (order_number, walk_in_name, customer:profiles!custom_orders_customer_id_fkey (username, full_name))";
+const buyerOf = (o: OrderRef) => o?.customer?.full_name?.trim() || o?.walk_in_name?.trim() || (o?.customer ? `@${o.customer.username}` : null);
+/** A refund that isn't cash went back by GCash (refunds keep their own cash/GCash method). */
+const refundProvider = (method: string) => (method === "cash" ? null : GCASH);
+
+/** Verified order payments and refunds between two timestamps, newest first. */
+export async function fetchOrderMoney(supabase: SupabaseClient, fromIso: string, toIso: string, limit = 300) {
+  let pays = supabase
+    .from("payments")
+    .select(
+      `id, order_id, payment_type, amount, method, provider, reference, gcash_reference, verified_at, provider_row:payment_providers (name), by:profiles!payments_verified_by_fkey (username, full_name), ${ORDER}`,
+    )
+    .eq("status", "verified")
+    .lt("verified_at", toIso);
+  if (fromIso) pays = pays.gte("verified_at", fromIso);
+  let refunds = supabase
+    .from("custom_order_refunds")
+    .select(`id, order_id, amount, method, created_at, by:profiles (username, full_name), ${ORDER}`)
+    .lt("created_at", toIso);
+  if (fromIso) refunds = refunds.gte("created_at", fromIso);
+
+  const [p, r] = await Promise.all([
+    pays.order("verified_at", { ascending: false }).limit(limit + 1),
+    refunds.order("created_at", { ascending: false }).limit(limit + 1),
+  ]);
+  const error = p.error ?? r.error;
+  if (error) return { lines: [] as OrderMoneyLine[], more: false, error };
+
+  type PayRow = {
+    id: string;
+    order_id: string;
+    payment_type: "down_payment" | "balance";
+    amount: number | string;
+    method: string;
+    provider: string | null;
+    reference: string | null;
+    gcash_reference: string | null;
+    verified_at: string;
+    provider_row: { name: string } | null;
+    by: Person;
+    order: OrderRef;
+  };
+  type RefundRow = { id: string; order_id: string; amount: number | string; method: string; created_at: string; by: Person; order: OrderRef };
+  const payRows = (p.data ?? []) as unknown as PayRow[];
+  const refundRows = (r.data ?? []) as unknown as RefundRow[];
+
+  const paid: OrderMoneyLine[] = payRows.slice(0, limit).map((x) => {
+    const cash = x.method === "cash";
+    const provider = cash ? null : (x.provider ?? GCASH);
+    return {
+      kind: "payment",
+      id: x.id,
+      orderId: x.order_id,
+      orderNumber: x.order?.order_number ?? "Unknown order",
+      buyer: buyerOf(x.order),
+      paymentType: x.payment_type,
+      amount: Number(x.amount),
+      at: x.verified_at,
+      method: cash ? "cash" : "e_payment",
+      provider,
+      providerName: cash ? null : (x.provider_row?.name ?? (provider === GCASH ? "GCash" : provider)),
+      reference: cash ? null : (x.reference ?? x.gcash_reference),
+      by: x.by,
+    };
+  });
+  const given: OrderMoneyLine[] = refundRows.slice(0, limit).map((x) => {
+    const provider = refundProvider(x.method);
+    return {
+      kind: "refund",
+      id: x.id,
+      orderId: x.order_id,
+      orderNumber: x.order?.order_number ?? "Unknown order",
+      buyer: buyerOf(x.order),
+      paymentType: null,
+      amount: Number(x.amount),
+      at: x.created_at,
+      method: provider ? "e_payment" : "cash",
+      provider,
+      providerName: provider ? "GCash" : null,
+      reference: null,
+      by: x.by,
+    };
+  });
+
+  // When either list was cut, keep only what's newer than where it stopped, so nothing is skipped.
+  const cutoffs = [payRows.length > limit ? paid.at(-1)?.at : null, refundRows.length > limit ? given.at(-1)?.at : null]
+    .filter((x): x is string => Boolean(x))
+    .map(Date.parse);
+  const floor = Math.max(-Infinity, ...cutoffs);
+  const lines = [...paid, ...given].filter((l) => Date.parse(l.at) >= floor).sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  return { lines, more: cutoffs.length > 0, error: null };
+}
+
+/** Totals for every order payment and refund in the period, read page by page past the list's cap. */
+export async function fetchOrderMoneyTotals(supabase: SupabaseClient, fromIso: string, toIso: string) {
+  const totals: OrderTotals = { payments: 0, paid: 0, refunds: 0, refunded: 0, cash: 0, e_payment: 0, providers: [] };
+  const byProvider = new Map<string, ProviderTotal>();
+  const addProvider = (code: string, name: string, amount: number) => {
+    const t = byProvider.get(code) ?? { code, name, amount: 0 };
+    t.amount += amount;
+    byProvider.set(code, t);
+  };
+
+  for (let afterId = "", i = 0; i < 100; i++) {
+    let q = supabase.from("payments").select("id, amount, method, provider, provider_row:payment_providers (name)").eq("status", "verified").lt("verified_at", toIso);
+    if (fromIso) q = q.gte("verified_at", fromIso);
+    if (afterId) q = q.gt("id", afterId);
+    const { data, error } = await q.order("id").limit(1000);
+    if (error) return { totals, error };
+    const rows = (data ?? []) as unknown as { id: string; amount: number | string; method: string; provider: string | null; provider_row: { name: string } | null }[];
+    if (rows.length === 0) break;
+    afterId = rows[rows.length - 1].id;
+    for (const r of rows) {
+      const amount = Number(r.amount);
+      totals.payments += 1;
+      totals.paid += amount;
+      if (r.method === "cash") {
+        totals.cash += amount;
+      } else {
+        const code = r.provider ?? GCASH;
+        totals.e_payment += amount;
+        addProvider(code, r.provider_row?.name ?? (code === GCASH ? "GCash" : code), amount);
+      }
+    }
+  }
+
+  for (let afterId = "", i = 0; i < 100; i++) {
+    let q = supabase.from("custom_order_refunds").select("id, amount, method").lt("created_at", toIso);
+    if (fromIso) q = q.gte("created_at", fromIso);
+    if (afterId) q = q.gt("id", afterId);
+    const { data, error } = await q.order("id").limit(1000);
+    if (error) return { totals, error };
+    const rows = (data ?? []) as { id: string; amount: number | string; method: string }[];
+    if (rows.length === 0) break;
+    afterId = rows[rows.length - 1].id;
+    for (const r of rows) {
+      const amount = Number(r.amount);
+      totals.refunds += 1;
+      totals.refunded += amount;
+      if (refundProvider(r.method)) {
+        totals.e_payment -= amount;
+        addProvider(GCASH, byProvider.get(GCASH)?.name ?? "GCash", -amount);
+      } else {
+        totals.cash -= amount;
+      }
+    }
+  }
+
+  const round = (n: number) => Math.round(n * 100) / 100;
+  return {
+    totals: {
+      ...totals,
+      paid: round(totals.paid),
+      refunded: round(totals.refunded),
+      cash: round(totals.cash),
+      e_payment: round(totals.e_payment),
+      providers: [...byProvider.values()].map((p) => ({ ...p, amount: round(p.amount) })).filter((p) => p.amount !== 0),
+    },
+    error: null,
+  };
+}

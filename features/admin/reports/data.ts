@@ -3,11 +3,29 @@ import { historyBounds, manilaToday, shiftDate, type HistoryFilters } from "@/fe
 
 export type Bucket = "hour" | "day" | "month";
 
-type Figures = { sales: number; revenue: number; pieces: number; cash: number; e_payment: number; voided: number; voided_revenue: number };
+/**
+ * revenue is everything that came in: shelf sales plus verified custom-order payments, less refunds
+ * (cash and e_payment split it). sales and pieces count shelf sales only.
+ */
+type Figures = {
+  sales: number;
+  revenue: number;
+  shelf_revenue: number;
+  order_payments: number;
+  order_payment_count: number;
+  refunds: number;
+  refund_count: number;
+  pieces: number;
+  cash: number;
+  e_payment: number;
+  voided: number;
+  voided_revenue: number;
+};
 /** E-payments received through one provider. */
 export type ProviderLine = { code: string; name: string; revenue: number };
 export type ReportTotals = Figures & { providers: ProviderLine[] };
-export type SeriesPoint = { bucket: string; label: string; sales: number; revenue: number };
+/** One hour, day, or month: shelf sales counted, the net total, and the part of it from custom orders. */
+export type SeriesPoint = { bucket: string; label: string; sales: number; revenue: number; orders: number };
 export type ProductLine = { product_id: string; name: string; pieces: number; revenue: number };
 export type VariantLine = ProductLine & { size: string | null; color: string | null };
 export type CashierLine = { id: string; username: string; full_name: string | null; sales: number; revenue: number };
@@ -25,7 +43,20 @@ export type SalesReport = {
 };
 
 const MIGRATION = "supabase/migrations/20261008000000_sales_report.sql";
-const EMPTY: Figures = { sales: 0, revenue: 0, pieces: 0, cash: 0, e_payment: 0, voided: 0, voided_revenue: 0 };
+const EMPTY: Figures = {
+  sales: 0,
+  revenue: 0,
+  shelf_revenue: 0,
+  order_payments: 0,
+  order_payment_count: 0,
+  refunds: 0,
+  refund_count: 0,
+  pieces: 0,
+  cash: 0,
+  e_payment: 0,
+  voided: 0,
+  voided_revenue: 0,
+};
 
 const daysBetween = (from: string, to: string) =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000) + 1;
@@ -43,9 +74,15 @@ const monthLabel = (ym: string) => new Intl.DateTimeFormat("en-PH", { month: "sh
 const hourLabel = (h: number) => (h === 0 ? "12 AM" : h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`);
 
 /** Every bucket in the period, with zeros where nothing sold, so the chart's gaps are real. */
-function fillSeries(bucket: Bucket, raw: { bucket: string; sales: number; revenue: number }[], from: string, to: string): SeriesPoint[] {
+function fillSeries(bucket: Bucket, raw: { bucket: string; sales: number; revenue: number; orders: number }[], from: string, to: string): SeriesPoint[] {
   const got = new Map(raw.map((r) => [r.bucket, r]));
-  const point = (key: string, label: string) => ({ bucket: key, label, sales: Number(got.get(key)?.sales ?? 0), revenue: Number(got.get(key)?.revenue ?? 0) });
+  const point = (key: string, label: string) => ({
+    bucket: key,
+    label,
+    sales: Number(got.get(key)?.sales ?? 0),
+    revenue: Number(got.get(key)?.revenue ?? 0),
+    orders: Number(got.get(key)?.orders ?? 0),
+  });
   if (bucket === "hour") {
     // Opening hours by default (8 AM–8 PM), widened when a sale fell outside them.
     const hours = raw.map((r) => Number(r.bucket));
@@ -84,10 +121,12 @@ type RawTotals = Partial<Record<keyof Figures | "gcash", number | string>> & { p
 
 /**
  * Totals as numbers. A database from before the e-payment update reports GCash alone
- * (`gcash`, no `e_payment`), which is read as e-payments through GCash.
+ * (`gcash`, no `e_payment`), which is read as e-payments through GCash. One from before
+ * supabase/migrations/20261031000000_order_money_in_sales.sql has shelf sales only.
  */
 function toTotals(t: RawTotals | null | undefined): ReportTotals {
   const figures = Object.fromEntries(Object.keys(EMPTY).map((k) => [k, Number(t?.[k as keyof Figures] ?? 0)])) as Figures;
+  if (t && t.shelf_revenue === undefined) figures.shelf_revenue = figures.revenue;
   if (t && t.e_payment === undefined && t.gcash !== undefined) {
     figures.e_payment = Number(t.gcash);
     const providers = figures.e_payment ? [{ code: "gcash", name: "GCash", revenue: figures.e_payment }] : [];
@@ -140,7 +179,7 @@ export async function fetchSalesReport(
 
   type Raw = {
     totals: RawTotals;
-    series: { bucket: string; sales: number; revenue: number | string }[];
+    series: { bucket: string; sales: number; revenue: number | string; orders?: number | string }[];
     products: (Omit<ProductLine, "pieces" | "revenue"> & { pieces: number | string; revenue: number | string })[];
     variants: (Omit<VariantLine, "pieces" | "revenue"> & { pieces: number | string; revenue: number | string })[];
     cashiers: (Omit<CashierLine, "sales" | "revenue"> & { sales: number | string; revenue: number | string })[];
@@ -152,7 +191,7 @@ export async function fetchSalesReport(
     ...(x.sales !== undefined ? { sales: Number(x.sales) } : {}),
     revenue: Number(x.revenue),
   });
-  const rawSeries = (r.series ?? []).map((s) => ({ bucket: s.bucket, sales: Number(s.sales), revenue: Number(s.revenue) }));
+  const rawSeries = (r.series ?? []).map((s) => ({ bucket: s.bucket, sales: Number(s.sales), revenue: Number(s.revenue), orders: Number(s.orders ?? 0) }));
 
   return {
     report: {

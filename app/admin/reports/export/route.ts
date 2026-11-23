@@ -71,15 +71,25 @@ export async function GET(request: NextRequest) {
     }
     const t = report.totals;
     // Shares as whole percents, the same rounding as the screen.
-    const share = (part: number) => (t.revenue > 0 ? Math.round((part / t.revenue) * 100) : 0);
+    // Products and cashiers are shelf sales, so their shares are of the shelf total.
+    const share = (part: number) => (t.shelf_revenue > 0 ? Math.round((part / t.shelf_revenue) * 100) : 0);
     const p = report.previous;
     const file = (name: string) => `jj-sales-${name}-${period}.csv`;
     if (kind === "sales-summary") {
       const rows: (string | number)[][] = [["Figure", "This period", ...(p ? ["Period before"] : [])]];
       const add = (label: string, now: number, before?: number) => rows.push([label, now, ...(p ? [before ?? 0] : [])]);
       add("Sales total (PHP)", t.revenue, p?.revenue);
-      add("Sales", t.sales, p?.sales);
-      add("Average sale (PHP)", t.sales ? Math.round((t.revenue / t.sales) * 100) / 100 : 0, p?.sales ? Math.round((p.revenue / p.sales) * 100) / 100 : 0);
+      add("Shelf sales (PHP)", t.shelf_revenue, p?.shelf_revenue);
+      add("Custom-order payments (PHP)", t.order_payments, p?.order_payments);
+      add("Custom-order payments", t.order_payment_count, p?.order_payment_count);
+      add("Refunds (PHP)", t.refunds, p?.refunds);
+      add("Refunds", t.refund_count, p?.refund_count);
+      add("Shelf sales", t.sales, p?.sales);
+      add(
+        "Average shelf sale (PHP)",
+        t.sales ? Math.round((t.shelf_revenue / t.sales) * 100) / 100 : 0,
+        p?.sales ? Math.round((p.shelf_revenue / p.sales) * 100) / 100 : 0,
+      );
       add("Pieces sold", t.pieces, p?.pieces);
       add("Cash (PHP)", t.cash, p?.cash);
       add("E-payment (PHP)", t.e_payment, p?.e_payment);
@@ -94,7 +104,10 @@ export async function GET(request: NextRequest) {
     }
     if (kind === "sales-series") {
       const head = report.bucket === "hour" ? "Hour" : report.bucket === "day" ? "Date" : "Month";
-      return csvResponse(file(`by-${report.bucket}`), [[head, "Sales", "Total (PHP)"], ...report.series.map((s) => [report.bucket === "hour" ? s.label : s.bucket, s.sales, s.revenue])]);
+      return csvResponse(file(`by-${report.bucket}`), [
+        [head, "Shelf sales", "Custom orders, less refunds (PHP)", "Total (PHP)"],
+        ...report.series.map((s) => [report.bucket === "hour" ? s.label : s.bucket, s.sales, s.orders, s.revenue]),
+      ]);
     }
     if (kind === "sales-products") {
       return csvResponse(file("best-products"), [
