@@ -74,7 +74,8 @@ export function SalesChart({ series, bucket }: { series: SeriesPoint[]; bucket: 
           }}
         >
           {series.map((s, i) => {
-            const h = (s.revenue / top) * 100;
+            // A refund can leave a bucket below zero; its column stays flat and the tooltip has the number.
+            const h = (Math.max(0, s.revenue) / top) * 100;
             const on = active === i;
             return (
               <div
@@ -84,7 +85,7 @@ export function SalesChart({ series, bucket }: { series: SeriesPoint[]; bucket: 
                 }}
                 role="img"
                 tabIndex={i === focusIndex ? 0 : -1}
-                aria-label={`${s.label}: ${formatPeso(s.revenue)}, ${s.sales} ${s.sales === 1 ? "sale" : "sales"}`}
+                aria-label={`${s.label}: ${formatPeso(s.revenue)}, ${s.sales} ${s.sales === 1 ? "sale" : "sales"}${s.orders ? `, ${formatPeso(s.orders)} from custom orders` : ""}`}
                 onPointerEnter={() => setActive(i)}
                 onFocus={() => {
                   setActive(i);
@@ -114,6 +115,7 @@ export function SalesChart({ series, bucket }: { series: SeriesPoint[]; bucket: 
                     <p className="text-[0.75rem] leading-tight opacity-80">
                       {s.label} · {s.sales} {s.sales === 1 ? "sale" : "sales"}
                     </p>
+                    {s.orders !== 0 && <p className="tabular text-[0.75rem] leading-tight opacity-80">{formatPeso(s.orders)} from orders</p>}
                   </div>
                 )}
               </div>
@@ -140,6 +142,7 @@ export function SalesChart({ series, bucket }: { series: SeriesPoint[]; bucket: 
                 {bucket === "hour" ? "Hour" : bucket === "day" ? "Day" : "Month"}
               </th>
               <th scope="col" className="voice-label border-b border-line py-2 pr-4 text-right text-[0.8125rem] font-semibold text-ink-2">Sales</th>
+              <th scope="col" className="voice-label border-b border-line py-2 pr-4 text-right text-[0.8125rem] font-semibold text-ink-2">Orders</th>
               <th scope="col" className="voice-label border-b border-line py-2 text-right text-[0.8125rem] font-semibold text-ink-2">Total</th>
             </tr>
           </thead>
@@ -148,6 +151,7 @@ export function SalesChart({ series, bucket }: { series: SeriesPoint[]; bucket: 
               <tr key={s.bucket}>
                 <th scope="row" className="border-b border-line py-2 pr-4 font-normal text-ink">{s.label}</th>
                 <td className="tabular border-b border-line py-2 pr-4 text-right text-ink">{s.sales || <span className="text-ink-2">–</span>}</td>
+                <td className="tabular border-b border-line py-2 pr-4 text-right text-ink">{s.orders ? formatPeso(s.orders) : <span className="text-ink-2">–</span>}</td>
                 <td className="tabular border-b border-line py-2 text-right font-semibold text-ink">
                   {s.revenue ? formatPeso(s.revenue) : <span className="font-normal text-ink-2">–</span>}
                 </td>
