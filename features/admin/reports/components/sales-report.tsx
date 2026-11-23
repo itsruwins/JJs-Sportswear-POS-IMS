@@ -13,16 +13,18 @@ const share = (part: number, whole: number) => (whole > 0 ? `${Math.round((part 
 export function SalesReportView({ report: r, periodLabel, csv }: { report: SalesReport; periodLabel: string; csv: string }) {
   const t = r.totals;
   const p = r.previous;
-  const average = t.sales ? Math.round((t.revenue / t.sales) * 100) / 100 : 0;
-  const prevAverage = p?.sales ? Math.round((p.revenue / p.sales) * 100) / 100 : 0; // rounded like the figure it compares with
+  // An average shelf sale: order payments aren't sales.
+  const average = t.sales ? Math.round((t.shelf_revenue / t.sales) * 100) / 100 : 0;
+  const prevAverage = p?.sales ? Math.round((p.shelf_revenue / p.sales) * 100) / 100 : 0; // rounded like the figure it compares with
+  const hasOrders = t.order_payment_count > 0 || t.refund_count > 0;
   const what = r.bucket === "hour" ? "hour" : r.bucket === "day" ? "day" : "month";
 
-  if (t.sales === 0 && t.voided === 0) {
+  if (t.sales === 0 && t.voided === 0 && !hasOrders) {
     return (
       <div className="mt-8 border-y border-line py-8">
         <p className="text-[1rem] font-semibold text-ink">No sales in this period</p>
         <p className="mt-1 max-w-[56ch] text-[0.9375rem] text-ink-2">
-          Counter sales from{" "}
+          Sales and custom-order payments from{" "}
           <Link href="/admin/pos" className="font-semibold text-ink underline underline-offset-2">
             Point of sale
           </Link>{" "}
@@ -54,6 +56,17 @@ export function SalesReportView({ report: r, periodLabel, csv }: { report: Sales
             ))}
           </p>
         )}
+        {hasOrders && (
+          <p className="mb-3 text-[0.875rem] text-ink-2">
+            Shelf sales <span className="tabular font-semibold text-ink">{formatPeso(t.shelf_revenue)}</span>
+            {" · "}Custom-order payments <span className="tabular font-semibold text-ink">{formatPeso(t.order_payments)}</span> ({t.order_payment_count})
+            {t.refund_count > 0 && (
+              <>
+                {" · "}Refunds <span className="tabular font-semibold text-ink">−{formatPeso(t.refunds)}</span> ({t.refund_count})
+              </>
+            )}
+          </p>
+        )}
         <p className="text-[0.875rem] text-ink-2">
           {r.previousLabel && p ? `Changes compare with ${r.previousLabel}. ` : ""}
           {t.voided > 0
@@ -62,13 +75,13 @@ export function SalesReportView({ report: r, periodLabel, csv }: { report: Sales
         </p>
       </ReportSection>
 
-      <ReportSection id="time-title" title={`Sales by ${what}`} note={`Total of each ${what}, voided sales left out`} csv={`${csv}&kind=sales-series`}>
+      <ReportSection id="time-title" title={`Sales by ${what}`} note={`Total of each ${what}: shelf sales and order payments, less refunds`} csv={`${csv}&kind=sales-series`}>
         {/* A new period is a new chart, so its keyboard stop starts on the latest bar. */}
         <SalesChart key={`${r.bucket}:${r.series[0]?.bucket}:${r.series.length}`} series={r.series} bucket={r.bucket} />
       </ReportSection>
 
 
-      <ReportSection id="best-title" title="Best sellers" note="Products by sales total; sizes and colors by pieces">
+      <ReportSection id="best-title" title="Best sellers" note="Shelf products by sales total; sizes and colors by pieces">
         <div className="grid gap-x-10 gap-y-8 pt-2 lg:grid-cols-2">
           <div>
             <TableTitle id="best-products" title="Products" csv={`${csv}&kind=sales-products`} label="Best-selling products" />
@@ -93,7 +106,7 @@ export function SalesReportView({ report: r, periodLabel, csv }: { report: Sales
                       </th>
                       <td className={`${td} ${num} text-ink`}>{x.pieces}</td>
                       <td className={`${td} ${num} font-semibold text-ink`}>{formatPeso(x.revenue)}</td>
-                      <td className={`${td} ${num} pr-0 text-ink-2`}>{share(x.revenue, t.revenue)}</td>
+                      <td className={`${td} ${num} pr-0 text-ink-2`}>{share(x.revenue, t.shelf_revenue)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -134,7 +147,7 @@ export function SalesReportView({ report: r, periodLabel, csv }: { report: Sales
         </div>
       </ReportSection>
 
-      <ReportSection id="cashier-title" title="By cashier" note="Who rang up the sales" csv={`${csv}&kind=sales-cashiers`}>
+      <ReportSection id="cashier-title" title="By cashier" note="Who rang up the shelf sales" csv={`${csv}&kind=sales-cashiers`}>
         <Scroll label="Sales by cashier">
           {/* Phones keep Sales, Total, and Share; Average returns from the small breakpoint up. */}
           <table className="w-full min-w-[20rem] text-left text-[0.9375rem]">
@@ -157,7 +170,7 @@ export function SalesReportView({ report: r, periodLabel, csv }: { report: Sales
                   <td className={`${td} ${num} text-ink`}>{c.sales}</td>
                   <td className={`${td} ${num} hidden text-ink-2 sm:table-cell`}>{formatPeso(Math.round((c.revenue / c.sales) * 100) / 100)}</td>
                   <td className={`${td} ${num} font-semibold text-ink`}>{formatPeso(c.revenue)}</td>
-                  <td className={`${td} ${num} pr-0 text-ink-2`}>{share(c.revenue, t.revenue)}</td>
+                  <td className={`${td} ${num} pr-0 text-ink-2`}>{share(c.revenue, t.shelf_revenue)}</td>
                 </tr>
               ))}
             </tbody>
